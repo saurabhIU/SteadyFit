@@ -1,0 +1,44 @@
+services:
+  # FastAPI backend (frontend deploys separately on Vercel)
+  - type: web
+    name: onerepmax-api
+    runtime: python
+    plan: free
+    buildCommand: pip install uv && uv sync --frozen
+    startCommand: uv run uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /health
+    envVars:
+      - key: DATABASE_URL          # Neon connection string
+        sync: false
+      - key: INTERNAL_CRON_SECRET
+        sync: false
+      - key: AI_GATEWAY_API_KEY
+        sync: false
+      - key: OPENAI_API_KEY        # embeddings only
+        sync: false
+      - key: TAVILY_API_KEY
+        sync: false
+      - key: USDA_API_KEY
+        sync: false
+      - key: FRONTEND_URL          # Vercel origin, for CORS
+        sync: false
+
+  # Weekly review trigger — replaces the old in-process APScheduler cron
+  - type: cron
+    name: onerepmax-weekly-review
+    runtime: python
+    plan: free
+    schedule: "0 18 * * 0"   # Sunday 18:00 UTC
+    buildCommand: "echo nothing to build"
+    startCommand: >-
+      curl -fsS -X POST
+      -H "X-Internal-Secret: $INTERNAL_CRON_SECRET"
+      "https://$API_HOST/internal/weekly-review"
+    envVars:
+      - key: INTERNAL_CRON_SECRET
+        sync: false
+      - key: API_HOST
+        fromService:
+          type: web
+          name: onerepmax-api
+          property: host

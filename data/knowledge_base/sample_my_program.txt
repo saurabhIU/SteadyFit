@@ -1,0 +1,102 @@
+# Saurabh — Personal Training Program
+# Replace names, dates, and numbers with your own data before uploading.
+
+## Program overview
+
+Goal: Lose fat while keeping strength. Training age: 2 years.
+Equipment: Full gym Mon/Tue/Wed/Thu/Fri/Sat; hotel gym or bodyweight when traveling.
+Sessions per week: 5-6. Session length target: 45-55 minutes.
+
+## Weekly split (default)
+
+### Monday — Upper push
+- Bench press or dumbbell press: 3 x 6-10
+- Incline dumbbell press: 3 x 8-12
+- Cable fly or push-up variation: 2 x 12-15
+- Triceps pressdown: 2 x 10-15
+- Optional: 10 min incline walk cooldown
+
+### Wednesday — Lower body
+- Romanian deadlift or leg curl: 3 x 8-12
+- Goblet squat or leg press: 3 x 8-12
+- Walking lunges: 2 x 10/leg
+- Calf raises: 3 x 12-15
+- Core: plank 3 x 30-45 sec
+
+### Friday — Full body + conditioning
+- Pull-ups or lat pulldown: 3 x 6-10
+- Row variation: 3 x 8-12
+- Shoulder press: 2 x 8-12
+- Kettlebell swing or bike: 4 x 30 sec hard / 60 sec easy
+
+### Saturday (optional) — Light cardio
+- 20-30 min brisk walk or easy cycle. RPE 4-5/10 only.
+
+## Deload week rules
+
+Run a deload every 4-6 weeks, or when sleep is poor for 3+ nights or performance drops 2 sessions in a row.
+
+Deload week changes:
+- Cut sets by 40-50% (e.g. 3 sets become 2 sets)
+- Keep loads at 80-85% of normal working weight OR same load, stop 2 reps short of failure
+- No new exercises; no AMRAP sets
+- Keep protein at 1.6-2.0 g/kg; calories at maintenance, not a aggressive cut
+- One optional 20 min easy walk only — skip hard conditioning
+
+Example deload week:
+- Mon: Upper push (2 sets each exercise, RPE 6)
+- Wed: Lower (2 sets each, RPE 6)
+- Fri: Full body (2 sets each, skip finisher)
+- Sat: Off or 15 min walk
+
+## Travel / hotel gym substitutions
+
+When dumbbells only (up to 40 lb) or limited machines:
+- Bench press -> dumbbell floor press or push-ups
+- Barbell RDL -> single-leg RDL with dumbbells
+- Leg press -> goblet squat or split squat
+- Pull-ups -> band-assisted pull-ups or inverted rows
+- Session cap: 35-40 minutes; prioritize compounds, 2 sets each
+
+## Progression rules
+
+- Add 2.5-5 lb when all sets hit top of rep range with good form
+- If you miss a session: move it within the same week if possible; do not double volume the next day
+- After 2 missed sessions in one week: drop Friday optional work and keep Mon + Wed only
+
+## Suppliments
+- Magnesium Glycinate
+- creatine monohydrate
+- Whey protein
+- Vitamin D3+k2
+- Fish oil
+
+## Breakfast I prefer
+
+1/3 cup oats
+1 scoop of whey protein
+1 banana
+5 almonds
+2-3 walnuts
+1 tablespoon chia seeds
+4 tablespoon greek yogurt
+1 cup of almind milk
+
+## Nutrition notes (personal)
+
+Daily targets (training days): ~2200 kcal, 155 g protein, 220 g carbs, 65 g fat.
+Rest days: ~2000 kcal, same protein.
+Preferred foods: dal, chicken, eggs, Greek yogurt, rice, roti, vegetables.
+Avoid: pork, beef. Eating out: choose grilled protein + vegetables; estimate, do not skip logging.
+
+## Injuries and constraints
+
+- Mild lower-back sensitivity: avoid heavy conventional deadlifts from floor; prefer RDL with controlled tempo
+- No jumping plyometrics when back is tight
+- Warm up 8-10 min before every session (bike + hip hinge drill + light sets)
+
+## Coach notes (edit freely)
+
+[YOUR NOTES HERE — e.g. race date, travel schedule, gym closures, PT recommendations]
+
+Last updated: 2026-07-11

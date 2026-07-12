@@ -9,9 +9,11 @@ Requires DATABASE_URL in the environment (or .env).
 """
 import os
 import sys
+from typing import LiteralString, cast
 
 import psycopg
-from psycopg.rows import dict_row
+from psycopg import Connection
+from psycopg.rows import DictRow, dict_row
 from langgraph.checkpoint.postgres import PostgresSaver
 
 try:  # pick up .env when run locally
@@ -48,15 +50,20 @@ def main() -> None:
         sys.exit("DATABASE_URL is not set")
 
     with psycopg.connect(url) as conn:
-        for stmt in STATEMENTS:
-            conn.execute(stmt)
+        with conn.cursor() as cur:
+            for stmt in STATEMENTS:
+                cur.execute(cast(LiteralString, stmt))
+        conn.commit()
     print("pgvector extension + documents table + indexes ready")
 
     # LangGraph checkpointer schema (idempotent; also runs on app startup)
-    with psycopg.Connection.connect(
+    conn = Connection[DictRow].connect(
         url, autocommit=True, prepare_threshold=0, row_factory=dict_row
-    ) as conn:
+    )
+    try:
         PostgresSaver(conn).setup()
+    finally:
+        conn.close()
     print("LangGraph checkpointer schema ready")
 
 

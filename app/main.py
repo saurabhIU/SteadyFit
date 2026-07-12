@@ -39,10 +39,15 @@ app = FastAPI(title="SteadyFit", lifespan=lifespan)
 # Next.js on Vercel (or localhost:3000) calls this API cross-origin.
 _origins = ["http://localhost:3000", "http://localhost:5173"]
 if settings.frontend_url:
-    _origins.append(settings.frontend_url.rstrip("/"))
+    for origin in settings.frontend_url.split(","):
+        cleaned = origin.strip().rstrip("/")
+        if cleaned:
+            _origins.append(cleaned)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=_origins,
+    # Vercel production + preview deploys (e.g. steadyfit.vercel.app, steadyfit-git-main-*.vercel.app)
+    allow_origin_regex=r"https://.*\.vercel\.app",
     allow_methods=["*"],
     allow_headers=["*"],
 )

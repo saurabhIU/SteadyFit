@@ -1,4 +1,4 @@
-"""Builds the OneRepMax coaching council graph.
+"""Builds the SteadyFit coaching council graph.
 
 Topology:
     coach (supervisor) -> {scheduler | nutrition | adherence | rag}

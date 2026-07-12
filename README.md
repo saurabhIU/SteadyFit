@@ -1,4 +1,4 @@
-# OneRepMax
+# SteadyFit
 
 An agentic AI fitness copilot for everyday people. A LangGraph "coaching council" —
 Coach (supervisor), Scheduler, Nutrition, Adherence — grounded in your own uploaded
@@ -64,7 +64,7 @@ uv run python evals/run_evals.py   # 20-case harness; writes evals/summary.md
 # in .env
 LANGCHAIN_TRACING_V2=true
 LANGCHAIN_API_KEY=your-key
-LANGCHAIN_PROJECT=onerepmax
+LANGCHAIN_PROJECT=steadyfit
 ```
 
 ## Deploy

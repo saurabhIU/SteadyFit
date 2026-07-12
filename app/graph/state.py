@@ -1,4 +1,4 @@
-"""Shared state for the OneRepMax coaching council graph."""
+"""Shared state for the SteadyFit coaching council graph."""
 from typing import Annotated, Literal, Optional
 from pydantic import BaseModel, Field
 from langgraph.graph.message import add_messages

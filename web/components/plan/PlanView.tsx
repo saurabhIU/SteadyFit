@@ -6,7 +6,7 @@ import { ApiError, fetchPlan } from "@/lib/api";
 import { PLAN_UPDATED } from "@/lib/plan-events";
 import type { PlanResponse } from "@/lib/types";
 
-const THREAD_KEY = "onerepmax_thread_id";
+const THREAD_KEY = "steadyfit_thread_id";
 
 const STATUS_STYLES: Record<string, string> = {
   planned: "border-line bg-white/70 text-ink",

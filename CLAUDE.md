@@ -1,4 +1,4 @@
-# OneRepMax — Agent Context
+# SteadyFit — Agent Context
 
 Multi-agent LangGraph fitness coaching copilot (capstone scaffold). A **Coach supervisor** routes user messages to specialist agents, merges their proposals in a **council** step, optionally **renegotiates** when adherence risk conflicts with plan density, and pauses for **human-in-the-loop approval** before persisting plan changes.
 
@@ -8,7 +8,7 @@ Full product/architecture rationale: **PLAN.md**. Quick start and deploy: **READ
 
 ## What this app does
 
-OneRepMax helps busy adults stay consistent by **adaptive re-planning** — rescheduling workouts around calendar conflicts, adjusting nutrition after real meals, flagging drop-off risk, and grounding answers in the user's **uploaded documents** (Agentic RAG) or **live web search** (Tavily).
+SteadyFit helps busy adults stay consistent by **adaptive re-planning** — rescheduling workouts around calendar conflicts, adjusting nutrition after real meals, flagging drop-off risk, and grounding answers in the user's **uploaded documents** (Agentic RAG) or **live web search** (Tavily).
 
 Every turn (user chat or Sunday weekly-review cron) enters at the Coach, loads profile/adherence context, routes to specialists, synthesizes a reply, and checkpoints state in Postgres.
 

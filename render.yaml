@@ -1,7 +1,7 @@
 services:
   # FastAPI backend (frontend deploys separately on Vercel)
   - type: web
-    name: onerepmax-api
+    name: steadyfit-api
     runtime: python
     plan: free
     buildCommand: pip install uv && uv sync --frozen
@@ -25,7 +25,7 @@ services:
 
   # Weekly review trigger — replaces the old in-process APScheduler cron
   - type: cron
-    name: onerepmax-weekly-review
+    name: steadyfit-weekly-review
     runtime: python
     plan: free
     schedule: "0 18 * * 0"   # Sunday 18:00 UTC
@@ -40,5 +40,5 @@ services:
       - key: API_HOST
         fromService:
           type: web
-          name: onerepmax-api
+          name: steadyfit-api
           property: host

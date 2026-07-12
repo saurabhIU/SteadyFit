@@ -1,7 +1,7 @@
 [project]
-name = "onerepmax"
+name = "steadyfit"
 version = "0.1.0"
-description = "OneRepMax — multi-agent LangGraph fitness coaching copilot"
+description = "SteadyFit — multi-agent LangGraph fitness coaching copilot"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [

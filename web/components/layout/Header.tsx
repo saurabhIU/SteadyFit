@@ -16,7 +16,7 @@ export function Header() {
     <header className="flex flex-wrap items-baseline justify-between gap-3 border-b-[3px] border-ink px-5 py-4">
       <div className="flex items-baseline gap-3">
         <Link href="/chat" className="font-mono text-xl font-bold tracking-tight">
-          ONE<span className="text-lift">REP</span>MAX
+          STEADY<span className="text-lift">FIT</span>
         </Link>
         <small className="font-mono text-[11px] uppercase tracking-widest text-steel">
           your coaching council

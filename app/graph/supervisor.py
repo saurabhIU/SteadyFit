@@ -3,7 +3,7 @@ from langgraph.types import interrupt
 from app.config import get_llm
 from app.graph.state import CouncilState, WeekPlan
 
-COACH_SYSTEM = """You are the Head Coach of OneRepMax, a friendly fitness copilot for busy,
+COACH_SYSTEM = """You are the Head Coach of SteadyFit, a friendly fitness copilot for busy,
 everyday people (not pro athletes). You supervise three specialists — Scheduler, Nutrition,
 Adherence — and an agentic-RAG Knowledge tool over the user's own documents + web search.
 

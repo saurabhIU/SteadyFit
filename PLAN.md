@@ -1,4 +1,4 @@
-# OneRepMax — Capstone Plan & Architecture
+# SteadyFit — Capstone Plan & Architecture
 
 An agentic AI fitness copilot for everyday people, built as a multi-agent LangGraph system
 with Agentic RAG over the user's own fitness data.
@@ -74,7 +74,7 @@ invisible; drop-off is only discovered after it has already happened.
 
 ### Solution (one sentence)
 
-OneRepMax is a proactive multi-agent fitness copilot — a LangGraph "coaching council" of
+SteadyFit is a proactive multi-agent fitness copilot — a LangGraph "coaching council" of
 Coach, Scheduler, Nutrition, and Adherence agents — that grounds its advice in the user's own
 uploaded fitness documents (Agentic RAG) and live web search, and autonomously re-plans the
 user's training and nutrition week around their real life.

@@ -34,7 +34,7 @@ async def lifespan(app: FastAPI):
     yield
 
 
-app = FastAPI(title="OneRepMax", lifespan=lifespan)
+app = FastAPI(title="SteadyFit", lifespan=lifespan)
 
 # Next.js on Vercel (or localhost:3000) calls this API cross-origin.
 _origins = ["http://localhost:3000", "http://localhost:5173"]

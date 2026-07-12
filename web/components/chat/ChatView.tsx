@@ -26,8 +26,8 @@ import { ApiError, fetchChatHistory, sendChat } from "@/lib/api";
 import { notifyPlanUpdated } from "@/lib/plan-events";
 import type { ChatMessage, PendingApproval } from "@/lib/types";
 
-const THREAD_KEY = "onerepmax_thread_id";
-const COUNCIL_KEY = "onerepmax_show_council";
+const THREAD_KEY = "steadyfit_thread_id";
+const COUNCIL_KEY = "steadyfit_show_council";
 
 const WELCOME: ChatMessage = {
   id: "welcome",

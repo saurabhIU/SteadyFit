@@ -20,14 +20,12 @@ import {
   PromptInputSubmit,
   PromptInputTextarea,
 } from "@/components/ai-elements/prompt-input";
-import { CouncilPanel } from "@/components/chat/CouncilPanel";
 import { PlanApprovalCard } from "@/components/chat/PlanApprovalCard";
 import { ApiError, fetchChatHistory, sendChat } from "@/lib/api";
 import { notifyPlanUpdated } from "@/lib/plan-events";
 import type { ChatMessage, PendingApproval } from "@/lib/types";
 
 const THREAD_KEY = "steadyfit_thread_id";
-const COUNCIL_KEY = "steadyfit_show_council";
 
 const WELCOME: ChatMessage = {
   id: "welcome",
@@ -40,7 +38,6 @@ export function ChatView() {
   const [messages, setMessages] = useState<ChatMessage[]>([WELCOME]);
   const [input, setInput] = useState("");
   const [threadId, setThreadId] = useState<string | null>(null);
-  const [showCouncil, setShowCouncil] = useState(true);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [pendingApproval, setPendingApproval] = useState<PendingApproval | null>(null);
@@ -48,8 +45,6 @@ export function ChatView() {
 
   useEffect(() => {
     const storedThread = sessionStorage.getItem(THREAD_KEY);
-    const storedCouncil = sessionStorage.getItem(COUNCIL_KEY);
-    if (storedCouncil !== null) setShowCouncil(storedCouncil === "true");
     if (!storedThread) return;
 
     setThreadId(storedThread);
@@ -62,7 +57,6 @@ export function ChatView() {
               id: crypto.randomUUID(),
               role: msg.role,
               content: msg.content,
-              council: msg.council,
             })),
           );
         }
@@ -95,7 +89,6 @@ export function ChatView() {
           id: crypto.randomUUID(),
           role: "assistant",
           content: data.reply,
-          council: data.council,
         };
         setMessages((prev) => [...prev, assistantMsg]);
         setPendingApproval(data.pending_approval ?? null);
@@ -132,11 +125,6 @@ export function ChatView() {
     notifyPlanUpdated();
   }
 
-  function toggleCouncil(checked: boolean) {
-    setShowCouncil(checked);
-    sessionStorage.setItem(COUNCIL_KEY, String(checked));
-  }
-
   const lastAssistantIndex = messages.findLastIndex((m) => m.role === "assistant");
 
   return (
@@ -149,9 +137,6 @@ export function ChatView() {
 
             return (
               <Fragment key={msg.id}>
-                {msg.role === "assistant" && showCouncil && msg.council ? (
-                  <CouncilPanel proposals={msg.council} />
-                ) : null}
                 <Message from={msg.role}>
                   <MessageContent>
                     {msg.role === "assistant" ? (
@@ -203,16 +188,6 @@ export function ChatView() {
         </ConversationContent>
         <ConversationScrollButton />
       </Conversation>
-
-      <label className="flex items-center gap-2 pb-2 font-mono text-[11px] text-steel">
-        <input
-          type="checkbox"
-          checked={showCouncil}
-          onChange={(e) => toggleCouncil(e.target.checked)}
-          className="accent-lift"
-        />
-        show council deliberation
-      </label>
 
       <PromptInput
         onSubmit={handleSubmit}

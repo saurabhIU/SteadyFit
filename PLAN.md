@@ -83,38 +83,39 @@ user's training and nutrition week around their real life.
 
 ```mermaid
 flowchart TD
-    U[Browser UI\nphone + laptop] --> FE[Frontend\nsingle-page chat + plan view]
-    FE --> API[FastAPI backend]
-    CRON[APScheduler\nSunday review job] --> API
+    U[Browser UI\nphone + laptop] --> FE[Next.js frontend\nchat + plan + upload\nVercel]
+    FE --> API[FastAPI backend\nRender]
+    CRON[Render cron job\nSunday weekly review] --> API
     API --> LG[LangGraph state graph]
-    LG --> GW[LLM gateway: OpenRouter\nClaude Sonnet / GPT-4o]
+    LG --> GW[Vercel AI Gateway\nClaude Sonnet / GPT-4o-mini]
     LG --> RET[Retriever]
-    RET --> VDB[(Qdrant\nvector DB)]
-    ING[Ingestion pipeline\nchunk + embed] --> VDB
+    RET --> PG[(Postgres + pgvector\nNeon: documents + checkpointer)]
+    ING[Ingestion pipeline\nchunk + embed] --> PG
     UP[User uploads\nprogram PDFs, recipes, logs] --> ING
     LG --> TAV[Tavily\nweb search tool]
     LG --> FOOD[USDA FoodData\nnutrition API]
     LG --> CAL[Calendar tool\nmock -> Google Calendar]
-    LG --> MEM[(SQLite/Postgres\ncheckpointer + profile memory)]
+    LG --> MEM[(SQLite profile store\nadherence + week plan)]
     LG --> LS[LangSmith\ntracing + monitoring]
     EV[Evals: RAGAS +\nLLM-as-judge harness] -.tests.-> API
-    DEP[Render\ndeployment] -.hosts.-> API
+    DEP_API[Render] -.hosts.-> API
+    DEP_FE[Vercel] -.hosts.-> FE
 ```
 
 ### Component choices (one sentence each)
 
 | Component | Choice | Why |
 |---|---|---|
-| LLM(s) | Claude Sonnet (primary) + GPT-4o-mini (cheap judge) via **OpenRouter** | Strong tool-calling and reasoning for agent negotiation; OpenRouter satisfies the LLM-gateway requirement and lets me swap models with one env var. |
+| LLM(s) | Claude Sonnet 4.5 (primary) + GPT-4o-mini (cheap judge) via **Vercel AI Gateway** | Strong tool-calling and reasoning for agent negotiation; the gateway satisfies the LLM-gateway requirement and lets me swap models with one env var. |
 | Agent orchestration | **LangGraph** (supervisor pattern) | Graph-with-conditional-edges is the natural fit for a supervisor routing to specialists and looping on disagreement, and it's the framework from my cohort. |
 | Tools | **Tavily** (public search), **USDA FoodData Central** (nutrition facts), **Calendar tool** (mock JSON now, Google Calendar API as stretch) | Tavily covers the "public data" requirement; USDA grounds macro math in real data; the calendar tool powers life-aware re-planning. |
-| Embedding model | **OpenAI text-embedding-3-small** | Cheap, fast, strong on short semi-structured chunks like exercises and recipes. |
-| Vector database | **Qdrant** (local Docker in dev, Qdrant Cloud free tier in prod) | Production-grade, has hybrid (dense+sparse) search built in — which I use for the Task 6 advanced-retrieval upgrade. |
-| Memory | **LangGraph SQLite/Postgres checkpointer** (conversation/graph state) + a `user_profile` table (goals, injuries, preferences, weight log) | Satisfies the memory requirement with both short-term (thread) and long-term (profile) memory. |
+| Embedding model | **OpenAI text-embedding-3-small** (direct OpenAI key, not the gateway) | Cheap, fast, strong on short semi-structured chunks like exercises and recipes. |
+| Vector database | **Postgres + pgvector** (Neon in prod, local Postgres in dev) | One database for RAG chunks and LangGraph checkpoints; HNSW cosine index on `documents.embedding`. Task 6 adds BM25/full-text hybrid with RRF on top. |
+| Memory | **LangGraph Postgres checkpointer** (conversation/graph state) + **SQLite** `profile.sqlite` (goals, injuries, adherence stats, week plan) | Short-term thread state in Postgres; long-term profile and workout logs in SQLite for the demo single-user setup. |
 | Monitoring | **LangSmith** | One env var gives full traces of every agent hop and tool call — essential for debugging multi-agent loops. |
 | Evaluation | **RAGAS** (faithfulness, context precision/recall) + custom **LLM-as-judge** rubric for coaching quality | RAGAS covers the RAG half; the judge rubric covers agent behavior (tone, safety, plan sanity). |
-| User interface | Single-page chat + weekly-plan view (vanilla HTML/JS served by FastAPI) | One deployable unit that runs in any phone or laptop browser (requirement) with zero build step. |
-| Deployment | **Render** (one web service) | Free tier, native Python, persistent disk for SQLite, public HTTPS endpoint (requirement). |
+| User interface | **Next.js** chat + weekly-plan + upload views (`web/`) | Responsive UI on phone and laptop; typed API client to the FastAPI backend. |
+| Deployment | **Split:** API on **Render** (`render.yaml`) + frontend on **Vercel** (root `web/`) | Render runs Python/uvicorn and a Sunday cron; Vercel serves the Next.js app. CORS via `FRONTEND_URL` on the API. |
 
 ### Agent workflow diagram (end to end)
 
@@ -125,7 +126,7 @@ flowchart TD
     COACH -->|food / macros| NUT[Nutrition agent]
     COACH -->|check-in / risk| ADH[Adherence agent]
     COACH -->|knowledge question| RAGQ{Personal or public?}
-    RAGQ -->|personal docs| RET[Retrieve from Qdrant\nuser's programs & recipes]
+    RAGQ -->|personal docs| RET[Retrieve from pgvector\nuser's programs & recipes]
     RAGQ -->|public / current| TAV[Tavily web search]
     SCH --> CALT[Calendar tool:\nread conflicts, propose slots]
     NUT --> FOODT[USDA API:\nverify macros]
@@ -146,10 +147,10 @@ flowchart TD
 **How it works:** Every turn — whether a user message or the autonomous Sunday trigger —
 enters at the Coach agent, which loads the user's profile memory and classifies intent.
 Knowledge questions route through Agentic RAG: the Coach decides whether the answer lives in
-the user's **own documents** (retrieve from Qdrant) or on the **public web** (Tavily), and can
-use both. Action requests route to specialists: the Scheduler reads the calendar tool and
-proposes a re-planned week; the Nutrition agent adjusts macros and verifies them against the
-USDA API; the Adherence agent inspects streak/skip data from memory.
+the user's **own documents** (retrieve from Postgres/pgvector) or on the **public web**
+(Tavily), and can use both. Action requests route to specialists: the Scheduler reads the
+calendar tool and proposes a re-planned week; the Nutrition agent adjusts macros and verifies
+them against the USDA API; the Adherence agent inspects streak/skip data from memory.
 
 The Coach then reviews specialist proposals in a "council" step. This is where the agentic
 behavior shows: if the Adherence agent flags drop-off risk while the Scheduler proposes a
@@ -159,8 +160,9 @@ simplifying the plan. Any plan **change** goes through a human-in-the-loop appro
 citations. All state is checkpointed so the Sunday review continues exactly where the user's
 history left off.
 
-**Requirements coverage:** LLM gateway → OpenRouter; memory → checkpointer + profile store;
-runs in a browser on phone and laptop → responsive single-page UI on a public Render URL.
+**Requirements coverage:** LLM gateway → Vercel AI Gateway; memory → Postgres checkpointer +
+SQLite profile store; runs in a browser on phone and laptop → Next.js on Vercel talking to
+the public Render API URL.
 
 ---
 
@@ -184,31 +186,35 @@ character splitting for prose. 750 tokens comfortably holds a full workout day o
 
 - **Personal data (RAG):** the user's uploaded fitness documents — their training program
   (PDF/Markdown), a personal recipe collection, and exported workout/weight logs (CSV). These
-  are chunked, embedded, and stored per-user in Qdrant.
+  are chunked, embedded, and stored in the Postgres `documents` table (pgvector).
 - **External API #1 — Tavily (agentic search):** answers public/current questions (supplement
   safety, exercise science, "is the gym near my hotel open Sunday") that personal docs can't.
 - **External API #2 — USDA FoodData Central:** authoritative macro/calorie data so the
   Nutrition agent's math is grounded rather than hallucinated.
 
 **How they interact:** the Coach agent treats retrieval as a decision, not a default
-(Agentic RAG). "What does *my* program say about deload week?" → Qdrant only. "Is creatine
-safe?" → Tavily only. "Plan a high-protein dinner from my recipes" → Qdrant retrieves the
+(Agentic RAG). "What does *my* program say about deload week?" → pgvector only. "Is creatine
+safe?" → Tavily only. "Plan a high-protein dinner from my recipes" → pgvector retrieves the
 recipe, then USDA verifies its macros, and if the recipe collection has no match, the agent
 falls back to Tavily and says so. Retrieved chunks and search results are injected into the
-specialist prompts with source tags, and every grounded answer cites its source.
+specialist prompts with `[doc:…]` / `[web:…]` source tags, and every grounded answer cites
+its source.
 
 ---
 
 ## Task 4: End-to-End Prototype (build plan)
 
-1. Core graph: Coach supervisor + Nutrition agent + shared Pydantic state + SQLite
-   checkpointer, tested from CLI.
-2. Agentic RAG: upload endpoint → ingestion pipeline → Qdrant; retrieval tool wired to the
-   graph; Tavily tool wired to the graph.
-3. Remaining agents (Scheduler, Adherence) + council conditional edges + `interrupt`
-   approval step.
-4. APScheduler Sunday-review job (the autonomous loop).
-5. Frontend chat + plan view; deploy to Render (public endpoint requirement).
+**Built (current stack):**
+
+1. Core graph: Coach supervisor + all specialist agents + shared Pydantic `CouncilState` +
+   **Postgres** LangGraph checkpointer (`scripts/init_db.py`).
+2. Agentic RAG: `POST /api/upload` → ingestion pipeline → **pgvector** on Postgres; retrieval
+   wired to the Knowledge agent; Tavily wired to the graph.
+3. Scheduler + Adherence agents + council conditional edges + LangGraph `interrupt` approval
+   step (`approve_node`).
+4. Autonomous Sunday review: **Render cron** → `POST /internal/weekly-review` (shared secret),
+   not an in-process scheduler.
+5. **Next.js** chat + plan + upload UI on **Vercel**; FastAPI API on **Render** (`render.yaml`).
 
 ## Task 5: Evals (plan)
 
@@ -222,9 +228,10 @@ specialist prompts with source tags, and every grounded answer cites its source.
 
 ## Task 6: Improving the Prototype (plan)
 
-- **Advanced retrieval:** switch Qdrant to **hybrid search (dense + BM25 sparse) with
-  reciprocal-rank fusion**, because fitness queries are keyword-heavy ("RDL", "deload",
-  "5x5") and exact-term sparse matching should raise context precision on program docs.
+- **Advanced retrieval:** add **hybrid search (dense pgvector + Postgres full-text/BM25) with
+  reciprocal-rank fusion** in `app/rag/retriever.py`, because fitness queries are
+  keyword-heavy ("RDL", "deload", "5x5") and exact-term sparse matching should raise context
+  precision on program docs.
 - **Second improvement:** upgrade the council step from single-pass to a
   critique-and-revise loop (Coach critiques specialist plan once before approval), measured
   by the LLM-judge plan-sanity score.
@@ -232,9 +239,9 @@ specialist prompts with source tags, and every grounded answer cites its source.
 
 ## Task 7: Next Steps
 
-**Keep for Demo Day:** the multi-agent council with visible deliberation transcript (the
-differentiator), Agentic RAG routing between personal docs and Tavily, the autonomous Sunday
-review, and the eval harness with before/after numbers.
+**Keep for Demo Day:** the multi-agent council (specialist routing + risk renegotiation loop),
+Agentic RAG routing between personal docs (pgvector) and Tavily, the autonomous Sunday review,
+human-in-the-loop plan approval, and the eval harness with before/after numbers.
 
 **Change/improve:** replace the mock calendar with real Google Calendar OAuth; add photo
 meal logging (vision); move SQLite → Postgres for multi-user; add streaming responses in the

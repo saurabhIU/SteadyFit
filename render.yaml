@@ -27,7 +27,7 @@ services:
   - type: cron
     name: steadyfit-weekly-review
     runtime: python
-    plan: free
+    plan: starter
     schedule: "0 18 * * 0"   # Sunday 18:00 UTC
     buildCommand: "echo nothing to build"
     startCommand: >-

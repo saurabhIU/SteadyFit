@@ -60,6 +60,7 @@ export type AdherenceStats = {
   last14d: Record<string, number>;
   adherence_pct: number | null;
   drop_off_signal: boolean;
+  streak_weeks: number;
 };
 
 export type PlanResponse = {

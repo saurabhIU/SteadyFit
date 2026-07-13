@@ -19,12 +19,24 @@ If a previous council round flagged drop-off RISK, your job changes: SIMPLIFY th
 Respond with just the intent word."""
 
 
+def _text_content(content: str | list) -> str:
+    if isinstance(content, str):
+        return content
+    parts: list[str] = []
+    for block in content:
+        if isinstance(block, str):
+            parts.append(block)
+        elif isinstance(block, dict) and block.get("type") == "text":
+            parts.append(str(block.get("text", "")))
+    return "\n".join(parts)
+
+
 def coach_node(state: CouncilState) -> dict:
     llm = get_llm()
     msgs = [{"role": "system", "content": COACH_SYSTEM}] + [
         m for m in state.messages
     ]
-    intent = llm.invoke(msgs).content.strip().lower()
+    intent = _text_content(llm.invoke(msgs).content).strip().lower()
     if intent not in {"schedule", "nutrition", "adherence", "knowledge"}:
         intent = "knowledge"
     return {"intent": intent, "council_rounds": state.council_rounds + 1}

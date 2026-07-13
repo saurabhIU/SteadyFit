@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { ApiError, sendApprove } from "@/lib/api";
 import type { PendingApproval } from "@/lib/types";
+import { cn } from "@/lib/utils";
 
 type PlanApprovalCardProps = {
   approval: PendingApproval;
@@ -18,12 +19,18 @@ export function PlanApprovalCard({
   onError,
 }: PlanApprovalCardProps) {
   const [busy, setBusy] = useState(false);
+  const [confirmation, setConfirmation] = useState<string | null>(null);
   const plan = approval.proposed_plan;
 
   async function decide(decision: "accept" | "reject") {
     setBusy(true);
     try {
       const data = await sendApprove(threadId, decision);
+      setConfirmation(
+        decision === "accept"
+          ? "Plan saved — we'll keep you on track."
+          : "No changes — your current week stays as is.",
+      );
       onResolved(data.reply);
     } catch (err) {
       const message =
@@ -36,62 +43,66 @@ export function PlanApprovalCard({
     }
   }
 
+  const bullets: string[] = [];
+  if (plan?.days.length) {
+    for (const day of plan.days) {
+      bullets.push(`${day.day}: ${day.focus} (${day.duration_min} min)`);
+    }
+  } else if (approval.scheduler_summary) {
+    bullets.push(approval.scheduler_summary.slice(0, 200));
+  }
+
   return (
-    <div className="rounded-lg border border-lift/50 bg-paper/80 p-4 shadow-sm">
-      <p className="font-mono text-[10px] font-bold uppercase tracking-wider text-lift">
-        plan change — your approval needed
-      </p>
-      <p className="mt-2 text-sm text-ink">
-        The scheduler proposed an updated week. Accept to save it, or decline to keep your
-        current plan.
+    <div className="animate-enter max-w-[92%] rounded-2xl border border-beige-border bg-beige p-4 text-card-text">
+      <h3 className="text-sm font-semibold text-card-text">
+        A small tweak to your week
+      </h3>
+      <p className="mt-1.5 text-sm text-card-text/80">
+        The council lined up these adjustments — only if they work for you.
       </p>
 
-      {plan ? (
-        <div className="mt-3 space-y-1.5 rounded border border-line bg-white/60 px-3 py-2.5 text-sm">
-          <p className="font-mono text-[11px] text-steel">
-            week of {plan.week_start}
-            {plan.calorie_target ? ` · ${plan.calorie_target} kcal` : ""}
-            {plan.protein_target_g ? ` · ${plan.protein_target_g}g protein` : ""}
-          </p>
-          <ul className="space-y-1">
-            {plan.days.map((day) => (
-              <li key={`${day.day}-${day.focus}`} className="flex justify-between gap-3">
-                <span>
-                  <span className="font-medium text-ink">{day.day}</span>{" "}
-                  <span className="text-steel">{day.focus}</span>
-                </span>
-                <span className="shrink-0 font-mono text-xs text-steel">
-                  {day.duration_min}m
-                </span>
-              </li>
-            ))}
-          </ul>
-          {plan.notes ? <p className="text-xs text-steel">{plan.notes}</p> : null}
-        </div>
-      ) : approval.scheduler_summary ? (
-        <p className="mt-3 whitespace-pre-wrap text-sm text-steel">
-          {approval.scheduler_summary.slice(0, 400)}
-        </p>
+      {bullets.length > 0 ? (
+        <ul className="mt-3 space-y-1.5 text-sm text-card-text/90">
+          {bullets.map((item) => (
+            <li key={item} className="flex gap-2">
+              <span className="text-sage" aria-hidden>
+                •
+              </span>
+              <span>{item}</span>
+            </li>
+          ))}
+        </ul>
       ) : null}
 
-      <div className="mt-4 flex flex-wrap gap-2">
-        <button
-          type="button"
-          onClick={() => decide("accept")}
-          disabled={busy}
-          className="rounded bg-lift px-3.5 py-2 text-sm font-medium text-white transition hover:opacity-90 disabled:opacity-60"
-        >
-          Accept plan
-        </button>
-        <button
-          type="button"
-          onClick={() => decide("reject")}
-          disabled={busy}
-          className="rounded border border-line bg-white px-3.5 py-2 text-sm text-ink transition hover:bg-paper disabled:opacity-60"
-        >
-          Keep current plan
-        </button>
-      </div>
+      {plan?.notes ? (
+        <p className="mt-2 text-xs text-card-text/60">{plan.notes}</p>
+      ) : null}
+
+      {confirmation ? (
+        <p className="mt-4 font-mono text-xs text-sage">{confirmation}</p>
+      ) : (
+        <div className="mt-4 flex flex-wrap items-center gap-3">
+          <button
+            type="button"
+            onClick={() => decide("accept")}
+            disabled={busy}
+            className={cn(
+              "rounded-[var(--radius-pill)] bg-sage px-5 py-2 text-sm font-medium text-sage-foreground",
+              "transition-colors duration-150 ease-out hover:bg-sage-hover disabled:opacity-60",
+            )}
+          >
+            Sounds good
+          </button>
+          <button
+            type="button"
+            onClick={() => decide("reject")}
+            disabled={busy}
+            className="text-sm text-card-text/60 underline-offset-2 transition-colors hover:text-card-text hover:underline disabled:opacity-60"
+          >
+            Keep my current plan
+          </button>
+        </div>
+      )}
     </div>
   );
 }

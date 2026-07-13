@@ -1,5 +1,6 @@
 """Tests for long-term memory loading and persistence."""
 import json
+from datetime import date, timedelta
 from pathlib import Path
 
 import pytest
@@ -53,6 +54,20 @@ def test_adherence_stats_detects_drop_off(memory_db):
     stats = store.get_adherence_stats()
     assert stats["drop_off_signal"] is True
     assert stats["last14d"]["skipped"] == 3
+    assert stats["streak_weeks"] == 0
+
+
+def test_week_streak_counts_consecutive_weeks(memory_db):
+    store.save_profile(UserProfile(name="Sam", goal="fit", sessions_per_week=3))
+    as_of = date(2026, 7, 14)  # Monday
+    # Threshold is 2 done/week for 3 sessions target.
+    for offset in (7, 8, 14, 15, 21, 22):
+        store.log_workout(
+            (as_of - timedelta(days=offset)).isoformat(),
+            "Workout",
+            "done",
+        )
+    assert store.get_week_streak(3, as_of=as_of) == 3
 
 
 class FakeGraph:

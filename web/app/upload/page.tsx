@@ -1,9 +1,5 @@
-import { UploadPanel } from "@/components/upload/UploadPanel";
+import { redirect } from "next/navigation";
 
-export default function UploadPage() {
-  return (
-    <main className="flex min-h-0 flex-1 flex-col">
-      <UploadPanel />
-    </main>
-  );
+export default function UploadRedirect() {
+  redirect("/update");
 }

@@ -1,91 +1,166 @@
 "use client";
 
-import { useState } from "react";
-import Link from "next/link";
+import { useCallback, useRef, useState } from "react";
+import { FileText, Upload } from "lucide-react";
 import { ApiError, uploadDocument } from "@/lib/api";
+import { cn } from "@/lib/utils";
+
+type UploadedFile = {
+  id: string;
+  name: string;
+  status: "uploading" | "done" | "error";
+  detail?: string;
+};
+
+const ACCEPT = ".md,.txt,.pdf,text/markdown,text/plain,application/pdf";
 
 export function UploadPanel() {
-  const [file, setFile] = useState<File | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [result, setResult] = useState<string | null>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+  const [dragActive, setDragActive] = useState(false);
+  const [files, setFiles] = useState<UploadedFile[]>([]);
   const [error, setError] = useState<string | null>(null);
 
-  async function handleUpload() {
-    if (!file || loading) return;
+  const ingestFile = useCallback(async (file: File) => {
+    const id = crypto.randomUUID();
+    setFiles((prev) => [
+      { id, name: file.name, status: "uploading" },
+      ...prev,
+    ]);
     setError(null);
-    setResult(null);
-    setLoading(true);
+
     try {
       const data = await uploadDocument(file);
-      setResult(`Ingested ${data.ingested_chunks} chunks from ${file.name}.`);
-      setFile(null);
+      setFiles((prev) =>
+        prev.map((f) =>
+          f.id === id
+            ? {
+                ...f,
+                status: "done",
+                detail: `${data.ingested_chunks} chunks indexed`,
+              }
+            : f,
+        ),
+      );
     } catch (err) {
       const message =
         err instanceof ApiError
           ? `Upload failed (${err.status}): ${err.message}`
           : "Could not reach the backend — is it running on port 8000?";
+      setFiles((prev) =>
+        prev.map((f) => (f.id === id ? { ...f, status: "error", detail: message } : f)),
+      );
       setError(message);
-    } finally {
-      setLoading(false);
     }
+  }, []);
+
+  function handleFiles(fileList: FileList | null) {
+    if (!fileList?.length) return;
+    void ingestFile(fileList[0]);
+    if (inputRef.current) inputRef.current.value = "";
   }
 
   return (
-    <div className="mx-auto w-full max-w-3xl px-5 py-6">
-      <div className="mb-6">
-        <p className="font-mono text-[10px] font-bold uppercase tracking-wider text-lift">
-          knowledge base
-        </p>
-        <h2 className="mt-1 text-xl font-semibold text-ink">Upload your docs</h2>
-        <p className="mt-1 text-sm text-steel">
-          Add your training program, recipes, or notes. The knowledge agent uses them for
-          personal RAG answers.
+    <div className="content-width space-y-6 py-6">
+      <div>
+        <h2 className="text-lg font-semibold text-navy-text">Update your library</h2>
+        <p className="mt-1 text-sm text-navy-muted">
+          Add a program, recipes, or notes — the knowledge agent will use them in chat.
         </p>
       </div>
 
-      <div className="rounded-lg border border-line bg-white/60 p-5">
-        <label className="block font-mono text-[11px] uppercase tracking-wider text-steel">
-          file (.md, .txt, .pdf)
-          <input
-            type="file"
-            accept=".md,.txt,.pdf,text/markdown,text/plain,application/pdf"
-            className="mt-2 block w-full text-sm text-ink file:mr-3 file:rounded file:border-0 file:bg-lift file:px-3 file:py-1.5 file:text-sm file:font-medium file:text-white"
-            onChange={(e) => setFile(e.target.files?.[0] ?? null)}
-          />
-        </label>
-
-        <div className="mt-4 flex flex-wrap gap-2">
-          <button
-            type="button"
-            onClick={handleUpload}
-            disabled={!file || loading}
-            className="rounded bg-lift px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
-          >
-            {loading ? "ingesting…" : "upload & ingest"}
-          </button>
-          <Link
-            href="/chat"
-            className="rounded border border-line px-4 py-2 text-sm text-ink hover:bg-paper"
-          >
-            back to chat
-          </Link>
+      <div
+        role="button"
+        tabIndex={0}
+        onClick={() => inputRef.current?.click()}
+        onKeyDown={(e) => {
+          if (e.key === "Enter" || e.key === " ") inputRef.current?.click();
+        }}
+        onDragEnter={(e) => {
+          e.preventDefault();
+          setDragActive(true);
+        }}
+        onDragOver={(e) => {
+          e.preventDefault();
+          setDragActive(true);
+        }}
+        onDragLeave={(e) => {
+          e.preventDefault();
+          setDragActive(false);
+        }}
+        onDrop={(e) => {
+          e.preventDefault();
+          setDragActive(false);
+          handleFiles(e.dataTransfer.files);
+        }}
+        className={cn(
+          "flex cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed px-6 py-14 text-center transition-colors duration-150 ease-out",
+          dragActive
+            ? "border-sage bg-beige"
+            : "border-beige-border/50 bg-beige/90 hover:border-beige-border hover:bg-beige",
+        )}
+      >
+        <div className="mb-4 flex size-12 items-center justify-center rounded-xl border border-beige-border bg-beige">
+          <Upload className="size-5 text-card-text/50" strokeWidth={1.5} />
         </div>
-
-        {result ? (
-          <p className="mt-4 rounded border border-emerald-300/50 bg-emerald-50 px-3 py-2 text-sm text-emerald-900">
-            {result}
-          </p>
-        ) : null}
-        {error ? (
-          <p className="mt-4 rounded border border-lift/40 bg-lift/10 px-3 py-2 text-sm text-ink">
-            {error}
-          </p>
-        ) : null}
+        <p className="text-sm font-medium text-card-text">
+          Drag a file here, or click to browse
+        </p>
+        <p className="mt-1.5 font-mono text-xs text-card-text/50">
+          .md · .txt · .pdf
+        </p>
+        <input
+          ref={inputRef}
+          type="file"
+          accept={ACCEPT}
+          className="sr-only"
+          onChange={(e) => handleFiles(e.target.files)}
+        />
       </div>
 
-      <p className="mt-4 font-mono text-[11px] text-steel">
-        Tip: try asking &quot;What does my program say about deload week?&quot; in chat after
-        uploading your program.
+      {error ? (
+        <p className="rounded-2xl border border-beige-border/30 bg-council px-4 py-3 text-sm text-navy-muted">
+          {error}
+        </p>
+      ) : null}
+
+      {files.length > 0 ? (
+        <div className="space-y-2">
+          <p className="font-mono text-xs text-navy-muted-dim">Uploaded files</p>
+          <ul className="space-y-2">
+            {files.map((file) => (
+              <li
+                key={file.id}
+                className="flex items-center gap-3 rounded-2xl border border-beige-border bg-beige px-4 py-3"
+              >
+                <FileText className="size-4 shrink-0 text-card-text/45" />
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-sm font-medium text-card-text">
+                    {file.name}
+                  </p>
+                  <p
+                    className={cn(
+                      "font-mono text-xs",
+                      file.status === "error"
+                        ? "text-neutral"
+                        : file.status === "uploading"
+                          ? "text-card-text/50"
+                          : "text-sage",
+                    )}
+                  >
+                    {file.status === "uploading"
+                      ? "Ingesting…"
+                      : (file.detail ?? "Ready")}
+                  </p>
+                </div>
+              </li>
+            ))}
+          </ul>
+        </div>
+      ) : null}
+
+      <p className="text-sm text-navy-muted-dim">
+        After uploading, try asking &quot;What does my program say about deload week?&quot;
+        in chat.
       </p>
     </div>
   );

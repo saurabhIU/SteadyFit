@@ -2,18 +2,137 @@
 
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
+import { ChevronDown, ChevronRight } from "lucide-react";
 import { ApiError, fetchPlan } from "@/lib/api";
 import { PLAN_UPDATED } from "@/lib/plan-events";
-import type { PlanResponse } from "@/lib/types";
+import type { PlanResponse, WorkoutDay } from "@/lib/types";
+import { cn } from "@/lib/utils";
 
 const THREAD_KEY = "steadyfit_thread_id";
 
-const STATUS_STYLES: Record<string, string> = {
-  planned: "border-line bg-white/70 text-ink",
-  done: "border-emerald-300/60 bg-emerald-50 text-emerald-900",
-  skipped: "border-red-300/50 bg-red-50 text-red-900",
-  moved: "border-amber-300/60 bg-amber-50 text-amber-900",
+const DAY_ABBR: Record<string, string> = {
+  Monday: "Mon",
+  Tuesday: "Tue",
+  Wednesday: "Wed",
+  Thursday: "Thu",
+  Friday: "Fri",
+  Saturday: "Sat",
+  Sunday: "Sun",
 };
+
+function formatDateRange(weekStart: string, dayCount: number) {
+  const start = new Date(`${weekStart}T12:00:00`);
+  if (Number.isNaN(start.getTime())) return weekStart;
+  const end = new Date(start);
+  end.setDate(end.getDate() + Math.max(dayCount - 1, 0));
+  const fmt = (d: Date) =>
+    d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+  return `${fmt(start)} – ${fmt(end)}`;
+}
+
+function sessionStats(days: WorkoutDay[], target: number) {
+  const done = days.filter((d) => d.status === "done").length;
+  const total = target || days.filter((d) => d.status !== "moved").length;
+  return { done, total: Math.max(total, days.length) };
+}
+
+function StatusDot({ status }: { status: WorkoutDay["status"] }) {
+  if (status === "done") {
+    return (
+      <span
+        className="size-2.5 shrink-0 rounded-full bg-sage"
+        aria-label="Done"
+      />
+    );
+  }
+  if (status === "skipped") {
+    return (
+      <span
+        className="size-2.5 shrink-0 rounded-full border-2 border-neutral/60 bg-transparent"
+        aria-label="Skipped"
+      />
+    );
+  }
+  return (
+    <span
+      className="size-2.5 shrink-0 rounded-full border-2 border-beige-border bg-transparent"
+      aria-label="Planned"
+    />
+  );
+}
+
+function ProgressDots({ done, total }: { done: number; total: number }) {
+  return (
+    <div className="flex items-center gap-1" aria-hidden>
+      {Array.from({ length: total }, (_, i) => (
+        <span
+          key={i}
+          className={cn(
+            "size-2 rounded-full",
+            i < done ? "bg-sage" : "bg-navy-muted-dim/40",
+          )}
+        />
+      ))}
+    </div>
+  );
+}
+
+function DayRow({ day, index }: { day: WorkoutDay; index: number }) {
+  const [open, setOpen] = useState(false);
+  const abbr = DAY_ABBR[day.day] ?? day.day.slice(0, 3);
+
+  const detail =
+    day.status === "skipped"
+      ? "Life happened — we can fold this back in when you're ready."
+      : day.status === "moved"
+        ? "Moved to fit your week — still counts toward consistency."
+        : day.status === "done"
+          ? `Completed · ${day.duration_min} min`
+          : `${day.duration_min} min · ${day.focus}`;
+
+  return (
+    <div className="overflow-hidden rounded-2xl border border-beige-border bg-beige">
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        className="flex w-full items-center gap-3 px-4 py-3.5 text-left transition-colors hover:bg-beige-border/20"
+        aria-expanded={open}
+      >
+        <div className="w-10 shrink-0 text-center">
+          <p className="font-mono text-[11px] font-medium uppercase text-card-text/50">
+            {abbr}
+          </p>
+          <p className="font-mono text-sm font-medium text-card-text">
+            {String(index + 1).padStart(2, "0")}
+          </p>
+        </div>
+
+        <StatusDot status={day.status} />
+
+        <div className="min-w-0 flex-1">
+          <p className="truncate text-sm font-medium text-card-text">{day.focus}</p>
+          <p className="truncate text-xs text-card-text/55">
+            {day.status === "skipped"
+              ? "Rest day — no guilt"
+              : `${day.duration_min} min`}
+          </p>
+        </div>
+
+        {open ? (
+          <ChevronDown className="size-4 shrink-0 text-card-text/40" />
+        ) : (
+          <ChevronRight className="size-4 shrink-0 text-card-text/40" />
+        )}
+      </button>
+
+      {open ? (
+        <div className="border-t border-beige-border/60 px-4 py-2.5">
+          <p className="text-sm text-card-text/70">{detail}</p>
+        </div>
+      ) : null}
+    </div>
+  );
+}
 
 export function PlanView() {
   const [data, setData] = useState<PlanResponse | null>(null);
@@ -61,16 +180,20 @@ export function PlanView() {
 
   if (loading && !data) {
     return (
-      <div className="mx-auto w-full max-w-3xl px-5 py-8 text-sm text-steel">
-        loading your week…
+      <div className="content-width space-y-4 py-6">
+        <div className="skeleton animate-shimmer h-8 w-48 rounded-lg" />
+        <div className="skeleton animate-shimmer h-16 rounded-2xl" />
+        <div className="skeleton animate-shimmer h-16 rounded-2xl" />
+        <div className="skeleton animate-shimmer h-16 rounded-2xl" />
+        <p className="text-sm text-navy-muted">Loading your week…</p>
       </div>
     );
   }
 
   if (error && !data) {
     return (
-      <div className="mx-auto w-full max-w-3xl px-5 py-8">
-        <div className="rounded border border-lift/40 bg-lift/10 px-3.5 py-2.5 text-sm text-ink">
+      <div className="content-width py-6">
+        <div className="rounded-2xl border border-beige-border/30 bg-council px-4 py-3 text-sm text-navy-muted">
           {error}
         </div>
       </div>
@@ -80,150 +203,69 @@ export function PlanView() {
   if (!data) return null;
 
   const plan = data.week_plan;
-  const profileTags =
-    data.profile.injuries.length > 0 ||
-    data.profile.food_preferences.length > 0 ||
-    data.profile.workout_preferences.length > 0;
+  const stats = plan
+    ? sessionStats(plan.days, data.profile.sessions_per_week)
+    : { done: 0, total: data.profile.sessions_per_week };
 
   return (
-    <div className="mx-auto w-full max-w-3xl px-5 py-6">
-      <div className="mb-6 flex flex-wrap items-end justify-between gap-3">
+    <div className="content-width space-y-5 py-6">
+      <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
-          <p className="font-mono text-[10px] font-bold uppercase tracking-wider text-lift">
-            weekly plan
-          </p>
-          <h2 className="mt-1 text-xl font-semibold text-ink">
-            {data.profile.name}&apos;s week
-          </h2>
-          <p className="mt-1 text-sm text-steel">{data.profile.goal}</p>
+          <h2 className="text-lg font-semibold text-navy-text">This week</h2>
+          {plan ? (
+            <p className="mt-0.5 font-mono text-sm text-navy-muted">
+              {formatDateRange(plan.week_start, plan.days.length)}
+            </p>
+          ) : (
+            <p className="mt-0.5 text-sm text-navy-muted">No plan yet</p>
+          )}
         </div>
-        <Link
-          href="/chat"
-          className="font-mono text-xs text-lift underline-offset-2 hover:underline"
-        >
-          adjust in chat →
-        </Link>
-      </div>
 
-      <div className="mb-6 grid gap-3 sm:grid-cols-3">
-        <StatCard
-          label="adherence (14d)"
-          value={
-            data.adherence.adherence_pct != null
-              ? `${data.adherence.adherence_pct}%`
-              : "no logs yet"
-          }
-          hint={
-            data.adherence.drop_off_signal
-              ? "drop-off signal — council may simplify"
-              : "based on workout log"
-          }
-        />
-        <StatCard
-          label="sessions / week"
-          value={String(data.profile.sessions_per_week)}
-          hint="target frequency"
-        />
-        <StatCard
-          label="macros"
-          value={plan ? `${plan.calorie_target ?? "—"} kcal` : "—"}
-          hint={
-            plan?.protein_target_g
-              ? `${plan.protein_target_g}g protein`
-              : "set after first plan"
-          }
-        />
+        {plan ? (
+          <div className="flex flex-col items-end gap-1.5">
+            <p className="font-mono text-sm text-navy-text">
+              {stats.done} of {stats.total} sessions
+            </p>
+            <ProgressDots done={stats.done} total={stats.total} />
+          </div>
+        ) : null}
       </div>
 
       {plan ? (
-        <div className="space-y-3">
-          <p className="font-mono text-[11px] text-steel">
-            week of {plan.week_start}
-            {plan.notes ? ` · ${plan.notes}` : ""}
-          </p>
-          <div className="grid gap-2">
-            {plan.days.map((day) => (
-              <div
-                key={`${day.day}-${day.focus}`}
-                className={`flex items-center justify-between rounded-lg border px-4 py-3 ${STATUS_STYLES[day.status] ?? STATUS_STYLES.planned}`}
-              >
-                <div>
-                  <p className="font-medium">{day.day}</p>
-                  <p className="text-sm text-steel">{day.focus}</p>
-                </div>
-                <div className="text-right font-mono text-xs">
-                  <p>{day.duration_min} min</p>
-                  <p className="uppercase tracking-wide opacity-70">{day.status}</p>
-                </div>
-              </div>
-            ))}
-          </div>
+        <div className="space-y-2">
+          {plan.days.map((day, index) => (
+            <DayRow key={`${day.day}-${day.focus}`} day={day} index={index} />
+          ))}
         </div>
       ) : (
-        <div className="rounded-lg border border-dashed border-line bg-white/50 px-4 py-8 text-center">
-          <p className="text-sm text-steel">No plan saved yet.</p>
+        <div className="rounded-2xl border border-dashed border-beige-border/40 px-4 py-10 text-center">
+          <p className="text-sm text-navy-muted">
+            Nothing on the calendar yet — chat with the council to sketch your first week.
+          </p>
           <Link
             href="/chat"
-            className="mt-2 inline-block text-sm font-medium text-lift hover:underline"
+            className="mt-3 inline-block text-sm font-medium text-sage hover:text-sage-hover"
           >
-            Chat with the council to build your first week
+            Start in chat →
           </Link>
         </div>
       )}
 
-      {profileTags ? (
-        <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {data.profile.injuries.length > 0 ? (
-            <TagList title="injuries / constraints" items={data.profile.injuries} />
-          ) : null}
-          {data.profile.food_preferences.length > 0 ? (
-            <TagList title="food preferences" items={data.profile.food_preferences} />
-          ) : null}
-          {data.profile.workout_preferences.length > 0 ? (
-            <TagList title="workout preferences" items={data.profile.workout_preferences} />
-          ) : null}
-        </div>
-      ) : null}
-    </div>
-  );
-}
-
-function StatCard({
-  label,
-  value,
-  hint,
-}: {
-  label: string;
-  value: string;
-  hint: string;
-}) {
-  return (
-    <div className="rounded-lg border border-line bg-white/60 px-3.5 py-3">
-      <p className="font-mono text-[10px] font-bold uppercase tracking-wider text-steel">
-        {label}
-      </p>
-      <p className="mt-1 text-lg font-semibold text-ink">{value}</p>
-      <p className="mt-0.5 text-xs text-steel">{hint}</p>
-    </div>
-  );
-}
-
-function TagList({ title, items }: { title: string; items: string[] }) {
-  return (
-    <div>
-      <p className="font-mono text-[10px] font-bold uppercase tracking-wider text-steel">
-        {title}
-      </p>
-      <ul className="mt-2 flex flex-wrap gap-1.5">
-        {items.map((item) => (
-          <li
-            key={item}
-            className="rounded-full border border-line bg-paper px-2.5 py-1 text-xs text-ink"
-          >
-            {item}
-          </li>
-        ))}
-      </ul>
+      <div className="rounded-2xl border border-beige-border bg-beige p-5 text-card-text">
+        <p className="text-sm leading-relaxed text-card-text/85">
+          A miss is information, not failure. When life shifts, we adjust — no
+          scorekeeping, just steady progress.
+        </p>
+        <Link
+          href="/chat"
+          className={cn(
+            "mt-4 inline-flex rounded-[var(--radius-pill)] bg-sage px-5 py-2 text-sm font-medium text-sage-foreground",
+            "transition-colors duration-150 ease-out hover:bg-sage-hover",
+          )}
+        >
+          Chat about it
+        </Link>
+      </div>
     </div>
   );
 }

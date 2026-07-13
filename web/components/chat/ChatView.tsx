@@ -1,29 +1,13 @@
 "use client";
 
-import { Fragment, useCallback, useEffect, useState } from "react";
-import { CopyIcon } from "lucide-react";
-import {
-  Conversation,
-  ConversationContent,
-  ConversationScrollButton,
-} from "@/components/ai-elements/conversation";
-import {
-  Message,
-  MessageAction,
-  MessageActions,
-  MessageContent,
-  MessageResponse,
-} from "@/components/ai-elements/message";
-import {
-  PromptInput,
-  type PromptInputMessage,
-  PromptInputSubmit,
-  PromptInputTextarea,
-} from "@/components/ai-elements/prompt-input";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { ArrowDown } from "lucide-react";
+import { CouncilPanel } from "@/components/chat/CouncilPanel";
 import { PlanApprovalCard } from "@/components/chat/PlanApprovalCard";
 import { ApiError, fetchChatHistory, sendChat } from "@/lib/api";
 import { notifyPlanUpdated } from "@/lib/plan-events";
-import type { ChatMessage, PendingApproval } from "@/lib/types";
+import type { ChatMessage, CouncilProposals, PendingApproval } from "@/lib/types";
+import { cn } from "@/lib/utils";
 
 const THREAD_KEY = "steadyfit_thread_id";
 
@@ -31,8 +15,12 @@ const WELCOME: ChatMessage = {
   id: "welcome",
   role: "assistant",
   content:
-    "Tell me your goal, log a meal, or say what got in the way this week — the council will handle the re-planning.",
+    "Tell me your goal, log a meal, or say what got in the way this week — I'll help you re-plan without the guilt trip.",
 };
+
+function hasCouncil(council?: CouncilProposals) {
+  return council && Object.values(council).some((v) => v?.trim());
+}
 
 export function ChatView() {
   const [messages, setMessages] = useState<ChatMessage[]>([WELCOME]);
@@ -42,6 +30,16 @@ export function ChatView() {
   const [error, setError] = useState<string | null>(null);
   const [pendingApproval, setPendingApproval] = useState<PendingApproval | null>(null);
   const [restoring, setRestoring] = useState(false);
+  const [showScrollBtn, setShowScrollBtn] = useState(false);
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const bottomRef = useRef<HTMLDivElement>(null);
+
+  const scrollToBottom = useCallback((smooth = true) => {
+    bottomRef.current?.scrollIntoView({
+      behavior: smooth ? "smooth" : "instant",
+      block: "end",
+    });
+  }, []);
 
   useEffect(() => {
     const storedThread = sessionStorage.getItem(THREAD_KEY);
@@ -57,6 +55,7 @@ export function ChatView() {
               id: crypto.randomUUID(),
               role: msg.role,
               content: msg.content,
+              council: msg.council,
             })),
           );
         }
@@ -67,6 +66,10 @@ export function ChatView() {
       })
       .finally(() => setRestoring(false));
   }, []);
+
+  useEffect(() => {
+    scrollToBottom(false);
+  }, [messages, loading, pendingApproval, scrollToBottom]);
 
   const submitMessage = useCallback(
     async (text: string) => {
@@ -89,6 +92,7 @@ export function ChatView() {
           id: crypto.randomUUID(),
           role: "assistant",
           content: data.reply,
+          council: hasCouncil(data.council) ? data.council : undefined,
         };
         setMessages((prev) => [...prev, assistantMsg]);
         setPendingApproval(data.pending_approval ?? null);
@@ -105,11 +109,12 @@ export function ChatView() {
     [threadId],
   );
 
-  async function handleSubmit(message: PromptInputMessage) {
-    const text = message.text.trim();
+  function handleSubmit(e?: React.FormEvent) {
+    e?.preventDefault();
+    const text = input.trim();
     if (!text || loading || restoring || pendingApproval) return;
     setInput("");
-    await submitMessage(text);
+    void submitMessage(text);
   }
 
   function handleApprovalResolved(reply: string) {
@@ -125,54 +130,69 @@ export function ChatView() {
     notifyPlanUpdated();
   }
 
-  const lastAssistantIndex = messages.findLastIndex((m) => m.role === "assistant");
+  function handleScroll() {
+    const el = scrollRef.current;
+    if (!el) return;
+    const distance = el.scrollHeight - el.scrollTop - el.clientHeight;
+    setShowScrollBtn(distance > 120);
+  }
+
+  const composerDisabled = loading || restoring || Boolean(pendingApproval);
 
   return (
-    <div className="mx-auto flex min-h-0 w-full max-w-3xl flex-1 flex-col px-5">
-      <Conversation className="min-h-0 flex-1">
-        <ConversationContent className="gap-4 p-0 py-5">
-          {messages.map((msg, messageIndex) => {
-            const isLastAssistant =
-              msg.role === "assistant" && messageIndex === lastAssistantIndex;
-
-            return (
-              <Fragment key={msg.id}>
-                <Message from={msg.role}>
-                  <MessageContent>
-                    {msg.role === "assistant" ? (
-                      <MessageResponse>{msg.content}</MessageResponse>
-                    ) : (
-                      <span className="whitespace-pre-wrap">{msg.content}</span>
+    <div className="content-width flex min-h-0 flex-1 flex-col">
+      <div
+        ref={scrollRef}
+        onScroll={handleScroll}
+        className="relative min-h-0 flex-1 overflow-y-auto py-5"
+        role="log"
+        aria-live="polite"
+        aria-label="Chat messages"
+      >
+        <div className="flex flex-col gap-4">
+          {messages.map((msg) => (
+            <div key={msg.id} className="flex flex-col gap-2">
+              {msg.role === "user" ? (
+                <div className="flex justify-end">
+                  <div
+                    className={cn(
+                      "bubble-user max-w-[85%] bg-sage px-4 py-3 text-sm text-sage-foreground",
+                      "animate-enter",
                     )}
-                  </MessageContent>
-                </Message>
-                {isLastAssistant && !loading ? (
-                  <MessageActions>
-                    <MessageAction
-                      tooltip="Copy"
-                      label="Copy"
-                      onClick={() => navigator.clipboard.writeText(msg.content)}
-                    >
-                      <CopyIcon className="size-3" />
-                    </MessageAction>
-                  </MessageActions>
-                ) : null}
-              </Fragment>
-            );
-          })}
+                  >
+                    <p className="whitespace-pre-wrap">{msg.content}</p>
+                  </div>
+                </div>
+              ) : (
+                <div className="flex flex-col items-start gap-2">
+                  <div
+                    className={cn(
+                      "bubble-coach max-w-[92%] border border-beige-border bg-beige px-4 py-3 text-sm text-card-text",
+                      "animate-enter",
+                    )}
+                  >
+                    <p className="whitespace-pre-wrap leading-relaxed">{msg.content}</p>
+                  </div>
+                  {msg.council && hasCouncil(msg.council) ? (
+                    <CouncilPanel council={msg.council} />
+                  ) : null}
+                </div>
+              )}
+            </div>
+          ))}
 
           {loading || restoring ? (
-            <Message from="assistant">
-              <MessageContent>
-                <span className="text-steel">
-                  {restoring ? "restoring your thread…" : "council convening…"}
-                </span>
-              </MessageContent>
-            </Message>
+            <div className="flex justify-start">
+              <div className="bubble-coach border border-beige-border bg-beige px-4 py-3 text-sm text-card-text/70">
+                {restoring
+                  ? "Pulling up your thread…"
+                  : "The council is talking it over…"}
+              </div>
+            </div>
           ) : null}
 
           {error ? (
-            <div className="rounded border border-lift/40 bg-lift/10 px-3.5 py-2.5 text-sm text-ink">
+            <div className="rounded-2xl border border-beige-border/40 bg-council px-4 py-3 text-sm text-navy-muted">
               {error}
             </div>
           ) : null}
@@ -185,27 +205,53 @@ export function ChatView() {
               onError={setError}
             />
           ) : null}
-        </ConversationContent>
-        <ConversationScrollButton />
-      </Conversation>
 
-      <PromptInput
+          <div ref={bottomRef} className="h-1 shrink-0" aria-hidden />
+        </div>
+
+        {showScrollBtn ? (
+          <button
+            type="button"
+            onClick={() => scrollToBottom()}
+            className="absolute bottom-3 left-1/2 flex size-9 -translate-x-1/2 items-center justify-center rounded-full border border-beige-border/30 bg-council text-navy-muted transition-colors hover:text-navy-text"
+            aria-label="Scroll to latest"
+          >
+            <ArrowDown className="size-4" />
+          </button>
+        ) : null}
+      </div>
+
+      <form
         onSubmit={handleSubmit}
-        className="relative mb-4 w-full border-t border-line pt-3.5"
+        className="sticky bottom-0 z-10 -mx-5 border-t border-beige-border/15 bg-navy px-5 py-3"
       >
-        <PromptInputTextarea
-          value={input}
-          placeholder="e.g. I missed leg day and I'm traveling Wed–Fri"
-          onChange={(e) => setInput(e.currentTarget.value)}
-          className="min-h-[52px] pr-12"
-          disabled={loading || restoring || Boolean(pendingApproval)}
-        />
-        <PromptInputSubmit
-          status={loading ? "submitted" : undefined}
-          disabled={!input.trim() || loading || restoring || Boolean(pendingApproval)}
-          className="absolute right-2 bottom-2"
-        />
-      </PromptInput>
+        <div className="flex items-end gap-2 rounded-[var(--radius-pill)] border border-beige-border bg-beige p-1.5 pl-4">
+          <textarea
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" && !e.shiftKey) {
+                e.preventDefault();
+                handleSubmit();
+              }
+            }}
+            placeholder="e.g. Life happened — want me to re-plan?"
+            rows={1}
+            disabled={composerDisabled}
+            className="max-h-32 min-h-[2.25rem] flex-1 resize-none bg-transparent py-2 text-sm text-card-text placeholder:text-card-text/45 focus:outline-none disabled:opacity-50"
+          />
+          <button
+            type="submit"
+            disabled={!input.trim() || composerDisabled}
+            className={cn(
+              "shrink-0 rounded-[var(--radius-pill)] bg-sage px-5 py-2 text-sm font-medium text-sage-foreground",
+              "transition-colors duration-150 ease-out hover:bg-sage-hover disabled:opacity-40",
+            )}
+          >
+            Send
+          </button>
+        </div>
+      </form>
     </div>
   );
 }

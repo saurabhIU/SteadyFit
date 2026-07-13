@@ -1,6 +1,7 @@
 """Long-term memory: user profile + adherence stats (SQLite)."""
 import json
 import sqlite3
+from datetime import date, timedelta
 
 from app.config import settings
 from app.graph.state import UserProfile, WeekPlan
@@ -32,7 +33,58 @@ def log_workout(date: str, focus: str, status: str):
         )
 
 
+def _week_start(d: date) -> date:
+    return d - timedelta(days=d.weekday())
+
+
+def _weekly_done_counts() -> dict[date, int]:
+    weekly: dict[date, int] = {}
+    with _conn() as c:
+        rows = c.execute("SELECT date, status FROM workout_log").fetchall()
+    for date_str, status in rows:
+        if status != "done":
+            continue
+        try:
+            d = date.fromisoformat(str(date_str)[:10])
+        except ValueError:
+            continue
+        ws = _week_start(d)
+        weekly[ws] = weekly.get(ws, 0) + 1
+    return weekly
+
+
+def _streak_threshold(sessions_per_week: int) -> int:
+    """~60% of weekly target, minimum one session — steady, not perfect."""
+    return max(1, (sessions_per_week * 3 + 4) // 5)
+
+
+def get_week_streak(sessions_per_week: int = 3, *, as_of: date | None = None) -> int:
+    """Consecutive ISO weeks (through current) meeting the attendance bar."""
+    threshold = _streak_threshold(sessions_per_week)
+    weekly = _weekly_done_counts()
+    if not weekly:
+        return 0
+
+    today = as_of or date.today()
+    this_week = _week_start(today)
+    week = this_week
+    streak = 0
+
+    for _ in range(52):
+        done = weekly.get(week, 0)
+        if done >= threshold:
+            streak += 1
+            week -= timedelta(days=7)
+        elif week == this_week:
+            # Current week still in progress — don't break; check prior weeks.
+            week -= timedelta(days=7)
+        else:
+            break
+    return streak
+
+
 def get_adherence_stats() -> dict:
+    profile = get_profile()
     with _conn() as c:
         rows = c.execute(
             "SELECT status, COUNT(*) FROM workout_log "
@@ -45,6 +97,7 @@ def get_adherence_stats() -> dict:
         "last14d": stats,
         "adherence_pct": round(100 * done / total) if total else None,
         "drop_off_signal": skipped >= 3,
+        "streak_weeks": get_week_streak(profile.sessions_per_week),
     }
 
 

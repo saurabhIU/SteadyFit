@@ -1,16 +1,21 @@
 import type { Metadata } from "next";
-import { IBM_Plex_Mono, Geist } from "next/font/google";
+import { IBM_Plex_Mono, Work_Sans } from "next/font/google";
 import { Header } from "@/components/layout/Header";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import "./globals.css";
 
-const geist = Geist({ subsets: ["latin"], variable: "--font-sans" });
+const workSans = Work_Sans({
+  subsets: ["latin"],
+  variable: "--font-ui",
+  display: "swap",
+});
 
 const plexMono = IBM_Plex_Mono({
-  variable: "--font-plex-mono",
   subsets: ["latin"],
-  weight: ["400", "700"],
+  variable: "--font-data",
+  weight: ["400", "500", "600"],
+  display: "swap",
 });
 
 export const metadata: Metadata = {
@@ -26,12 +31,12 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={cn("h-full", plexMono.variable, "font-sans", geist.variable)}
+      className={cn("h-full", workSans.variable, plexMono.variable, "font-sans")}
     >
-      <body className="flex min-h-dvh flex-col bg-paper text-ink antialiased">
+      <body className="flex min-h-dvh flex-col bg-navy text-navy-text">
         <TooltipProvider>
           <Header />
-          {children}
+          <div className="page-shell flex min-h-0 flex-1 flex-col">{children}</div>
         </TooltipProvider>
       </body>
     </html>

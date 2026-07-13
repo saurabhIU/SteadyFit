@@ -40,7 +40,7 @@ def get_llm(model: str | None = None):
     from langchain_openai import ChatOpenAI
     return ChatOpenAI(
         model=model or settings.primary_model,
-        api_key=gateway_api_key(),
+        api_key=gateway_api_key,
         base_url=settings.ai_gateway_base_url,
         temperature=0.3,
     )

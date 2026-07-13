@@ -200,6 +200,72 @@
   border-bottom-left-radius: var(--radius-bubble-tail);
 }
 
+.coach-prose {
+  font-size: 0.875rem;
+  line-height: 1.6;
+  color: var(--card-text);
+}
+
+.coach-prose :where(p) {
+  margin: 0.625rem 0;
+}
+
+.coach-prose :where(p:first-child) {
+  margin-top: 0;
+}
+
+.coach-prose :where(p:last-child) {
+  margin-bottom: 0;
+}
+
+.coach-prose :where(ul, ol) {
+  margin: 0.625rem 0;
+  padding-left: 1.25rem;
+}
+
+.coach-prose :where(li) {
+  margin: 0.25rem 0;
+}
+
+.coach-prose :where(strong) {
+  font-weight: 600;
+}
+
+.coach-prose :where(a) {
+  color: var(--sage);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.coach-prose :where(code) {
+  font-family: var(--font-mono);
+  font-size: 0.8125rem;
+  border-radius: 0.25rem;
+  background: color-mix(in srgb, var(--beige-border) 40%, var(--beige));
+  padding: 0.1rem 0.35rem;
+}
+
+.coach-prose :where(pre) {
+  margin: 0.75rem 0;
+  overflow-x: auto;
+  border-radius: 0.5rem;
+  border: 1px solid var(--beige-border);
+  background: color-mix(in srgb, var(--beige-border) 25%, var(--beige));
+  padding: 0.75rem;
+}
+
+.coach-prose :where(pre code) {
+  background: transparent;
+  padding: 0;
+}
+
+.coach-prose :where(blockquote) {
+  margin: 0.75rem 0;
+  border-left: 3px solid var(--sage);
+  padding-left: 0.75rem;
+  color: color-mix(in srgb, var(--card-text) 75%, transparent);
+}
+
 .content-width {
   width: 100%;
   max-width: var(--content-max);

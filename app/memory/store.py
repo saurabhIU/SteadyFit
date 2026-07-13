@@ -38,7 +38,8 @@ def _week_start(d: date) -> date:
 
 
 def _weekly_done_counts() -> dict[date, int]:
-    weekly: dict[date, int] = {}
+    """Distinct calendar days with at least one completed workout per ISO week."""
+    weekly_days: dict[date, set[str]] = {}
     with _conn() as c:
         rows = c.execute("SELECT date, status FROM workout_log").fetchall()
     for date_str, status in rows:
@@ -49,8 +50,8 @@ def _weekly_done_counts() -> dict[date, int]:
         except ValueError:
             continue
         ws = _week_start(d)
-        weekly[ws] = weekly.get(ws, 0) + 1
-    return weekly
+        weekly_days.setdefault(ws, set()).add(d.isoformat())
+    return {ws: len(days) for ws, days in weekly_days.items()}
 
 
 def _streak_threshold(sessions_per_week: int) -> int:

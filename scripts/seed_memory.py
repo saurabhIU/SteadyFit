@@ -5,6 +5,7 @@ Run: uv run python scripts/seed_memory.py
 from datetime import date, timedelta
 
 from app.graph.state import UserProfile, WeekPlan, WorkoutDay
+from app.memory import store
 from app.memory.store import log_workout, save_profile, save_week_plan
 
 PROFILE = UserProfile(
@@ -33,6 +34,9 @@ WEEK_PLAN = WeekPlan(
 def main():
     save_profile(PROFILE)
     save_week_plan(WEEK_PLAN)
+
+    with store._conn() as c:
+        c.execute("DELETE FROM workout_log")
 
     today = date.today()
     samples = [

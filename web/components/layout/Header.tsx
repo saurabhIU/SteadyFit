@@ -45,8 +45,10 @@ function PillTabs({ pathname, className }: { pathname: string; className?: strin
   );
 }
 
+const MIN_STREAK_WEEKS = 3;
+
 function StreakBadge({ weeks }: { weeks: number }) {
-  if (weeks < 1) return null;
+  if (weeks < MIN_STREAK_WEEKS) return null;
 
   return (
     <div
@@ -102,7 +104,7 @@ export function Header() {
   const showStreak =
     (pathname === "/chat" || pathname === "/plan") &&
     streakWeeks !== null &&
-    streakWeeks > 0;
+    streakWeeks >= MIN_STREAK_WEEKS;
 
   return (
     <>

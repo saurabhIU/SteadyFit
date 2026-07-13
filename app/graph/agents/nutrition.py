@@ -1,6 +1,6 @@
 """Nutrition agent: works with what the user actually ate."""
 from app.config import get_llm
-from app.graph.state import CouncilState
+from app.graph.state import CoachingTeamState
 from app.tools.food_api import lookup_food
 from app.rag.retriever import retrieve_personal
 
@@ -10,7 +10,7 @@ of the day/week, and stay non-judgmental. Prefer recipes from the user's own upl
 collection when relevant. Verify macro claims with the food database results provided."""
 
 
-def nutrition_node(state: CouncilState) -> dict:
+def nutrition_node(state: CoachingTeamState) -> dict:
     user_msg = state.messages[-1].content if state.messages else ""
     recipes = retrieve_personal(user_msg, collection_filter="recipes", k=3)
     food_facts = lookup_food(user_msg)

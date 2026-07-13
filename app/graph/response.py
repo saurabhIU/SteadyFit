@@ -18,19 +18,22 @@ def _as_dict(state: Any) -> dict:
 
 
 def extract_interrupts(result: Any) -> list:
-    if isinstance(result, dict) and INTERRUPT in result:
-        return list(result[INTERRUPT])
-    if hasattr(result, "interrupts"):
-        return list(result.interrupts)
+    if isinstance(result, dict):
+        if INTERRUPT in result:
+            return list(result[INTERRUPT])
+        return []
+    interrupts = getattr(result, "interrupts", None)
+    if interrupts is not None:
+        return list(interrupts)
     return []
 
 
 def extract_state(result: Any) -> Any:
-    if isinstance(result, dict) and INTERRUPT in result and len(result) == 1:
-        return None
-    if hasattr(result, "value"):
-        return result.value
-    return result
+    if isinstance(result, dict):
+        if INTERRUPT in result and len(result) == 1:
+            return None
+        return result
+    return getattr(result, "value", result)
 
 
 def pending_approval_from_interrupts(interrupts: list) -> dict | None:
@@ -140,11 +143,11 @@ def build_chat_payload(
 
     reply = last_message_content(state)
     # Specialist drafts are merged into the coach reply — don't echo them again.
-    council = {} if reply else proposals_from_state(state)
+    coaching_team = {} if reply else proposals_from_state(state)
 
     return {
         "thread_id": thread_id,
         "reply": reply,
-        "council": council,
+        "coaching_team": coaching_team,
         "pending_approval": pending,
     }

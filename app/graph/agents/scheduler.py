@@ -1,7 +1,7 @@
 """Scheduler agent: life-aware weekly re-planning."""
 from app.config import get_llm
 from app.graph.plan_utils import parse_week_plan
-from app.graph.state import CouncilState
+from app.graph.state import CoachingTeamState
 from app.tools.calendar_tool import get_calendar_conflicts
 
 SYSTEM = """You are the Scheduler agent. The user is a busy everyday person.
@@ -21,7 +21,7 @@ Write a short warm proposal, then end with a fenced JSON block for the updated p
 ```"""
 
 
-def scheduler_node(state: CouncilState) -> dict:
+def scheduler_node(state: CoachingTeamState) -> dict:
     conflicts = get_calendar_conflicts()
     llm = get_llm()
     prompt = (

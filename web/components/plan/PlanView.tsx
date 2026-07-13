@@ -193,7 +193,7 @@ export function PlanView() {
   if (error && !data) {
     return (
       <div className="content-width py-6">
-        <div className="rounded-2xl border border-beige-border/30 bg-council px-4 py-3 text-sm text-navy-muted">
+        <div className="rounded-2xl border border-beige-border/30 bg-team-panel px-4 py-3 text-sm text-navy-muted">
           {error}
         </div>
       </div>
@@ -240,7 +240,7 @@ export function PlanView() {
       ) : (
         <div className="rounded-2xl border border-dashed border-beige-border/40 px-4 py-10 text-center">
           <p className="text-sm text-navy-muted">
-            Nothing on the calendar yet — chat with the council to sketch your first week.
+            Nothing on the calendar yet — chat with the AI Coaching Team to sketch your first week.
           </p>
           <Link
             href="/chat"

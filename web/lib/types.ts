@@ -1,4 +1,4 @@
-export type CouncilProposals = Record<string, string>;
+export type CoachingTeamProposals = Record<string, string>;
 
 export type WorkoutDay = {
   day: string;
@@ -24,14 +24,14 @@ export type PendingApproval = {
 export type ChatResponse = {
   thread_id: string;
   reply: string;
-  council: CouncilProposals;
+  coaching_team: CoachingTeamProposals;
   pending_approval?: PendingApproval | null;
 };
 
 export type ChatHistoryMessage = {
   role: "user" | "assistant";
   content: string;
-  council?: CouncilProposals;
+  coaching_team?: CoachingTeamProposals;
 };
 
 export type ChatHistoryResponse = {
@@ -44,7 +44,7 @@ export type ChatMessage = {
   id: string;
   role: "user" | "assistant" | "system";
   content: string;
-  council?: CouncilProposals;
+  coaching_team?: CoachingTeamProposals;
 };
 
 export type UserProfile = {

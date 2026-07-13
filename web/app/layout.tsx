@@ -20,7 +20,7 @@ const plexMono = IBM_Plex_Mono({
 
 export const metadata: Metadata = {
   title: "SteadyFit",
-  description: "Your multi-agent fitness coaching council",
+  description: "Your multi-agent AI Coaching Team fitness copilot",
 };
 
 export default function RootLayout({

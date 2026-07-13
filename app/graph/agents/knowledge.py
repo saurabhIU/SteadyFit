@@ -1,6 +1,6 @@
 """Knowledge agent: agentic RAG — decide between personal docs (Qdrant) and web (Tavily)."""
 from app.config import get_llm
-from app.graph.state import CouncilState
+from app.graph.state import CoachingTeamState
 from app.rag.retriever import retrieve_personal
 from app.tools.tavily_search import web_search
 
@@ -10,7 +10,7 @@ ROUTER_SYSTEM = """Decide where the answer lives. Reply with exactly one word:
 - both     : needs the user's docs AND public verification"""
 
 
-def knowledge_node(state: CouncilState) -> dict:
+def knowledge_node(state: CoachingTeamState) -> dict:
     q = state.messages[-1].content if state.messages else ""
     llm = get_llm()
     route = llm.invoke([{"role": "system", "content": ROUTER_SYSTEM},

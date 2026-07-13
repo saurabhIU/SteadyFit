@@ -77,8 +77,8 @@ def test_build_chat_payload_with_interrupt_only_result():
     assert out["thread_id"] == "thread-1"
     assert out["reply"] == "Here's your adjusted week."
     assert out["pending_approval"] == payload
-    assert "plan_changed" not in out["council"]
-    assert "proposed_week_plan" not in out["council"]
+    assert "plan_changed" not in out["coaching_team"]
+    assert "proposed_week_plan" not in out["coaching_team"]
 
 
 def test_build_thread_history_restores_messages_and_pending():
@@ -106,7 +106,7 @@ def test_build_thread_history_restores_messages_and_pending():
     out = build_thread_history(FakeGraph(), "thread-1")
     assert len(out["messages"]) == 2
     assert out["messages"][0]["content"] == "I missed leg day"
-    assert "council" not in out["messages"][1]
+    assert "coaching_team" not in out["messages"][1]
     assert out["pending_approval"] == payload
 
 

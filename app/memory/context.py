@@ -2,7 +2,7 @@
 from typing import Any
 
 from app.graph.runtime import thread_config
-from app.graph.state import CouncilState, UserProfile, WeekPlan
+from app.graph.state import CoachingTeamState, UserProfile, WeekPlan
 from app.memory.store import get_adherence_stats, get_profile, get_saved_week_plan, save_week_plan
 
 
@@ -33,11 +33,11 @@ def bootstrap_input(
     thread_id: str,
     *,
     messages: list | None = None,
-) -> CouncilState:
+) -> CoachingTeamState:
     """Merge long-term memory into each graph invoke."""
     profile = get_profile()
     week_plan = week_plan_from_graph(graph, thread_id) or get_saved_week_plan()
-    return CouncilState(
+    return CoachingTeamState(
         messages=messages or [],
         profile=profile,
         week_plan=week_plan,

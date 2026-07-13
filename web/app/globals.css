@@ -24,8 +24,8 @@
   --sage-hover: #7fa88a;
   --sage-foreground: #141922;
 
-  /* Council / inset */
-  --council-bg: #1d2530;
+  /* AI Coaching Team inset panel */
+  --team-panel-bg: #1d2530;
 
   /* Amber — streak badge only */
   --amber: #e08a52;
@@ -103,7 +103,7 @@
   --color-sage: var(--sage);
   --color-sage-hover: var(--sage-hover);
   --color-sage-foreground: var(--sage-foreground);
-  --color-council: var(--council-bg);
+  --color-team-panel: var(--team-panel-bg);
   --color-amber: var(--amber);
   --color-amber-bg: var(--amber-bg);
   --color-amber-border: var(--amber-border);
@@ -183,9 +183,9 @@
 .skeleton {
   background: linear-gradient(
     90deg,
-    color-mix(in srgb, var(--council-bg) 80%, var(--navy)) 25%,
-    color-mix(in srgb, var(--beige) 40%, var(--council-bg)) 50%,
-    color-mix(in srgb, var(--council-bg) 80%, var(--navy)) 75%
+    color-mix(in srgb, var(--team-panel-bg) 80%, var(--navy)) 25%,
+    color-mix(in srgb, var(--beige) 40%, var(--team-panel-bg)) 50%,
+    color-mix(in srgb, var(--team-panel-bg) 80%, var(--navy)) 75%
   );
   background-size: 200% 100%;
 }

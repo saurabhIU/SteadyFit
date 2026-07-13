@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { ChevronDown, ChevronUp } from "lucide-react";
 import { cn } from "@/lib/utils";
-import type { CouncilProposals } from "@/lib/types";
+import type { CoachingTeamProposals } from "@/lib/types";
 
 const AGENT_LABELS: Record<string, string> = {
   scheduler: "Scheduler",
@@ -13,25 +13,25 @@ const AGENT_LABELS: Record<string, string> = {
   coach: "Coach",
 };
 
-type CouncilPanelProps = {
-  council: CouncilProposals;
+type CoachingTeamPanelProps = {
+  coachingTeam: CoachingTeamProposals;
   className?: string;
   defaultOpen?: boolean;
 };
 
-export function CouncilPanel({
-  council,
+export function CoachingTeamPanel({
+  coachingTeam,
   className,
   defaultOpen = false,
-}: CouncilPanelProps) {
+}: CoachingTeamPanelProps) {
   const [open, setOpen] = useState(defaultOpen);
-  const entries = Object.entries(council).filter(([, text]) => text?.trim());
+  const entries = Object.entries(coachingTeam).filter(([, text]) => text?.trim());
 
   if (entries.length === 0) return null;
 
   return (
     <div className={cn("animate-enter w-full max-w-[92%]", className)}>
-      <div className="overflow-hidden rounded-lg border border-beige-border/20 bg-council">
+      <div className="overflow-hidden rounded-lg border border-beige-border/20 bg-team-panel">
         <button
           type="button"
           onClick={() => setOpen((v) => !v)}
@@ -39,7 +39,7 @@ export function CouncilPanel({
           aria-expanded={open}
         >
           <span className="font-mono text-xs text-navy-muted">
-            ◆ behind the glass — council deliberation
+            ◆ behind the glass — AI Coaching Team deliberation
           </span>
           <span className="flex shrink-0 items-center gap-1 font-mono text-[11px] text-navy-muted-dim">
             {open ? "hide" : "show"}

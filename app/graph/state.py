@@ -1,4 +1,4 @@
-"""Shared state for the SteadyFit coaching council graph."""
+"""Shared state for the SteadyFit AI Coaching Team graph."""
 from typing import Annotated, Literal, Optional
 from pydantic import BaseModel, Field
 from langgraph.graph.message import add_messages
@@ -28,7 +28,7 @@ class UserProfile(BaseModel):
     workout_preferences: list[str] = []
 
 
-class CouncilState(BaseModel):
+class CoachingTeamState(BaseModel):
     """State object every agent node reads and writes."""
     messages: Annotated[list, add_messages] = []
     profile: UserProfile = UserProfile()
@@ -36,5 +36,5 @@ class CouncilState(BaseModel):
     intent: Optional[str] = None          # set by coach: schedule|nutrition|adherence|knowledge
     proposals: dict = Field(default_factory=dict)   # specialist -> proposal text/json
     risk_flag: bool = False               # set by adherence agent
-    council_rounds: int = 0               # guard against infinite negotiation loops
+    coaching_team_rounds: int = 0         # guard against infinite negotiation loops
     retrieved_context: list[str] = []     # RAG chunks / search results with source tags

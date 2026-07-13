@@ -1,7 +1,7 @@
-"""Coach (supervisor), council (negotiation), and approval nodes."""
+"""Coach (supervisor), AI Coaching Team (negotiation), and approval nodes."""
 from langgraph.types import interrupt
 from app.config import get_llm
-from app.graph.state import CouncilState, WeekPlan
+from app.graph.state import CoachingTeamState, WeekPlan
 
 COACH_SYSTEM = """You are the Head Coach of SteadyFit, a friendly fitness copilot for busy,
 everyday people (not pro athletes). You supervise three specialists — Scheduler, Nutrition,
@@ -13,7 +13,7 @@ Given the conversation and the user's profile, classify the request into exactly
 - adherence  (check-ins, motivation, streaks, weekly review)
 - knowledge  (any question needing the user's documents or web facts)
 
-If a previous council round flagged drop-off RISK, your job changes: SIMPLIFY the plan
+If a previous AI Coaching Team round flagged drop-off RISK, your job changes: SIMPLIFY the plan
 (fewer/shorter sessions, easier meals). Be warm, concrete, never guilt-tripping.
 
 Respond with just the intent word."""
@@ -31,7 +31,7 @@ def _text_content(content: str | list) -> str:
     return "\n".join(parts)
 
 
-def coach_node(state: CouncilState) -> dict:
+def coach_node(state: CoachingTeamState) -> dict:
     llm = get_llm()
     msgs = [{"role": "system", "content": COACH_SYSTEM}] + [
         m for m in state.messages
@@ -39,16 +39,16 @@ def coach_node(state: CouncilState) -> dict:
     intent = _text_content(llm.invoke(msgs).content).strip().lower()
     if intent not in {"schedule", "nutrition", "adherence", "knowledge"}:
         intent = "knowledge"
-    return {"intent": intent, "council_rounds": state.council_rounds + 1}
+    return {"intent": intent, "coaching_team_rounds": state.coaching_team_rounds + 1}
 
 
-COUNCIL_SYSTEM = """You are the Head Coach reviewing your specialists' proposals before
+COACHING_TEAM_SYSTEM = """You are the Head Coach reviewing your specialists' proposals before
 answering the user. Merge proposals into one clear, warm reply. If the adherence agent
 flagged risk AND the proposed plan got harder, do not answer — signal renegotiation instead.
 Cite sources for any retrieved facts using [source] tags found in the context."""
 
 
-def council_node(state: CouncilState) -> dict:
+def coaching_team_node(state: CoachingTeamState) -> dict:
     llm = get_llm()
     context = "\n\n".join(state.retrieved_context) if state.retrieved_context else "none"
     proposals = "\n".join(f"{k}: {v}" for k, v in state.proposals.items()) or "none"
@@ -60,7 +60,7 @@ def council_node(state: CouncilState) -> dict:
         "Write the final reply to the user."
     )
     reply = llm.invoke(
-        [{"role": "system", "content": COUNCIL_SYSTEM},
+        [{"role": "system", "content": COACHING_TEAM_SYSTEM},
          {"role": "user", "content": prompt}]
     )
     # Keep routing flags only — raw specialist text is merged into the reply above.
@@ -72,7 +72,7 @@ def council_node(state: CouncilState) -> dict:
     return {"messages": [reply], "proposals": retained}
 
 
-def approve_node(state: CouncilState) -> dict:
+def approve_node(state: CoachingTeamState) -> dict:
     """Human-in-the-loop: pause the graph until the user accepts/edits the plan change."""
     raw = state.proposals.get("proposed_week_plan")
     proposed_plan = WeekPlan(**raw) if isinstance(raw, dict) else state.week_plan

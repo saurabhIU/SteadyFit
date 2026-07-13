@@ -14,11 +14,11 @@ import {
   MessageContent,
   MessageResponse,
 } from "@/components/ai-elements/message";
-import { CouncilPanel } from "@/components/chat/CouncilPanel";
+import { CoachingTeamPanel } from "@/components/chat/CoachingTeamPanel";
 import { PlanApprovalCard } from "@/components/chat/PlanApprovalCard";
 import { ApiError, fetchChatHistory, sendChat } from "@/lib/api";
 import { notifyPlanUpdated } from "@/lib/plan-events";
-import type { ChatMessage, CouncilProposals, PendingApproval } from "@/lib/types";
+import type { ChatMessage, CoachingTeamProposals, PendingApproval } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
 const THREAD_KEY = "steadyfit_thread_id";
@@ -36,8 +36,8 @@ const USER_BUBBLE =
 const COACH_BUBBLE =
   "group-[.is-assistant]:bubble-coach group-[.is-assistant]:max-w-[92%] group-[.is-assistant]:rounded-[var(--radius-bubble)] group-[.is-assistant]:border group-[.is-assistant]:border-beige-border group-[.is-assistant]:bg-beige group-[.is-assistant]:px-4 group-[.is-assistant]:py-3 group-[.is-assistant]:text-card-text";
 
-function hasCouncil(council?: CouncilProposals) {
-  return council && Object.values(council).some((v) => v?.trim());
+function hasCoachingTeam(proposals?: CoachingTeamProposals) {
+  return proposals && Object.values(proposals).some((v) => v?.trim());
 }
 
 export function ChatView() {
@@ -63,7 +63,7 @@ export function ChatView() {
               id: crypto.randomUUID(),
               role: msg.role,
               content: msg.content,
-              council: msg.council,
+              coaching_team: msg.coaching_team,
             })),
           );
         }
@@ -96,7 +96,7 @@ export function ChatView() {
           id: crypto.randomUUID(),
           role: "assistant",
           content: data.reply,
-          council: hasCouncil(data.council) ? data.council : undefined,
+          coaching_team: hasCoachingTeam(data.coaching_team) ? data.coaching_team : undefined,
         };
         setMessages((prev) => [...prev, assistantMsg]);
         setPendingApproval(data.pending_approval ?? null);
@@ -165,8 +165,8 @@ export function ChatView() {
                     </MessageContent>
                   </Message>
 
-                  {msg.role === "assistant" && msg.council && hasCouncil(msg.council) ? (
-                    <CouncilPanel council={msg.council} />
+                  {msg.role === "assistant" && msg.coaching_team && hasCoachingTeam(msg.coaching_team) ? (
+                    <CoachingTeamPanel coachingTeam={msg.coaching_team} />
                   ) : null}
                 </div>
 
@@ -176,7 +176,7 @@ export function ChatView() {
                       tooltip="Copy"
                       label="Copy"
                       variant="ghost"
-                      className="text-navy-muted hover:bg-council hover:text-navy-text"
+                      className="text-navy-muted hover:bg-team-panel hover:text-navy-text"
                       onClick={() => navigator.clipboard.writeText(msg.content)}
                     >
                       <CopyIcon className="size-3.5" />
@@ -193,14 +193,14 @@ export function ChatView() {
                 <span className="text-card-text/70">
                   {restoring
                     ? "Pulling up your thread…"
-                    : "The council is talking it over…"}
+                    : "The AI Coaching Team is talking it over…"}
                 </span>
               </MessageContent>
             </Message>
           ) : null}
 
           {error ? (
-            <div className="rounded-2xl border border-beige-border/40 bg-council px-4 py-3 text-sm text-navy-muted">
+            <div className="rounded-2xl border border-beige-border/40 bg-team-panel px-4 py-3 text-sm text-navy-muted">
               {error}
             </div>
           ) : null}
@@ -216,7 +216,7 @@ export function ChatView() {
         </ConversationContent>
 
         <ConversationScrollButton
-          className="border-beige-border/30 bg-council text-navy-muted hover:bg-council hover:text-navy-text"
+          className="border-beige-border/30 bg-team-panel text-navy-muted hover:bg-team-panel hover:text-navy-text"
         />
       </Conversation>
 

@@ -1,34 +1,34 @@
-"""Builds the SteadyFit coaching council graph.
+"""Builds the SteadyFit AI Coaching Team graph.
 
 Topology:
     coach (supervisor) -> {scheduler | nutrition | adherence | rag}
-    specialists -> council
-    council -> coach   (if conflict, e.g. risk_flag while plan got denser)
-    council -> approve (human-in-the-loop interrupt, if plan changed)
-    council -> END     (informational answer)
+    specialists -> coaching_team
+    coaching_team -> coach   (if conflict, e.g. risk_flag while plan got denser)
+    coaching_team -> approve (human-in-the-loop interrupt, if plan changed)
+    coaching_team -> END     (informational answer)
 """
 from langgraph.graph import StateGraph, END
 from langgraph.checkpoint.postgres import PostgresSaver
 from psycopg import Connection
-from psycopg.rows import dict_row
+from psycopg.rows import DictRow, dict_row
 
 from app.config import settings
-from app.graph.state import CouncilState
-from app.graph.supervisor import coach_node, council_node, approve_node
+from app.graph.state import CoachingTeamState
+from app.graph.supervisor import coach_node, coaching_team_node, approve_node
 from app.graph.agents.scheduler import scheduler_node
 from app.graph.agents.nutrition import nutrition_node
 from app.graph.agents.adherence import adherence_node
 from app.graph.agents.knowledge import knowledge_node
 
-MAX_COUNCIL_ROUNDS = 2
+MAX_COACHING_TEAM_ROUNDS = 2
 
 
-def route_from_coach(state: CouncilState) -> str:
+def route_from_coach(state: CoachingTeamState) -> str:
     return state.intent or "knowledge"
 
 
-def route_from_council(state: CouncilState) -> str:
-    if state.risk_flag and state.council_rounds < MAX_COUNCIL_ROUNDS:
+def route_from_coaching_team(state: CoachingTeamState) -> str:
+    if state.risk_flag and state.coaching_team_rounds < MAX_COACHING_TEAM_ROUNDS:
         return "coach"          # renegotiate: simplify the plan
     if state.proposals.get("plan_changed"):
         return "approve"        # human-in-the-loop
@@ -36,14 +36,14 @@ def route_from_council(state: CouncilState) -> str:
 
 
 def build_graph():
-    g = StateGraph(CouncilState)
+    g = StateGraph(CoachingTeamState)
 
     g.add_node("coach", coach_node)
     g.add_node("scheduler", scheduler_node)
     g.add_node("nutrition", nutrition_node)
     g.add_node("adherence", adherence_node)
     g.add_node("knowledge", knowledge_node)   # agentic RAG: personal docs vs Tavily
-    g.add_node("council", council_node)
+    g.add_node("coaching_team", coaching_team_node)
     g.add_node("approve", approve_node)       # uses langgraph interrupt()
 
     g.set_entry_point("coach")
@@ -54,8 +54,8 @@ def build_graph():
         "knowledge": "knowledge",
     })
     for node in ("scheduler", "nutrition", "adherence", "knowledge"):
-        g.add_edge(node, "council")
-    g.add_conditional_edges("council", route_from_council, {
+        g.add_edge(node, "coaching_team")
+    g.add_conditional_edges("coaching_team", route_from_coaching_team, {
         "coach": "coach",
         "approve": "approve",
         "end": END,
@@ -63,7 +63,7 @@ def build_graph():
     g.add_edge("approve", END)
 
     # Long-lived connection; connection kwargs per langgraph-checkpoint-postgres docs.
-    conn = Connection.connect(
+    conn = Connection[DictRow].connect(
         settings.database_url,
         autocommit=True,
         prepare_threshold=0,

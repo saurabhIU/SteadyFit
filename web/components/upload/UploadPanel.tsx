@@ -118,7 +118,7 @@ export function UploadPanel() {
       </div>
 
       {error ? (
-        <p className="rounded-2xl border border-beige-border/30 bg-council px-4 py-3 text-sm text-navy-muted">
+        <p className="rounded-2xl border border-beige-border/30 bg-team-panel px-4 py-3 text-sm text-navy-muted">
           {error}
         </p>
       ) : null}

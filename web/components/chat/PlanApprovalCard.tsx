@@ -58,7 +58,7 @@ export function PlanApprovalCard({
         A small tweak to your week
       </h3>
       <p className="mt-1.5 text-sm text-card-text/80">
-        The council lined up these adjustments — only if they work for you.
+        The AI Coaching Team lined up these adjustments — only if they work for you.
       </p>
 
       {bullets.length > 0 ? (

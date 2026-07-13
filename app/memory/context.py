@@ -20,7 +20,11 @@ def _coerce_week_plan(raw: Any) -> WeekPlan | None:
 
 
 def week_plan_from_graph(graph, thread_id: str) -> WeekPlan | None:
-    snapshot = graph.get_state(thread_config(thread_id))
+    try:
+        snapshot = graph.get_state(thread_config(thread_id))
+    except Exception:
+        # Checkpointer blips (idle Neon disconnect) — fall through to SQLite.
+        return None
     if not snapshot or not snapshot.values:
         return None
     values = snapshot.values

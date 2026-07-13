@@ -16,6 +16,7 @@ dependencies = [
     "pydantic-settings",
     # Storage (Postgres + pgvector on Neon)
     "psycopg[binary]",
+    "psycopg-pool",
     "pgvector",
     # Tools
     "tavily-python",

@@ -111,7 +111,10 @@ def pending_approval_from_snapshot(snapshot: Any) -> dict | None:
 
 
 def build_thread_history(graph, thread_id: str) -> dict:
-    snapshot = graph.get_state(thread_config(thread_id))
+    try:
+        snapshot = graph.get_state(thread_config(thread_id))
+    except Exception:
+        return {"thread_id": thread_id, "messages": [], "pending_approval": None}
     if not snapshot or not snapshot.values:
         return {"thread_id": thread_id, "messages": [], "pending_approval": None}
 

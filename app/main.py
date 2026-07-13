@@ -11,7 +11,7 @@ from langgraph.types import Command
 from pydantic import BaseModel
 
 from app.config import settings
-from app.graph.build import build_graph
+from app.graph.build import build_graph, close_checkpointer_pool
 from app.graph.response import build_chat_payload, build_thread_history
 from app.graph.runtime import thread_config
 from app.memory.context import bootstrap_input, persist_approved_plan, plan_snapshot
@@ -31,7 +31,11 @@ async def lifespan(app: FastAPI):
     global graph
     Path("data").mkdir(exist_ok=True)
     graph = build_graph()
-    yield
+    try:
+        yield
+    finally:
+        close_checkpointer_pool()
+        graph = None
 
 
 app = FastAPI(title="SteadyFit", lifespan=lifespan)

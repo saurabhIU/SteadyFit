@@ -9,8 +9,8 @@ Topology:
 """
 from langgraph.graph import StateGraph, END
 from langgraph.checkpoint.postgres import PostgresSaver
-from psycopg import Connection
-from psycopg.rows import DictRow, dict_row
+from psycopg.rows import dict_row
+from psycopg_pool import ConnectionPool
 
 from app.config import settings
 from app.graph.state import CoachingTeamState
@@ -21,6 +21,38 @@ from app.graph.agents.adherence import adherence_node
 from app.graph.agents.knowledge import knowledge_node
 
 MAX_COACHING_TEAM_ROUNDS = 2
+
+# Keep the pool for the process lifetime. A single long-lived Connection dies when
+# Neon/Render idle-timeouts it; the pool checks and replaces dead conns.
+_pool: ConnectionPool | None = None
+
+
+def get_checkpointer_pool() -> ConnectionPool:
+    global _pool
+    if _pool is None:
+        _pool = ConnectionPool(
+            conninfo=settings.database_url,
+            min_size=1,
+            max_size=5,
+            # Recycle before typical Neon idle kills (~5m); health-check on checkout.
+            max_idle=120,
+            max_lifetime=1800,
+            kwargs={
+                "autocommit": True,
+                "prepare_threshold": 0,
+                "row_factory": dict_row,
+            },
+            check=ConnectionPool.check_connection,
+            open=True,
+        )
+    return _pool
+
+
+def close_checkpointer_pool() -> None:
+    global _pool
+    if _pool is not None:
+        _pool.close()
+        _pool = None
 
 
 def route_from_coach(state: CoachingTeamState) -> str:
@@ -62,13 +94,7 @@ def build_graph():
     })
     g.add_edge("approve", END)
 
-    # Long-lived connection; connection kwargs per langgraph-checkpoint-postgres docs.
-    conn = Connection[DictRow].connect(
-        settings.database_url,
-        autocommit=True,
-        prepare_threshold=0,
-        row_factory=dict_row,
-    )
-    checkpointer = PostgresSaver(conn)
+    pool = get_checkpointer_pool()
+    checkpointer = PostgresSaver(pool)
     checkpointer.setup()  # idempotent schema migration, runs at app startup
     return g.compile(checkpointer=checkpointer)

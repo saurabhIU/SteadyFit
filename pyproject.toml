@@ -25,6 +25,7 @@ dependencies = [
     "fastapi",
     "python-multipart",
     "uvicorn[standard]",
+    "slowapi",
     # Evals
     "ragas",
     "datasets",

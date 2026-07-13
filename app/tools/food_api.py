@@ -19,5 +19,6 @@ def lookup_food(query: str, k: int = 2) -> list[str]:
                        f"protein={n.get('Protein')}g carbs={n.get('Carbohydrate, by difference')}g "
                        f"fat={n.get('Total lipid (fat)')}g (per 100g)")
         return out or ["[usda] no match"]
-    except Exception as e:
-        return [f"[usda:error] {e}"]
+    except Exception:
+        from app.security import safe_tool_error
+        return [safe_tool_error("usda")]

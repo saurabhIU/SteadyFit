@@ -37,6 +37,7 @@ def bootstrap_input(
     thread_id: str,
     *,
     messages: list | None = None,
+    retrieved_context: list[str] | None = None,
 ) -> CoachingTeamState:
     """Merge long-term memory into each graph invoke."""
     profile = get_profile()
@@ -45,6 +46,7 @@ def bootstrap_input(
         messages=messages or [],
         profile=profile,
         week_plan=week_plan,
+        retrieved_context=retrieved_context or [],
     )
 
 

@@ -1,0 +1,55 @@
+"""Shared chat processing: normalize → scope gate → LangGraph (or refuse)."""
+from __future__ import annotations
+
+import logging
+import uuid
+
+from app.graph.response import build_chat_payload
+from app.graph.runtime import thread_config
+from app.memory.context import bootstrap_input
+from app.security import (
+    OUT_OF_SCOPE_REPLY,
+    classify_scope,
+    log_out_of_scope,
+    normalize_user_message,
+)
+
+logger = logging.getLogger("steadyfit.chat")
+
+
+def process_user_chat(graph, message: str, thread_id: str | None = None) -> dict:
+    """Run defenses then the coaching team graph. Used by API and evals."""
+    thread = thread_id or str(uuid.uuid4())
+    normalized = normalize_user_message(message)
+    if not normalized:
+        return {
+            "thread_id": thread,
+            "reply": OUT_OF_SCOPE_REPLY,
+            "coaching_team": {},
+            "pending_approval": None,
+            "scope": "rejected_empty",
+        }
+
+    verdict = classify_scope(normalized)
+    if verdict == "out_of_scope":
+        log_out_of_scope(thread_id=thread, message=normalized, verdict=verdict)
+        return {
+            "thread_id": thread,
+            "reply": OUT_OF_SCOPE_REPLY,
+            "coaching_team": {},
+            "pending_approval": None,
+            "scope": verdict,
+        }
+
+    config = thread_config(thread)
+    result = graph.invoke(
+        bootstrap_input(
+            graph,
+            thread,
+            messages=[{"role": "user", "content": normalized}],
+        ),
+        config=config,
+    )
+    payload = build_chat_payload(thread, result, graph=graph, config=config)
+    payload["scope"] = verdict
+    return payload

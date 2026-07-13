@@ -20,6 +20,10 @@ class Settings(BaseSettings):
     # Vercel frontend origin for CORS (localhost is always allowed for dev)
     frontend_url: str = ""
     profile_db: str = "data/profile.sqlite"
+    # Blast-radius / input caps
+    max_message_length: int = 2000
+    llm_max_tokens: int = 1024
+    chat_rate_limit: str = "20/minute"
 
     class Config:
         env_file = ".env"
@@ -35,12 +39,17 @@ def gateway_api_key() -> str:
 
 
 @lru_cache
-def get_llm(model: str | None = None):
+def get_llm(
+    model: str | None = None,
+    max_tokens: int | None = None,
+    temperature: float = 0.3,
+):
     """LLM via the Vercel AI Gateway (requirement: use an LLM gateway)."""
     from langchain_openai import ChatOpenAI
     return ChatOpenAI(
         model=model or settings.primary_model,
         api_key=gateway_api_key,
         base_url=settings.ai_gateway_base_url,
-        temperature=0.3,
+        temperature=temperature,
+        max_tokens=max_tokens if max_tokens is not None else settings.llm_max_tokens,
     )

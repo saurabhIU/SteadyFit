@@ -6,6 +6,7 @@ from pgvector.psycopg import register_vector
 from langchain_openai import OpenAIEmbeddings
 from app.config import settings
 from app.rag.ingest import TABLE
+from app.security import safe_tool_error, wrap_untrusted
 
 
 def retrieve_personal(query: str, k: int = 4, collection_filter: str | None = None) -> list[str]:
@@ -20,6 +21,9 @@ def retrieve_personal(query: str, k: int = 4, collection_filter: str | None = No
                 f"ORDER BY embedding <=> %s LIMIT %s",
                 (Vector(vec), k),
             ).fetchall()
-        return [f"[doc:{source}] {text}" for source, text in rows]
-    except Exception as e:
-        return [f"[doc:error] retrieval unavailable: {e}"]
+        return [
+            wrap_untrusted(f"[doc:{source}] {text}", source="doc")
+            for source, text in rows
+        ]
+    except Exception:
+        return [safe_tool_error("doc")]

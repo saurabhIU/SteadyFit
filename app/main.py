@@ -1,15 +1,18 @@
 """FastAPI backend: chat, uploads, weekly review. Frontend is the Next.js app in web/."""
-import uuid
 from contextlib import asynccontextmanager
 from pathlib import Path
 from typing import Literal
 
-from fastapi import FastAPI, Header, HTTPException, UploadFile
+from fastapi import FastAPI, Header, HTTPException, Request, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from langgraph.graph.state import CompiledStateGraph
 from langgraph.types import Command
 from pydantic import BaseModel
+from slowapi import Limiter, _rate_limit_exceeded_handler
+from slowapi.errors import RateLimitExceeded
+from slowapi.util import get_remote_address
 
+from app.chat_pipeline import process_user_chat
 from app.config import settings
 from app.graph.build import build_graph, close_checkpointer_pool
 from app.graph.response import build_chat_payload, build_thread_history
@@ -18,6 +21,7 @@ from app.memory.context import bootstrap_input, persist_approved_plan, plan_snap
 from app.rag.ingest import ingest
 
 graph: CompiledStateGraph | None = None
+limiter = Limiter(key_func=get_remote_address)
 
 
 def require_graph() -> CompiledStateGraph:
@@ -39,6 +43,8 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(title="SteadyFit", lifespan=lifespan)
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
 # Next.js on Vercel (or localhost:3000) calls this API cross-origin.
 _origins = ["http://localhost:3000", "http://localhost:5173"]
@@ -94,19 +100,9 @@ class ChatIn(BaseModel):
 
 
 @app.post("/api/chat")
-def chat(body: ChatIn):
-    thread = body.thread_id or str(uuid.uuid4())
-    config = thread_config(thread)
-    g = require_graph()
-    result = g.invoke(
-        bootstrap_input(
-            g,
-            thread,
-            messages=[{"role": "user", "content": body.message}],
-        ),
-        config=config,
-    )
-    return build_chat_payload(thread, result, graph=g, config=config)
+@limiter.limit(settings.chat_rate_limit)
+def chat(request: Request, body: ChatIn):
+    return process_user_chat(require_graph(), body.message, body.thread_id)
 
 
 @app.get("/api/chat/history")
@@ -139,7 +135,11 @@ def get_plan(thread_id: str | None = None):
 async def upload(file: UploadFile):
     if not file.filename:
         raise HTTPException(status_code=400, detail="filename required")
-    dest = Path("data/uploads") / file.filename
+    # Keep uploads as basename only — block path traversal.
+    safe_name = Path(file.filename).name
+    if not safe_name or safe_name in {".", ".."}:
+        raise HTTPException(status_code=400, detail="invalid filename")
+    dest = Path("data/uploads") / safe_name
     dest.parent.mkdir(parents=True, exist_ok=True)
     dest.write_bytes(await file.read())
     n = ingest(str(dest))

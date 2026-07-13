@@ -2,6 +2,7 @@
 from app.config import get_llm
 from app.graph.plan_utils import parse_week_plan
 from app.graph.state import CoachingTeamState
+from app.security import as_text, with_security, wrap_untrusted
 from app.tools.calendar_tool import get_calendar_conflicts
 
 SYSTEM = """You are the Scheduler agent. The user is a busy everyday person.
@@ -24,14 +25,17 @@ Write a short warm proposal, then end with a fenced JSON block for the updated p
 def scheduler_node(state: CoachingTeamState) -> dict:
     conflicts = get_calendar_conflicts()
     llm = get_llm()
+    user_msg = as_text(state.messages[-1].content) if state.messages else ""
     prompt = (
         f"Profile: {state.profile.model_dump_json()}\n"
         f"Plan: {state.week_plan.model_dump_json() if state.week_plan else 'none'}\n"
         f"Calendar conflicts: {conflicts}\n"
-        f"User request: {state.messages[-1].content if state.messages else ''}"
+        f"{wrap_untrusted(user_msg, source='user')}"
     )
-    proposal = llm.invoke([{"role": "system", "content": SYSTEM},
-                           {"role": "user", "content": prompt}]).content
+    proposal = as_text(llm.invoke([
+        {"role": "system", "content": with_security(SYSTEM)},
+        {"role": "user", "content": prompt},
+    ]).content)
     parsed = parse_week_plan(proposal)
     proposals = {**state.proposals, "scheduler": proposal, "plan_changed": True}
     if parsed:

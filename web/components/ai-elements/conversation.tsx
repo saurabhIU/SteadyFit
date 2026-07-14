@@ -5,14 +5,14 @@ import { cn } from "@/lib/utils";
 import type { UIMessage } from "ai";
 import { ArrowDownIcon, DownloadIcon } from "lucide-react";
 import type { ComponentProps } from "react";
-import { useCallback } from "react";
+import { useCallback, useEffect } from "react";
 import { StickToBottom, useStickToBottomContext } from "use-stick-to-bottom";
 
 export type ConversationProps = ComponentProps<typeof StickToBottom>;
 
 export const Conversation = ({ className, ...props }: ConversationProps) => (
   <StickToBottom
-    className={cn("relative flex-1 overflow-y-hidden", className)}
+    className={cn("relative flex-1 overflow-y-auto", className)}
     initial="smooth"
     resize="smooth"
     role="log"
@@ -33,6 +33,20 @@ export const ConversationContent = ({
     {...props}
   />
 );
+
+/** Force stick-to-bottom whenever `watch` changes (new messages, loading, chips). */
+export function ConversationAutoScroll({ watch }: { watch: unknown }) {
+  const { scrollToBottom } = useStickToBottomContext();
+
+  useEffect(() => {
+    const id = requestAnimationFrame(() => {
+      void scrollToBottom({ animation: "smooth" });
+    });
+    return () => cancelAnimationFrame(id);
+  }, [watch, scrollToBottom]);
+
+  return null;
+}
 
 export type ConversationEmptyStateProps = ComponentProps<"div"> & {
   title?: string;
@@ -78,7 +92,7 @@ export const ConversationScrollButton = ({
   const { isAtBottom, scrollToBottom } = useStickToBottomContext();
 
   const handleScrollToBottom = useCallback(() => {
-    scrollToBottom();
+    void scrollToBottom();
   }, [scrollToBottom]);
 
   return (

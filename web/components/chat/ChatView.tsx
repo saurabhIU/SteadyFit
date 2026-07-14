@@ -4,6 +4,7 @@ import { Fragment, useCallback, useEffect, useState } from "react";
 import { CopyIcon } from "lucide-react";
 import {
   Conversation,
+  ConversationAutoScroll,
   ConversationContent,
   ConversationScrollButton,
 } from "@/components/ai-elements/conversation";
@@ -149,6 +150,9 @@ export function ChatView() {
   return (
     <div className="content-width flex min-h-0 flex-1 flex-col">
       <Conversation className="min-h-0 flex-1">
+        <ConversationAutoScroll
+          watch={`${messages.length}:${loading}:${restoring}:${pendingApproval ? 1 : 0}:${quickReplies.length}`}
+        />
         <ConversationContent className="gap-4 p-0 py-5">
           {messages.map((msg, messageIndex) => {
             const isLastAssistant =

@@ -7,43 +7,52 @@ Topology:
     coaching_team -> approve (human-in-the-loop interrupt, if plan changed)
     coaching_team -> END     (informational answer)
 """
-from langgraph.graph import StateGraph, END
+from typing import cast
+
 from langgraph.checkpoint.postgres import PostgresSaver
-from psycopg.rows import dict_row
+from langgraph.graph import END, StateGraph
+from psycopg import Connection
+from psycopg.rows import DictRow, dict_row
 from psycopg_pool import ConnectionPool
 
 from app.config import settings
-from app.graph.state import CoachingTeamState
-from app.graph.supervisor import coach_node, coaching_team_node, approve_node
-from app.graph.agents.scheduler import scheduler_node
-from app.graph.agents.nutrition import nutrition_node
 from app.graph.agents.adherence import adherence_node
 from app.graph.agents.knowledge import knowledge_node
+from app.graph.agents.nutrition import nutrition_node
+from app.graph.agents.scheduler import scheduler_node
+from app.graph.state import CoachingTeamState
+from app.graph.supervisor import approve_node, coach_node, coaching_team_node
 
 MAX_COACHING_TEAM_ROUNDS = 2
 
+DictConnectionPool = ConnectionPool[Connection[DictRow]]
+
 # Keep the pool for the process lifetime. A single long-lived Connection dies when
 # Neon/Render idle-timeouts it; the pool checks and replaces dead conns.
-_pool: ConnectionPool | None = None
+_pool: DictConnectionPool | None = None
 
 
-def get_checkpointer_pool() -> ConnectionPool:
+def get_checkpointer_pool() -> DictConnectionPool:
     global _pool
     if _pool is None:
-        _pool = ConnectionPool(
-            conninfo=settings.database_url,
-            min_size=1,
-            max_size=5,
-            # Recycle before typical Neon idle kills (~5m); health-check on checkout.
-            max_idle=120,
-            max_lifetime=1800,
-            kwargs={
-                "autocommit": True,
-                "prepare_threshold": 0,
-                "row_factory": dict_row,
-            },
-            check=ConnectionPool.check_connection,
-            open=True,
+        # Runtime uses dict_row; constructor generics default to TupleRow for the checker.
+        _pool = cast(
+            DictConnectionPool,
+            ConnectionPool(
+                conninfo=settings.database_url,
+                min_size=1,
+                max_size=5,
+                # Recycle before typical Neon idle kills (~5m); health-check on checkout.
+                max_idle=120,
+                max_lifetime=1800,
+                kwargs={
+                    "autocommit": True,
+                    "prepare_threshold": 0,
+                    "row_factory": dict_row,
+                },
+                check=ConnectionPool.check_connection,
+                open=True,
+            ),
         )
     return _pool
 

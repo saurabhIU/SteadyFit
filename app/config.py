@@ -38,6 +38,11 @@ def gateway_api_key() -> str:
     return settings.ai_gateway_api_key or os.environ.get("VERCEL_OIDC_TOKEN", "")
 
 
+def openai_api_key() -> str:
+    """OpenAI key for embeddings (SecretStr-compatible callable for LangChain)."""
+    return settings.openai_api_key
+
+
 @lru_cache
 def get_llm(
     model: str | None = None,
@@ -46,10 +51,12 @@ def get_llm(
 ):
     """LLM via the Vercel AI Gateway (requirement: use an LLM gateway)."""
     from langchain_openai import ChatOpenAI
+    limit = max_tokens if max_tokens is not None else settings.llm_max_tokens
     return ChatOpenAI(
         model=model or settings.primary_model,
         api_key=gateway_api_key,
         base_url=settings.ai_gateway_base_url,
         temperature=temperature,
-        max_tokens=max_tokens if max_tokens is not None else settings.llm_max_tokens,
+        # langchain-openai aliases this field as max_completion_tokens for OpenAI's API
+        max_completion_tokens=limit,
     )

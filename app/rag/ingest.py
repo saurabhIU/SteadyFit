@@ -8,7 +8,7 @@ from langchain_text_splitters import (MarkdownHeaderTextSplitter,
                                       RecursiveCharacterTextSplitter)
 from pgvector.psycopg import register_vector
 
-from app.config import settings
+from app.config import openai_api_key, settings
 
 TABLE = "documents"
 EMBED_DIM = 1536
@@ -54,7 +54,7 @@ def ingest(path: str, doc_type: str = "program") -> int:
     if not chunks:
         raise ValueError(f"No chunks produced from {file_path.name}")
     embedder = OpenAIEmbeddings(model="text-embedding-3-small",
-                                api_key=settings.openai_api_key)
+                                api_key=openai_api_key)
     vectors = embedder.embed_documents([c["text"] for c in chunks])
     with psycopg.connect(settings.database_url) as conn:
         register_vector(conn)

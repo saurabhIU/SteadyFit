@@ -4,7 +4,7 @@ import psycopg
 from pgvector import Vector
 from pgvector.psycopg import register_vector
 from langchain_openai import OpenAIEmbeddings
-from app.config import settings
+from app.config import openai_api_key, settings
 from app.rag.ingest import TABLE
 from app.security import safe_tool_error, wrap_untrusted
 
@@ -12,7 +12,7 @@ from app.security import safe_tool_error, wrap_untrusted
 def retrieve_personal(query: str, k: int = 4, collection_filter: str | None = None) -> list[str]:
     try:
         embedder = OpenAIEmbeddings(model="text-embedding-3-small",
-                                    api_key=settings.openai_api_key)
+                                    api_key=openai_api_key)
         vec = embedder.embed_query(query)
         with psycopg.connect(settings.database_url) as conn:
             register_vector(conn)

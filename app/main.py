@@ -1,8 +1,7 @@
 """FastAPI backend: chat, uploads, weekly review. Frontend is the Next.js app in web/."""
 from contextlib import asynccontextmanager
 from pathlib import Path
-from typing import Literal
-
+from typing import Literal, cast
 from fastapi import FastAPI, Header, HTTPException, Request, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from langgraph.graph.state import CompiledStateGraph
@@ -11,6 +10,7 @@ from pydantic import BaseModel
 from slowapi import Limiter, _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
 from slowapi.util import get_remote_address
+from starlette.types import ExceptionHandler
 
 from app.chat_pipeline import process_user_chat
 from app.config import settings
@@ -44,7 +44,11 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(title="SteadyFit", lifespan=lifespan)
 app.state.limiter = limiter
-app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+# slowapi's handler is typed for RateLimitExceeded; Starlette expects Exception.
+app.add_exception_handler(
+    RateLimitExceeded,
+    cast(ExceptionHandler, _rate_limit_exceeded_handler),
+)
 
 # Next.js on Vercel (or localhost:3000) calls this API cross-origin.
 _origins = ["http://localhost:3000", "http://localhost:5173"]

@@ -2,6 +2,7 @@
 from app.security import (
     OUT_OF_SCOPE_REPLY,
     normalize_user_message,
+    out_of_scope_reply,
     wrap_untrusted,
     with_security,
 )
@@ -35,3 +36,9 @@ def test_with_security_prefixes_preamble():
 
 def test_out_of_scope_reply_is_fitness_redirect():
     assert "fitness coach" in OUT_OF_SCOPE_REPLY.lower()
+
+
+def test_out_of_scope_reply_mentions_ask():
+    reply = out_of_scope_reply("Write me a React todo app")
+    assert "React todo app" in reply
+    assert "fitness" in reply.lower()

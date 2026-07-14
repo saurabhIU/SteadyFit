@@ -12,6 +12,7 @@ from app.security import (
     classify_scope,
     log_out_of_scope,
     normalize_user_message,
+    out_of_scope_reply,
 )
 
 logger = logging.getLogger("steadyfit.chat")
@@ -35,7 +36,7 @@ def process_user_chat(graph, message: str, thread_id: str | None = None) -> dict
         log_out_of_scope(thread_id=thread, message=normalized, verdict=verdict)
         return {
             "thread_id": thread,
-            "reply": OUT_OF_SCOPE_REPLY,
+            "reply": out_of_scope_reply(normalized),
             "coaching_team": {},
             "pending_approval": None,
             "scope": verdict,

@@ -21,6 +21,9 @@ OUT_OF_SCOPE_REPLY = (
     "re-planning your week?"
 )
 
+_SCOPE_IN_RE = re.compile(r"\bin[_ ]?scope\b", re.IGNORECASE)
+_SCOPE_OUT_RE = re.compile(r"\bout[_ ]?of[_ ]?scope\b|\boutofscope\b", re.IGNORECASE)
+
 # Noise reduction only — not the security boundary.
 _CONTROL_CHARS_RE = re.compile(r"[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]")
 _ANGLE_TAG_RE = re.compile(r"</?\s*[A-Za-z][^>]{0,80}>")
@@ -91,22 +94,58 @@ def normalize_user_message(text: str, *, max_chars: int | None = None) -> str:
     return cleaned
 
 
+def out_of_scope_reply(message: str) -> str:
+    """Brief refusal that references what they asked — avoids identical canned spam."""
+    preview = " ".join((message or "").split())
+    if len(preview) > 72:
+        preview = preview[:69] + "…"
+    if preview:
+        return (
+            f"I stay focused on fitness coaching, so I can't help with “{preview}”. "
+            "Ask me about a workout, meal, or re-planning your week."
+        )
+    return OUT_OF_SCOPE_REPLY
+
+
 def classify_scope(message: str) -> ScopeVerdict:
-    """Cheap LLM classifier — structure/classification, not keyword blocklists."""
-    llm = get_llm(settings.judge_model, max_tokens=16, temperature=0)
-    raw = llm.invoke([
-        {"role": "system", "content": SCOPE_GATE_SYSTEM},
-        {"role": "user", "content": wrap_untrusted(message, source="user")},
-    ]).content
-    text = raw if isinstance(raw, str) else str(raw)
-    token = text.strip().lower().replace("-", "_").split()[0] if text.strip() else ""
+    """Cheap LLM classifier — structure/classification, not keyword blocklists.
+
+    On gateway failures or unparseable labels, fail *open* (in_scope) so real
+    coaching chat still works; agent SECURITY_PREAMBLE + untrusted wrappers
+    remain the second line of defense.
+    """
+    try:
+        llm = get_llm(settings.judge_model, max_tokens=32, temperature=0)
+        # Plain text only — <untrusted> wrappers confuse short classifier answers.
+        raw = llm.invoke([
+            {"role": "system", "content": SCOPE_GATE_SYSTEM},
+            {"role": "user", "content": message},
+        ]).content
+        text = as_text(raw).strip()
+    except Exception as exc:
+        logger.warning("scope_gate_error falling_open err=%s preview=%r", exc, message[:80])
+        return "in_scope"
+
+    if not text:
+        logger.warning("scope_gate_empty falling_open preview=%r", message[:80])
+        return "in_scope"
+
+    # Prefer explicit labels anywhere in the reply (models often add a short prefix).
+    out_hit = _SCOPE_OUT_RE.search(text)
+    in_hit = _SCOPE_IN_RE.search(text)
+    if out_hit and (not in_hit or out_hit.start() <= in_hit.start()):
+        return "out_of_scope"
+    if in_hit:
+        return "in_scope"
+
+    token = text.lower().replace("-", "_").split()[0]
     if token.startswith("in_scope") or token == "inscope":
         return "in_scope"
     if token.startswith("out_of_scope") or token in {"out_of_scope", "outofscope", "out"}:
         return "out_of_scope"
-    # Fail closed: ambiguous → out_of_scope
-    logger.warning("scope_gate_ambiguous token=%r preview=%r", token, message[:80])
-    return "out_of_scope"
+
+    logger.warning("scope_gate_ambiguous falling_open text=%r preview=%r", text[:80], message[:80])
+    return "in_scope"
 
 
 def log_out_of_scope(*, thread_id: str, message: str, verdict: str) -> None:

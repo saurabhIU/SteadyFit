@@ -21,6 +21,7 @@ dependencies = [
     # Tools
     "tavily-python",
     "requests",
+    "pypdf",
     # API
     "fastapi",
     "python-multipart",

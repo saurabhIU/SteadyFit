@@ -1,21 +1,25 @@
 # Knowledge base
 
-Author each topic as structured Markdown (H2/H3 sections) — the chunker is
-header-aware. Suggested corpus to write/collect (open-licence sources or your
-own summaries):
+Drop curated sources here (Markdown, plain text, or PDF). PDFs are extracted
+with pypdf, then chunked the same way as Markdown.
 
-- hypertrophy_programming.md   (volume landmarks, progressive overload, splits)
-- nutrition_fundamentals.md    (energy balance, protein targets, cutting)
-- recovery_and_sleep.md        (deloads, sleep, training when under-recovered)
-- beginner_templates.md        (3-day full body, upper/lower, equipment subs)
-- supplements_basics.md        (creatine, protein powder, caffeine)
+Current guidelines corpus (open HHS docs):
 
-Upload into the vector store via the API (with the backend running):
+- `Physical_Activity_Guidelines_2nd_edition.pdf`
+- `PAG_ExecutiveSummary.pdf`
+
+Plus optional personal templates (`sample_my_program.txt`, etc.).
+
+Seed everything in this folder into pgvector:
 
 ```bash
-# Markdown sample
-curl -F "file=@data/knowledge_base/sample_hypertrophy_basics.md" http://localhost:8000/api/upload
+uv run python scripts/init_db.py          # once
+uv run python scripts/seed_knowledge_base.py
+```
 
-# Plain-text personal program template (edit, then upload via /upload or curl)
-curl -F "file=@data/knowledge_base/sample_my_program.txt" http://localhost:8000/api/upload
+Or upload a single file via the API (backend running):
+
+```bash
+curl -F "file=@data/knowledge_base/PAG_ExecutiveSummary.pdf" \
+  http://localhost:8000/api/upload
 ```

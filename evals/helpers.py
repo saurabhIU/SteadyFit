@@ -9,9 +9,9 @@ from app.graph.response import build_chat_payload, proposals_from_state
 from app.graph.runtime import thread_config
 from app.memory.context import bootstrap_input
 from app.security import (
-    OUT_OF_SCOPE_REPLY,
     classify_scope,
     normalize_user_message,
+    out_of_scope_reply,
     wrap_untrusted,
 )
 
@@ -68,7 +68,7 @@ def invoke_case(graph, row: dict) -> dict:
         if classify_scope(normalized) == "out_of_scope":
             return {
                 "thread_id": thread,
-                "reply": OUT_OF_SCOPE_REPLY,
+                "reply": out_of_scope_reply(normalized),
                 "coaching_team": {},
                 "pending_approval": None,
                 "scope": "out_of_scope",

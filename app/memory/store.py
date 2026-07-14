@@ -77,7 +77,6 @@ def get_week_streak(sessions_per_week: int = 3, *, as_of: date | None = None) ->
             streak += 1
             week -= timedelta(days=7)
         elif week == this_week:
-            # Current week still in progress — don't break; check prior weeks.
             week -= timedelta(days=7)
         else:
             break
@@ -86,6 +85,7 @@ def get_week_streak(sessions_per_week: int = 3, *, as_of: date | None = None) ->
 
 def get_adherence_stats() -> dict:
     profile = get_profile()
+    sessions = profile.sessions_per_week or 3
     with _conn() as c:
         rows = c.execute(
             "SELECT status, COUNT(*) FROM workout_log "
@@ -98,23 +98,80 @@ def get_adherence_stats() -> dict:
         "last14d": stats,
         "adherence_pct": round(100 * done / total) if total else None,
         "drop_off_signal": skipped >= 3,
-        "streak_weeks": get_week_streak(profile.sessions_per_week),
+        "streak_weeks": get_week_streak(sessions),
     }
 
 
+def _parse_int(raw: str | None) -> int | None:
+    if raw is None or raw == "" or raw == "None":
+        return None
+    try:
+        return int(raw)
+    except ValueError:
+        return None
+
+
+def _parse_bool(raw: str | None, default: bool = False) -> bool:
+    if raw is None:
+        return default
+    return raw.lower() in {"1", "true", "yes"}
+
+
 def get_profile() -> UserProfile:
+    """Load profile; migrates legacy keys (injuries, food_preferences, …)."""
     with _conn() as c:
         rows = c.execute("SELECT key, value FROM profile WHERE key != 'week_plan'").fetchall()
     if not rows:
         return UserProfile()
     data = dict(rows)
+
+    # --- migrate legacy fields into the new schema ---
+    constraints = json.loads(data.get("constraints", "[]") or "[]")
+    if not constraints and data.get("injuries"):
+        try:
+            constraints = json.loads(data["injuries"])
+        except json.JSONDecodeError:
+            constraints = []
+
+    modes = json.loads(data.get("preferred_workout_modes", "[]") or "[]")
+    if not modes and data.get("workout_preferences"):
+        try:
+            modes = json.loads(data["workout_preferences"])
+        except json.JSONDecodeError:
+            modes = []
+
+    food = data.get("food_preference") or None
+    if not food and data.get("food_preferences"):
+        try:
+            prefs = json.loads(data["food_preferences"])
+            food = prefs[0] if prefs else None
+        except json.JSONDecodeError:
+            food = None
+
+    sessions = _parse_int(data.get("sessions_per_week"))
+
+    goal = data.get("goal", "") or ""
+    onboarding = _parse_bool(data.get("onboarding_complete"), default=False)
+    # Existing seeded profiles (had a real goal + modes) count as complete if flag absent.
+    if "onboarding_complete" not in data and goal and goal != "general fitness" and modes:
+        onboarding = True
+    if goal == "general fitness" and not onboarding:
+        goal = ""
+
     return UserProfile(
-        name=data.get("name", "athlete"),
-        goal=data.get("goal", "general fitness"),
-        sessions_per_week=int(data.get("sessions_per_week", 3)),
-        injuries=json.loads(data.get("injuries", "[]")),
-        food_preferences=json.loads(data.get("food_preferences", "[]")),
-        workout_preferences=json.loads(data.get("workout_preferences", "[]")),
+        name=data.get("name", "athlete") or "athlete",
+        goal=goal,
+        age=_parse_int(data.get("age")),
+        age_declined=_parse_bool(data.get("age_declined")),
+        sex=data.get("sex") or None,
+        sex_declined=_parse_bool(data.get("sex_declined")),
+        preferred_workout_modes=list(modes),
+        food_preference=food,
+        sessions_per_week=sessions,
+        constraints=list(constraints),
+        constraints_asked=_parse_bool(data.get("constraints_asked")),
+        onboarding_complete=onboarding,
+        awaiting_onboarding_confirm=_parse_bool(data.get("awaiting_onboarding_confirm")),
     )
 
 
@@ -122,10 +179,25 @@ def save_profile(profile: UserProfile):
     rows = {
         "name": profile.name,
         "goal": profile.goal,
-        "sessions_per_week": str(profile.sessions_per_week),
-        "injuries": json.dumps(profile.injuries),
-        "food_preferences": json.dumps(profile.food_preferences),
-        "workout_preferences": json.dumps(profile.workout_preferences),
+        "age": "" if profile.age is None else str(profile.age),
+        "age_declined": str(profile.age_declined),
+        "sex": profile.sex or "",
+        "sex_declined": str(profile.sex_declined),
+        "preferred_workout_modes": json.dumps(profile.preferred_workout_modes),
+        "food_preference": profile.food_preference or "",
+        "sessions_per_week": (
+            "" if profile.sessions_per_week is None else str(profile.sessions_per_week)
+        ),
+        "constraints": json.dumps(profile.constraints),
+        "constraints_asked": str(profile.constraints_asked),
+        "onboarding_complete": str(profile.onboarding_complete),
+        "awaiting_onboarding_confirm": str(profile.awaiting_onboarding_confirm),
+        # Legacy mirrors for older readers
+        "injuries": json.dumps(profile.constraints),
+        "food_preferences": json.dumps(
+            [profile.food_preference] if profile.food_preference else []
+        ),
+        "workout_preferences": json.dumps(profile.preferred_workout_modes),
     }
     with _conn() as c:
         for key, value in rows.items():
@@ -155,3 +227,13 @@ def save_week_plan(plan: WeekPlan | dict):
             "ON CONFLICT(key) DO UPDATE SET value = excluded.value",
             (json.dumps(payload),),
         )
+
+
+def clear_profile_slots():
+    """Wipe profile keys (keep week_plan / logs) — used by seed --fresh."""
+    keep = {"week_plan"}
+    with _conn() as c:
+        rows = c.execute("SELECT key FROM profile").fetchall()
+        for (key,) in rows:
+            if key not in keep:
+                c.execute("DELETE FROM profile WHERE key = ?", (key,))

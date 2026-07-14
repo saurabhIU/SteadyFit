@@ -17,6 +17,7 @@ from psycopg_pool import ConnectionPool
 
 from app.config import settings
 from app.graph.agents.adherence import adherence_node
+from app.graph.agents.intake import intake_node
 from app.graph.agents.knowledge import knowledge_node
 from app.graph.agents.nutrition import nutrition_node
 from app.graph.agents.scheduler import scheduler_node
@@ -68,6 +69,13 @@ def route_from_coach(state: CoachingTeamState) -> str:
     return state.intent or "knowledge"
 
 
+def route_from_intake(state: CoachingTeamState) -> str:
+    """After intake: either end the turn or kick off the first WeekPlan."""
+    if state.intent == "first_plan":
+        return "scheduler"
+    return "end"
+
+
 def route_from_coaching_team(state: CoachingTeamState) -> str:
     if state.risk_flag and state.coaching_team_rounds < MAX_COACHING_TEAM_ROUNDS:
         return "coach"          # renegotiate: simplify the plan
@@ -80,6 +88,7 @@ def build_graph():
     g = StateGraph(CoachingTeamState)
 
     g.add_node("coach", coach_node)
+    g.add_node("intake", intake_node)
     g.add_node("scheduler", scheduler_node)
     g.add_node("nutrition", nutrition_node)
     g.add_node("adherence", adherence_node)
@@ -89,10 +98,16 @@ def build_graph():
 
     g.set_entry_point("coach")
     g.add_conditional_edges("coach", route_from_coach, {
+        "intake": "intake",
         "schedule": "scheduler",
         "nutrition": "nutrition",
         "adherence": "adherence",
         "knowledge": "knowledge",
+        "first_plan": "scheduler",
+    })
+    g.add_conditional_edges("intake", route_from_intake, {
+        "scheduler": "scheduler",
+        "end": END,
     })
     for node in ("scheduler", "nutrition", "adherence", "knowledge"):
         g.add_edge(node, "coaching_team")

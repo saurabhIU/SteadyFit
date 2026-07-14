@@ -24,11 +24,24 @@ Write a short warm proposal, then end with a fenced JSON block for the updated p
 
 def scheduler_node(state: CoachingTeamState) -> dict:
     user_msg = as_text(state.messages[-1].content) if state.messages else ""
+    first_plan = (
+        state.intent == "first_plan"
+        or state.proposals.get("intake_handoff") == "first_plan"
+        or state.week_plan is None
+    )
+    hint = (
+        "This is their FIRST week after onboarding. Build a realistic week that "
+        "matches preferred_workout_modes and sessions_per_week. Align focus days "
+        "with their modes (e.g. walking/gym). Set sensible calorie_target and "
+        "protein_target_g for the stated goal and food_preference."
+        if first_plan
+        else "Call calendar_conflicts, then propose the re-planned week."
+    )
     user_prompt = (
         f"Profile: {state.profile.model_dump_json()}\n"
         f"Plan: {state.week_plan.model_dump_json() if state.week_plan else 'none'}\n"
         f"{wrap_untrusted(user_msg, source='user')}\n\n"
-        "Call calendar_conflicts, then propose the re-planned week."
+        f"{hint}"
     )
     result = run_tool_agent(
         system=with_security(SYSTEM),

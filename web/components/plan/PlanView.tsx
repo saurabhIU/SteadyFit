@@ -204,8 +204,8 @@ export function PlanView() {
 
   const plan = data.week_plan;
   const stats = plan
-    ? sessionStats(plan.days, data.profile.sessions_per_week)
-    : { done: 0, total: data.profile.sessions_per_week };
+    ? sessionStats(plan.days, data.profile.sessions_per_week ?? 3)
+    : { done: 0, total: data.profile.sessions_per_week ?? 3 };
 
   return (
     <div className="content-width space-y-5 py-6">

@@ -61,9 +61,13 @@ def plan_snapshot(graph, thread_id: str) -> dict:
     """API payload for the /plan view."""
     profile = get_profile()
     week_plan = week_plan_from_graph(graph, thread_id) or get_saved_week_plan()
+    profile_data = profile.model_dump()
+    profile_data["injuries"] = profile.injuries
+    profile_data["food_preferences"] = profile.food_preferences
+    profile_data["workout_preferences"] = profile.workout_preferences
     return {
         "thread_id": thread_id,
-        "profile": profile.model_dump(),
+        "profile": profile_data,
         "week_plan": week_plan.model_dump() if week_plan else None,
         "adherence": get_adherence_stats(),
     }

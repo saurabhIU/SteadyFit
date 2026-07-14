@@ -26,6 +26,7 @@ export type ChatResponse = {
   reply: string;
   coaching_team: CoachingTeamProposals;
   pending_approval?: PendingApproval | null;
+  quick_replies?: string[];
 };
 
 export type ChatHistoryMessage = {
@@ -50,7 +51,14 @@ export type ChatMessage = {
 export type UserProfile = {
   name: string;
   goal: string;
-  sessions_per_week: number;
+  age?: number | null;
+  sex?: string | null;
+  preferred_workout_modes?: string[];
+  food_preference?: string | null;
+  sessions_per_week: number | null;
+  constraints?: string[];
+  onboarding_complete?: boolean;
+  /** @deprecated legacy mirrors */
   injuries: string[];
   food_preferences: string[];
   workout_preferences: string[];

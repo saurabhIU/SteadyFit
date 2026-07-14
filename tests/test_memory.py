@@ -22,14 +22,27 @@ def test_profile_round_trip(memory_db):
         name="Sam",
         goal="build muscle",
         sessions_per_week=4,
-        injuries=["knee"],
-        food_preferences=["vegetarian"],
+        constraints=["knee"],
+        preferred_workout_modes=["gym"],
+        food_preference="vegetarian",
+        onboarding_complete=True,
     )
     store.save_profile(profile)
     loaded = store.get_profile()
     assert loaded.name == "Sam"
     assert loaded.goal == "build muscle"
+    assert loaded.constraints == ["knee"]
     assert loaded.injuries == ["knee"]
+    assert loaded.food_preference == "vegetarian"
+    assert loaded.onboarding_complete is True
+
+
+def test_fresh_incomplete_profile(memory_db):
+    store.save_profile(UserProfile())
+    loaded = store.get_profile()
+    assert loaded.onboarding_complete is False
+    assert loaded.goal == ""
+    assert loaded.sessions_per_week is None
 
 
 def test_week_plan_round_trip(memory_db):
@@ -58,7 +71,9 @@ def test_adherence_stats_detects_drop_off(memory_db):
 
 
 def test_week_streak_counts_consecutive_weeks(memory_db):
-    store.save_profile(UserProfile(name="Sam", goal="fit", sessions_per_week=3))
+    store.save_profile(
+        UserProfile(name="Sam", goal="fit", sessions_per_week=3, onboarding_complete=True)
+    )
     as_of = date(2026, 7, 14)  # Monday
     # Threshold is 2 done/week for 3 sessions target.
     for offset in (7, 8, 14, 15, 21, 22):

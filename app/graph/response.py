@@ -147,10 +147,13 @@ def build_chat_payload(
     reply = last_message_content(state)
     # Specialist drafts are merged into the coach reply — don't echo them again.
     coaching_team = {} if reply else proposals_from_state(state)
+    data = _as_dict(state)
+    quick_replies = list(data.get("quick_replies") or [])
 
     return {
         "thread_id": thread_id,
         "reply": reply,
         "coaching_team": coaching_team,
         "pending_approval": pending,
+        "quick_replies": quick_replies,
     }

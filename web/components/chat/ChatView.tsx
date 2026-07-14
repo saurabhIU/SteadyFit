@@ -27,7 +27,7 @@ const WELCOME: ChatMessage = {
   id: "welcome",
   role: "assistant",
   content:
-    "Tell me your goal, log a meal, or say what got in the way this week — I'll help you re-plan without the guilt trip.",
+    "Hi — I'm Steady. If you're new here I'll ask a few quick things about your goals and how you like to train. Or jump straight in: log a meal, or say what got in the way this week.",
 };
 
 const USER_BUBBLE =
@@ -47,6 +47,7 @@ export function ChatView() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [pendingApproval, setPendingApproval] = useState<PendingApproval | null>(null);
+  const [quickReplies, setQuickReplies] = useState<string[]>([]);
   const [restoring, setRestoring] = useState(false);
 
   useEffect(() => {
@@ -100,6 +101,7 @@ export function ChatView() {
         };
         setMessages((prev) => [...prev, assistantMsg]);
         setPendingApproval(data.pending_approval ?? null);
+        setQuickReplies(data.quick_replies ?? []);
       } catch (err) {
         const message =
           err instanceof ApiError
@@ -123,6 +125,7 @@ export function ChatView() {
 
   function handleApprovalResolved(reply: string) {
     setPendingApproval(null);
+    setQuickReplies([]);
     setMessages((prev) => [
       ...prev,
       {
@@ -132,6 +135,12 @@ export function ChatView() {
       },
     ]);
     notifyPlanUpdated();
+  }
+
+  async function handleChip(option: string) {
+    if (loading || restoring || pendingApproval) return;
+    setQuickReplies([]);
+    await submitMessage(option);
   }
 
   const lastAssistantIndex = messages.findLastIndex((m) => m.role === "assistant");
@@ -224,6 +233,24 @@ export function ChatView() {
         onSubmit={handleSubmit}
         className="sticky bottom-0 z-10 -mx-5 border-t border-beige-border/15 bg-navy px-5 py-3"
       >
+        {quickReplies.length > 0 && !composerDisabled ? (
+          <div className="mb-3 flex flex-wrap gap-2">
+            {quickReplies.map((option) => (
+              <button
+                key={option}
+                type="button"
+                onClick={() => void handleChip(option)}
+                className={cn(
+                  "rounded-[var(--radius-pill)] border border-sage/40 bg-sage/90 px-3.5 py-1.5",
+                  "text-xs font-medium text-sage-foreground transition-colors",
+                  "hover:bg-sage-hover",
+                )}
+              >
+                {option}
+              </button>
+            ))}
+          </div>
+        ) : null}
         <div
           className={cn(
             "group flex items-end gap-2 rounded-[var(--radius-pill)] border p-1.5 pl-4 transition-colors duration-150 ease-out",

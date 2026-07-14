@@ -11,6 +11,16 @@ def test_route_from_coach_respects_intent():
     assert route_from_coach(CoachingTeamState(intent="schedule")) == "schedule"
 
 
+def test_route_from_coach_intake():
+    assert route_from_coach(CoachingTeamState(intent="intake")) == "intake"
+
+
+def test_route_from_intake_to_scheduler_on_first_plan():
+    from app.graph.build import route_from_intake
+    assert route_from_intake(CoachingTeamState(intent="first_plan")) == "scheduler"
+    assert route_from_intake(CoachingTeamState(intent="intake")) == "end"
+
+
 def test_route_from_coaching_team_risk_loops_to_coach():
     state = CoachingTeamState(risk_flag=True, coaching_team_rounds=0)
     assert route_from_coaching_team(state) == "coach"

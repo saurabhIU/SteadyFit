@@ -1,6 +1,8 @@
 """Coach (supervisor), AI Coaching Team (negotiation), and approval nodes."""
 from langgraph.types import interrupt
+
 from app.config import get_llm
+from app.graph.intake import looks_like_profile_change_request, needs_intake
 from app.graph.state import CoachingTeamState, WeekPlan
 from app.security import as_text, llm_history, with_security, wrap_untrusted
 
@@ -9,10 +11,11 @@ everyday people (not pro athletes). You supervise three specialists — Schedule
 Adherence — and an agentic-RAG Knowledge tool over the user's own documents + web search.
 
 Given the conversation and the user's profile, classify the request into exactly one intent:
-- schedule   (planning, missed workouts, travel, moving sessions)
+- schedule   (planning, missed workouts, travel, moving sessions, first week plan)
 - nutrition  (food logged, meals, macros, recipes)
 - adherence  (check-ins, motivation, streaks, weekly review)
 - knowledge  (any question needing the user's documents or web facts)
+- profile_update (user wants to change goal, food preference, modes, sessions, etc.)
 
 If a previous AI Coaching Team round flagged drop-off RISK, your job changes: SIMPLIFY the plan
 (fewer/shorter sessions, easier meals). Be warm, concrete, never guilt-tripping.
@@ -21,12 +24,35 @@ Respond with just the intent word."""
 
 
 def coach_node(state: CoachingTeamState) -> dict:
+    rounds = state.coaching_team_rounds + 1
+
+    # Completeness gate — unfinished onboarding never goes to specialists.
+    if needs_intake(state.profile) and not state.profile.onboarding_complete:
+        return {
+            "intent": "intake",
+            "coaching_team_rounds": rounds,
+            "quick_replies": [],
+        }
+
+    user_msg = ""
+    if state.messages:
+        user_msg = as_text(state.messages[-1].content)
+
+    if looks_like_profile_change_request(user_msg):
+        return {
+            "intent": "intake",
+            "coaching_team_rounds": rounds,
+            "quick_replies": [],
+        }
+
     llm = get_llm(max_tokens=32)
     msgs = [{"role": "system", "content": with_security(COACH_SYSTEM)}] + llm_history(state.messages)
     intent = as_text(llm.invoke(msgs).content).strip().lower()
-    if intent not in {"schedule", "nutrition", "adherence", "knowledge"}:
+    if intent in {"profile_update", "profile", "update"}:
+        intent = "intake"
+    elif intent not in {"schedule", "nutrition", "adherence", "knowledge", "intake"}:
         intent = "knowledge"
-    return {"intent": intent, "coaching_team_rounds": state.coaching_team_rounds + 1}
+    return {"intent": intent, "coaching_team_rounds": rounds, "quick_replies": []}
 
 
 COACHING_TEAM_SYSTEM = """You are the Head Coach reviewing your specialists' proposals before
@@ -41,7 +67,7 @@ def coaching_team_node(state: CoachingTeamState) -> dict:
     context = "\n\n".join(state.retrieved_context) if state.retrieved_context else "none"
     proposal_parts = []
     for key, value in state.proposals.items():
-        if key in {"plan_changed", "proposed_week_plan"}:
+        if key in {"plan_changed", "proposed_week_plan", "intake_handoff"}:
             continue
         proposal_parts.append(wrap_untrusted(str(value), source=f"proposal:{key}"))
     proposals = "\n\n".join(proposal_parts) or "none"
@@ -58,13 +84,12 @@ def coaching_team_node(state: CoachingTeamState) -> dict:
         [{"role": "system", "content": with_security(COACHING_TEAM_SYSTEM)},
          {"role": "user", "content": prompt}]
     )
-    # Keep routing flags only — raw specialist text is merged into the reply above.
     retained = {
         k: state.proposals[k]
         for k in ("plan_changed", "proposed_week_plan")
         if k in state.proposals
     }
-    return {"messages": [reply], "proposals": retained}
+    return {"messages": [reply], "proposals": retained, "quick_replies": []}
 
 
 def approve_node(state: CoachingTeamState) -> dict:
@@ -76,7 +101,6 @@ def approve_node(state: CoachingTeamState) -> dict:
         "proposed_plan": proposed_plan.model_dump() if proposed_plan else None,
         "scheduler_summary": (state.proposals.get("scheduler") or "")[:600],
     })
-    # decision arrives via Command(resume=...) from the API layer
     accepted = decision == "accept"
     note = (
         "Plan approved and saved — you're set for the week."
@@ -86,6 +110,7 @@ def approve_node(state: CoachingTeamState) -> dict:
     updates: dict = {
         "messages": [{"role": "assistant", "content": note}],
         "proposals": {},
+        "quick_replies": [],
     }
     if accepted and proposed_plan:
         updates["week_plan"] = proposed_plan

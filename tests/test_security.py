@@ -42,3 +42,23 @@ def test_out_of_scope_reply_mentions_ask():
     reply = out_of_scope_reply("Write me a React todo app")
     assert "React todo app" in reply
     assert "fitness" in reply.lower()
+
+
+def test_guidelines_question_is_fitness_scope():
+    from app.security import classify_scope, looks_like_fitness_query
+
+    q = "What do my Physical Activity Guidelines say about weekly activity for adults?"
+    assert looks_like_fitness_query(q)
+    assert classify_scope(q) == "in_scope"
+
+
+def test_greeting_is_fitness_scope():
+    from app.security import classify_scope
+
+    assert classify_scope("Hi") == "in_scope"
+
+
+def test_pure_coding_not_fitness_hint():
+    from app.security import looks_like_fitness_query
+
+    assert not looks_like_fitness_query("Write a bubble-sort function in Python")

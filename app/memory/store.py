@@ -5,10 +5,11 @@ import json
 import re
 import uuid
 from datetime import date, timedelta
-from typing import Any
+from typing import Any, cast
 
 import psycopg
-from psycopg.rows import dict_row
+from psycopg import Connection
+from psycopg.rows import DictRow, dict_row
 
 from app.config import settings
 from app.graph.state import UserProfile, WeekPlan
@@ -16,10 +17,17 @@ from app.graph.state import UserProfile, WeekPlan
 _SLUG_RE = re.compile(r"[^a-z0-9]+")
 
 
-def _conn():
+def _conn() -> Connection[DictRow]:
+    """Open a dict-row connection.
+
+    psycopg stubs type ``connect()`` / ``row_factory`` as ``TupleRow``-only, so we
+    avoid ``row_factory=`` on connect and assign ``dict_row`` via ``Any``.
+    """
     if not settings.database_url:
         raise RuntimeError("DATABASE_URL is not set")
-    return psycopg.connect(settings.database_url, row_factory=dict_row)
+    conn = psycopg.connect(settings.database_url)
+    conn.row_factory = cast(Any, dict_row)
+    return cast(Connection[DictRow], conn)
 
 
 def _week_start(d: date) -> date:

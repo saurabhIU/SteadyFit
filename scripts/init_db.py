@@ -57,8 +57,11 @@ STATEMENTS = [
         ON documents (user_id, doc_type, source_file)
         WHERE doc_type = 'memory' AND user_id IS NOT NULL AND source_file IS NOT NULL
     """,
+    # Personal uploads are multi-chunk (many rows share user_id/doc_type/source).
+    # Idempotent re-ingest is DELETE-by-source then INSERT — not a one-row unique key.
+    "DROP INDEX IF EXISTS documents_personal_user_upsert_uidx",
     """
-    CREATE UNIQUE INDEX IF NOT EXISTS documents_personal_user_upsert_uidx
+    CREATE INDEX IF NOT EXISTS documents_personal_user_source_idx
         ON documents (user_id, doc_type, source)
         WHERE doc_type IN ('personal','program','recipes','reference','knowledge')
           AND user_id IS NOT NULL

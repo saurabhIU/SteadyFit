@@ -104,13 +104,14 @@ npm run dev
 
 Personal upload (scoped to the active profile):
 ```bash
-curl -H "X-User-Id: demo-veteran" -F "file=@my_program.md" http://localhost:8000/api/upload
+# Or rely on seed_memory --profile veteran, which ingests data/eval_uploads/*
+curl -H "X-User-Id: demo-veteran" -F "file=@data/eval_uploads/my_program.md" http://localhost:8000/api/upload
 ```
 
 Tests and evals:
 ```bash
 uv run pytest tests/
-uv run python evals/run_evals.py   # ~53 cases: adversarial, kb_retrieval, onboarding, memory
+uv run python evals/run_evals.py   # 74 cases: kb_retrieval, rag_personal, memory, adversarial, …
 # Evals use demo-new for onboarding, demo-veteran for everything else
 ```
 
@@ -142,7 +143,8 @@ app/
   memory/         Postgres profiles + adherence + weekly_summary + user_context
 web/              Next.js — chat (chips + citations), plan, update/upload, profile switcher
 data/knowledge_base/   Volume1–7 markdown + exercise_library.json
-evals/            golden_dataset.jsonl (~53) + harness + LangSmith experiment
+evals/            golden_dataset.jsonl (74) + harness + LangSmith experiment
+data/eval_uploads/ personal fixtures for rag_personal (seeded onto demo-veteran)
 scripts/          init_db, migrate_documents_*, seed_memory (--profile fresh|veteran), backfill_memories
 tests/            routing, memory isolation, recency weighting
 PLAN.md           Capstone Tasks 1–7

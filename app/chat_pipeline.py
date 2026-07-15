@@ -4,21 +4,61 @@ from __future__ import annotations
 import logging
 import uuid
 
+from langgraph.types import Command
+
 from app.graph.intake import needs_intake
-from app.graph.response import build_chat_payload
+from app.graph.response import (
+    build_chat_payload,
+    messages_from_state,
+    pending_approval_from_snapshot,
+)
 from app.graph.runtime import make_thread_id, thread_config
-from app.memory.context import bootstrap_input
+from app.memory.context import bootstrap_input, persist_approved_plan
 from app.memory.store import get_profile
 from app.memory.user_context import set_current_user_id
 from app.security import (
     OUT_OF_SCOPE_REPLY,
     classify_scope,
+    gentle_clarification_reply,
     log_out_of_scope,
+    looks_like_fitness_query,
+    looks_like_short_affirmation,
+    looks_like_short_reject,
     normalize_user_message,
     out_of_scope_reply,
+    prior_turns_from_messages,
 )
 
 logger = logging.getLogger("steadyfit.chat")
+
+
+def _snapshot_messages(graph, thread: str) -> list[dict]:
+    try:
+        snapshot = graph.get_state(thread_config(thread))
+    except Exception:
+        return []
+    if not snapshot or not getattr(snapshot, "values", None):
+        return []
+    return messages_from_state(snapshot.values)
+
+
+def _pending_approval(graph, thread: str):
+    try:
+        snapshot = graph.get_state(thread_config(thread))
+    except Exception:
+        return None
+    return pending_approval_from_snapshot(snapshot)
+
+
+def should_skip_scope_gate(*, profile, pending_approval: dict | None) -> bool:
+    """Deterministic bypass when the system explicitly asked for this reply."""
+    if pending_approval and pending_approval.get("type") == "plan_approval":
+        return True
+    if needs_intake(profile) and not profile.onboarding_complete:
+        return True
+    if profile.awaiting_onboarding_confirm:
+        return True
+    return False
 
 
 def process_user_chat(
@@ -46,24 +86,96 @@ def process_user_chat(
         }
 
     profile = get_profile(user_id)
-    if needs_intake(profile) and not profile.onboarding_complete:
-        verdict = "in_scope"
-    else:
-        verdict = classify_scope(normalized)
-        if verdict == "out_of_scope":
-            log_out_of_scope(thread_id=thread, message=normalized, verdict=verdict)
+    config = thread_config(thread)
+    pending = _pending_approval(graph, thread)
+    history = _snapshot_messages(graph, thread)
+    prior_assistant, prior_user = prior_turns_from_messages(history)
+
+    # ── 1) Pending-state bypass (approve interrupt / intake) ───────────────
+    if should_skip_scope_gate(profile=profile, pending_approval=pending):
+        verdict = "in_scope_pending_bypass"
+        # Chat-side affirmations resume HITL when UI uses free text instead of /api/approve
+        if pending and pending.get("type") == "plan_approval":
+            if looks_like_short_affirmation(normalized):
+                result = graph.invoke(Command(resume="accept"), config=config)
+                persist_approved_plan(graph, thread, user_id)
+                payload = build_chat_payload(thread, result, graph=graph, config=config)
+                payload["scope"] = verdict
+                payload["user_id"] = user_id
+                return payload
+            if looks_like_short_reject(normalized):
+                result = graph.invoke(Command(resume="reject"), config=config)
+                payload = build_chat_payload(thread, result, graph=graph, config=config)
+                payload["scope"] = verdict
+                payload["user_id"] = user_id
+                return payload
+            # Ambiguous while paused: keep pending; nudge toward Accept/Reject UI
             return {
                 "thread_id": thread,
                 "user_id": user_id,
-                "reply": out_of_scope_reply(normalized),
+                "reply": (
+                    "Your plan change is still waiting for approval — "
+                    "tap Accept / Reject, or say “sounds good” / “no thanks”."
+                ),
                 "coaching_team": {},
-                "pending_approval": None,
-                "quick_replies": [],
+                "pending_approval": pending,
+                "quick_replies": ["sounds good", "no thanks"],
                 "citations": [],
                 "scope": verdict,
             }
+        # Intake pending (or confirm) — skip gate and enter graph
+        result = graph.invoke(
+            bootstrap_input(
+                graph,
+                thread,
+                user_id=user_id,
+                messages=[{"role": "user", "content": normalized}],
+            ),
+            config=config,
+        )
+        payload = build_chat_payload(thread, result, graph=graph, config=config)
+        payload["scope"] = verdict
+        payload["user_id"] = user_id
+        return payload
 
-    config = thread_config(thread)
+    # ── 2) Context-aware scope gate ────────────────────────────────────────
+    verdict = classify_scope(
+        normalized,
+        prior_assistant=prior_assistant,
+        prior_user=prior_user,
+    )
+
+    # Cold thread + vague affirmation → gentle clarify (do not firm-refuse)
+    if (
+        verdict == "in_scope"
+        and not (prior_assistant or "").strip()
+        and looks_like_short_affirmation(normalized)
+        and not looks_like_fitness_query(normalized)
+    ):
+        return {
+            "thread_id": thread,
+            "user_id": user_id,
+            "reply": gentle_clarification_reply(),
+            "coaching_team": {},
+            "pending_approval": None,
+            "quick_replies": ["my plan", "food", "a workout"],
+            "citations": [],
+            "scope": "gentle_clarify",
+        }
+
+    if verdict == "out_of_scope":
+        log_out_of_scope(thread_id=thread, message=normalized, verdict=verdict)
+        return {
+            "thread_id": thread,
+            "user_id": user_id,
+            "reply": out_of_scope_reply(normalized),
+            "coaching_team": {},
+            "pending_approval": None,
+            "quick_replies": [],
+            "citations": [],
+            "scope": verdict,
+        }
+
     result = graph.invoke(
         bootstrap_input(
             graph,

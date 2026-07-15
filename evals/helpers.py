@@ -21,9 +21,20 @@ from ragas_metrics import RAGAS_METRIC_KEYS, average_ragas, ragas_scores
 EVAL_USER_VETERAN = "demo-veteran"
 EVAL_USER_NEW = "demo-new"
 
+PROTEIN_CREATINE_OFFER = (
+    "Hey Saurabh — creatine monohydrate (~3–5 g daily) is the main evidence-backed "
+    "supplement for most lifters; optional whey if you struggle to hit protein from food. "
+    "Want me to help you hit 140g protein/day from vegetarian sources, or dial "
+    "in your creatine timing?"
+)
+
 
 def eval_user_id(row: dict) -> str:
-    """Onboarding cases use the fresh persona; everything else uses the veteran."""
+    """Onboarding / intake gate cases use demo-new; override via eval_user."""
+    if row.get("eval_user"):
+        return str(row["eval_user"])
+    if row.get("category") in {"onboarding", "gate_context"} and row.get("setup") == "intake_food":
+        return EVAL_USER_NEW
     if row.get("category") == "onboarding":
         return EVAL_USER_NEW
     return EVAL_USER_VETERAN
@@ -69,6 +80,89 @@ def load_golden_rows(path: str | Path) -> list[dict]:
         if line:
             rows.append(json.loads(line))
     return rows
+
+
+def _seed_thread_history(graph, thread: str, user_id: str, seed_messages: list[dict]) -> None:
+    """Write prior turns into the checkpointer before the evaluated user message."""
+    from app.memory.store import get_profile
+
+    config = thread_config(thread)
+    profile = get_profile(user_id)
+    graph.update_state(
+        config,
+        {
+            "messages": seed_messages,
+            "user_id": user_id,
+            "profile": profile,
+        },
+    )
+
+
+def _seed_pending_approve(graph, thread: str, user_id: str) -> None:
+    """Drive the graph into the approve interrupt so chat affirmations can resume it."""
+    from app.graph.state import WeekPlan, WorkoutDay
+    from app.memory.store import get_profile, get_saved_week_plan
+
+    config = thread_config(thread)
+    profile = get_profile(user_id)
+    current = get_saved_week_plan(user_id)
+    proposed = WeekPlan(
+        week_start=(current.week_start if current else "2026-07-14"),
+        days=[
+            WorkoutDay(day="Mon", focus="Upper A", duration_min=40, status="planned"),
+            WorkoutDay(day="Wed", focus="Lower A", duration_min=40, status="planned"),
+            WorkoutDay(day="Fri", focus="Conditioning", duration_min=30, status="planned"),
+        ],
+        calorie_target=2100,
+        protein_target_g=140,
+        notes="Eval pending-approve seed plan",
+    )
+    graph.update_state(
+        config,
+        {
+            "messages": [
+                {"role": "user", "content": "Please simplify my week."},
+                {
+                    "role": "assistant",
+                    "content": "Here's a lighter week — accept to save it?",
+                },
+            ],
+            "user_id": user_id,
+            "profile": profile,
+            "week_plan": current,
+            "proposals": {
+                "scheduler": "Simplified to 3 shorter sessions.",
+                "plan_changed": True,
+                "proposed_week_plan": proposed.model_dump(),
+            },
+            "risk_flag": False,
+            "coaching_team_rounds": 1,
+        },
+        as_node="memory_write",
+    )
+    # Continue into approve_node → interrupt
+    graph.invoke(None, config=config)
+
+
+def _seed_intake_food(user_id: str) -> None:
+    """Leave demo-new needing food_preference so chip replies skip the gate."""
+    from app.graph.state import UserProfile
+    from app.memory.store import ensure_user, save_profile, user_exists
+
+    if not user_exists(user_id):
+        ensure_user(user_id, "Demo New")
+    save_profile(
+        user_id,
+        UserProfile(
+            name="Demo New",
+            goal="lose fat",
+            sessions_per_week=3,
+            preferred_workout_modes=["gym", "walking"],
+            food_preference=None,
+            onboarding_complete=False,
+            awaiting_onboarding_confirm=False,
+        ),
+    )
 
 
 def invoke_case(graph, row: dict) -> dict:
@@ -117,6 +211,15 @@ def invoke_case(graph, row: dict) -> dict:
             "proposals": proposals_from_state(state),
         }
 
+    setup = row.get("setup")
+    if setup == "intake_food":
+        _seed_intake_food(user_id)
+    if setup == "pending_approve":
+        _seed_pending_approve(graph, thread, user_id)
+    seed_messages = row.get("seed_messages")
+    if seed_messages:
+        _seed_thread_history(graph, thread, user_id, seed_messages)
+
     payload = process_user_chat(
         graph, row["input"], user_id=user_id, thread_id=conversation
     )
@@ -124,7 +227,11 @@ def invoke_case(graph, row: dict) -> dict:
     config = thread_config(thread)
     contexts: list[str] = []
     proposals: dict = {}
-    if payload.get("scope") == "in_scope":
+    if payload.get("scope") in {
+        "in_scope",
+        "in_scope_pending_bypass",
+        "gentle_clarify",
+    }:
         try:
             snapshot = graph.get_state(config)
             state = snapshot.values if snapshot else None

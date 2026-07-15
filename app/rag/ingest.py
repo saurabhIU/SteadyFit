@@ -62,9 +62,9 @@ def ingest(path: str, doc_type: str = "program", *, user_id: str) -> int:
     with psycopg.connect(settings.database_url) as conn:
         register_vector(conn)
         conn.execute(
-            f"DELETE FROM {TABLE} WHERE user_id = %s AND source = %s "
-            f"AND doc_type = %s",
-            (user_id, file_path.name, doc_type),
+            f"DELETE FROM {TABLE} WHERE user_id = %s AND doc_type = %s "
+            f"AND (source = %s OR source_file = %s)",
+            (user_id, doc_type, file_path.name, file_path.name),
         )
         with conn.cursor() as cur:
             cur.executemany(

@@ -119,7 +119,7 @@ flowchart TD
 | App memory | Postgres **`app_users` / profiles / week_plans / workout_log / weight_log`** | Multi-profile demo via `X-User-Id`; no SQLite. |
 | Coaching memory | `documents` `doc_type=memory` + recency-weighted retrieve | Scheduler/Adherence recall past travel / overload weeks with `[Memory: …]` citations. |
 | Monitoring | **LangSmith** | Traces of tool_calls and agent hops; optional `--experiment` runs. |
-| Evaluation | RAGAS + LLM-as-judge; ~**53** cases incl. adversarial / onboarding / kb_retrieval / **memory** | Onboarding → `demo-new`; all others → `demo-veteran`. |
+| Evaluation | RAGAS + LLM-as-judge; **74** cases incl. adversarial / onboarding / **kb_retrieval** / **rag_personal** / **memory** | Onboarding → `demo-new`; all others → `demo-veteran` (+ seeded personal uploads). |
 | UI | **Next.js** — chat chips, citation pills, plan approve, **profile dropdown** | Shareable `?profile=` links; header sends `X-User-Id` on every call. |
 | Deploy | Render API + Vercel `web/` | Cron weekly review loops **all** profiles. |
 
@@ -215,17 +215,19 @@ memory for **“what worked for this person before.”**
 5. Scope gate + rate limit + `<untrusted>` wrappers.
 6. Sunday cron weekly review **for every profile**; Next.js on Vercel + API on Render.
 7. **Multi-profile:** `X-User-Id`, thread namespacing, profile switcher, isolation tests.
-8. **Coaching memory:** weekly summarizer + recency-weighted retrieve + memory evals (51–53).
+8. **Coaching memory:** weekly summarizer + recency-weighted retrieve + memory evals.
+9. **Personal eval fixtures:** `data/eval_uploads/` ingested for `demo-veteran` (rag_personal).
 
 ---
 
 ## Task 5: Evals
 
-- Golden set: **~53 cases** across schedule / nutrition / knowledge / safety / adversarial /
-  autonomous / onboarding / **kb_retrieval** / **memory**.
+- Golden set: **74 cases** across schedule / nutrition / knowledge / safety / adversarial /
+  autonomous / onboarding / **kb_retrieval** / **rag_personal** / **rag_web** / **memory**.
 - Harness: LLM-as-judge (groundedness, plan sanity, tone, safety) + RAGAS for
   `rag_*` / `kb_retrieval` when context is present.
-- Profile mapping: onboarding → `demo-new`; all other categories → `demo-veteran`.
+- Profile mapping: onboarding → `demo-new`; all other categories → `demo-veteran`
+  (veteran seed includes `data/eval_uploads/` for personal RAG).
 - Run: `uv run python evals/run_evals.py` → `evals/summary.md`.
 - Optional LangSmith: `uv run python evals/run_evals.py --experiment`.
 
@@ -241,7 +243,11 @@ memory for **“what worked for this person before.”**
 Category highlights: **kb_retrieval** 5.0 groundedness; **schedule** / **safety** / **knowledge** strong;
 **adversarial** and some **nutrition** / **rag_personal** cases pull averages down.
 Memory cases **51–53** scored well in a targeted re-run (judge ~4.7–5.0) after coaching memory shipped.
-Re-run onboarding + memory after multi-profile if publishing a new LangSmith baseline.
+
+**Golden set (current):** **74** cases — `kb_retrieval` (29) + `rag_personal` (14) emphasize curated KB vs
+user-upload RAG. Personal fixtures live in `data/eval_uploads/` and are ingested for
+`demo-veteran` by `scripts/seed_memory.py --profile veteran`. Re-run the full suite before
+publishing a new LangSmith baseline.
 
 ---
 

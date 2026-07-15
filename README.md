@@ -111,18 +111,22 @@ curl -H "X-User-Id: demo-veteran" -F "file=@data/eval_uploads/my_program.md" htt
 Tests and evals:
 ```bash
 uv run pytest tests/
-uv run python evals/run_evals.py   # 74 cases: kb_retrieval, rag_personal, memory, adversarial, …
-# Evals use demo-new for onboarding, demo-veteran for everything else
+uv run python evals/run_evals.py                  # ~80 cases → evals/summary.md
+uv run python evals/run_evals.py --label baseline # also writes summary_baseline.*
+uv run python evals/run_evals.py --compare baseline hybrid_retrieval
+# Categories: schedule, nutrition, kb_retrieval, rag_personal, rag_web, memory,
+#   gate_context, adversarial, …
+# RAGAS (faithfulness, answer_relevancy, context_precision/recall, answer_correctness)
+# on rag_* / kb_retrieval / memory. Tracing is forced off for local evals.
 ```
 
 **LangSmith (optional):**
 ```bash
-LANGCHAIN_TRACING_V2=true
-LANGCHAIN_API_KEY=your-key
-LANGCHAIN_PROJECT=steadyfit
+LANGSMITH_TRACING=true
+LANGSMITH_API_KEY=your-key
+LANGSMITH_PROJECT=steadyfit-dev
 # Full experiment: uv run python evals/run_evals.py --experiment
-
-LangSmith tracing (optional): see **TRACING.md**.
+# Chat/API tracing: see TRACING.md
 ```
 
 ## Deploy

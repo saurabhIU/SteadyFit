@@ -28,10 +28,12 @@ dependencies = [
     "python-multipart",
     "uvicorn[standard]",
     "slowapi",
-    # Evals
-    "ragas",
-    "datasets",
+    # Evals (RAGAS + HF datasets; pin for harness stability)
+    "ragas>=0.4,<0.5",
+    "datasets>=4,<5",
     "langchain-community<0.4",
+    "python-dotenv",
+    "nest-asyncio>=1.6",
 ]
 
 [dependency-groups]

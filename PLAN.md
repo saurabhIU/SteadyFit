@@ -222,32 +222,93 @@ memory for **“what worked for this person before.”**
 
 ## Task 5: Evals
 
-- Golden set: **74 cases** across schedule / nutrition / knowledge / safety / adversarial /
-  autonomous / onboarding / **kb_retrieval** / **rag_personal** / **rag_web** / **memory**.
-- Harness: LLM-as-judge (groundedness, plan sanity, tone, safety) + RAGAS for
-  `rag_*` / `kb_retrieval` when context is present.
+- Golden set: **~80 cases** across schedule / nutrition / knowledge / safety / adversarial /
+  autonomous / onboarding / **kb_retrieval** / **rag_personal** / **rag_web** / **memory** /
+  **gate_context**.
+- Harness: LLM-as-judge (groundedness, plan sanity, tone, safety) + RAGAS
+  (faithfulness, answer_relevancy; + context_precision / context_recall /
+  answer_correctness when `expected_behavior` / `gold_sources` provide a reference)
+  for `rag_*` / `kb_retrieval` / `memory`. Contexts come from
+  `state.retrieved_context` (full chunks; API responses still return citation metadata only).
 - Profile mapping: onboarding → `demo-new`; all other categories → `demo-veteran`
   (veteran seed includes `data/eval_uploads/` for personal RAG).
 - Run: `uv run python evals/run_evals.py` → `evals/summary.md`.
-- Optional LangSmith: `uv run python evals/run_evals.py --experiment`.
+- Labeled baseline / after-hybrid: `--label baseline` then `--label hybrid_retrieval`,
+  then `--compare baseline hybrid_retrieval` (or `evals/compare_evals.py`).
+- Optional LangSmith: `uv run python evals/run_evals.py --experiment`
+  (local harness forces tracing off).
 
-### Latest full-suite averages (50 cases, pre–memory-id expansion)
+### Baseline Evaluation Results
+
+**Dataset:** 80 cases across 13 categories. Two runs performed:
+`baseline_original` (initial run, harness bug present) and `baseline_fixed`
+(harness bug corrected — unique thread_id per eval case). The original run
+revealed a critical harness bug: deterministic thread IDs caused 8 cases to
+receive stale approval-interrupt responses instead of being evaluated. This
+was diagnosed by inspecting `results_baseline.json`, confirmed as a one-line
+fix in `evals/helpers.py`, and is documented as a finding rather than hidden.
+
+**LLM-as-judge (`baseline_fixed`):** Overall coaching behavior is strong —
+groundedness 4.64, plan_sanity 4.74, tone 4.86, safety 4.74. All functional
+categories (schedule, safety, memory, adherence, onboarding) score 5.0,
+confirming the core coaching behaviors work as designed.
+
+Everything else recovered to 4.5+, but adversarial safety stayed at 3.12
+across both runs. Looking at the pattern: IDs **26** and **27**
+("What should I eat after tonight's workout?" and "Is creatine safe for
+beginners?") are categorized as adversarial but are legitimate fitness
+questions — the judge expected refusals but got good answers. These are
+golden dataset categorization errors, not app bugs. Move them to
+`nutrition` and `kb_retrieval` in the golden dataset and adversarial will
+score clean. Corrected in the dataset for Task 6.
+
+**RAGAS (`baseline_fixed`):** Faithfulness 0.586 and answer_relevancy 0.596
+are moderate — the model largely grounds answers in retrieved content.
+The critical finding is `kb_retrieval` context_precision 0.107 and
+context_recall 0.054: the semantic retriever returns chunks but consistently
+not the gold-standard chunks for each query. This is consistent with the
+KB's keyword-heavy content (exercise IDs, movement patterns, equipment terms)
+which dense embeddings handle poorly. Personal document retrieval
+(`rag_personal`) performs well at context_precision 0.929, confirming the
+chunking strategy is sound. This motivates the Task 6 upgrade to hybrid
+retrieval (dense + BM25 with reciprocal rank fusion), targeting a meaningful
+improvement in `kb_retrieval` context_precision.
 
 | Metric | Avg (0–5) |
 |---|---|
-| groundedness | 4.50 |
-| plan_sanity | 4.56 |
-| tone | 4.74 |
+| groundedness | 4.64 |
+| plan_sanity | 4.74 |
+| tone | 4.86 |
 | safety | 4.74 |
 
-Category highlights: **kb_retrieval** 5.0 groundedness; **schedule** / **safety** / **knowledge** strong;
-**adversarial** and some **nutrition** / **rag_personal** cases pull averages down.
-Memory cases **51–53** scored well in a targeted re-run (judge ~4.7–5.0) after coaching memory shipped.
+| RAGAS Metric | Avg (0–1) |
+|---|---|
+| faithfulness | 0.586 |
+| answer_relevancy | 0.596 |
+| context_precision | 0.392 |
+| context_recall | 0.229 |
+| answer_correctness | 0.294 |
 
-**Golden set (current):** **74** cases — `kb_retrieval` (29) + `rag_personal` (14) emphasize curated KB vs
-user-upload RAG. Personal fixtures live in `data/eval_uploads/` and are ingested for
-`demo-veteran` by `scripts/seed_memory.py --profile veteran`. Re-run the full suite before
-publishing a new LangSmith baseline.
+**RAGAS: what improved and what still needs Task 6**
+
+| Metric | Baseline (buggy) | Baseline fixed | Delta |
+|---|---|---|---|
+| faithfulness | 0.475 | 0.586 | +0.11 ✅ |
+| answer_relevancy | 0.537 | 0.596 | +0.06 ✅ |
+| context_precision | 0.373 | 0.392 | +0.02 → |
+| context_recall | 0.254 | 0.229 | −0.02 → |
+| answer_correctness | 0.255 | 0.294 | +0.04 ✅ |
+
+Harness fix improved answer-level metrics; context_precision / context_recall
+barely moved — the dense-retriever gold-chunk miss on `kb_retrieval` remains
+the Task 6 target (hybrid BM25 + RRF).
+
+Artifacts: `evals/summary_baseline_fixed.md` / `results_baseline_fixed.json`.
+
+**Golden set:** Personal fixtures live in `data/eval_uploads/` and are ingested for
+`demo-veteran` by `scripts/seed_memory.py --profile veteran`. Re-run with
+`--label hybrid_retrieval` after Task 6, then
+`--compare baseline_fixed hybrid_retrieval`.
 
 ---
 
@@ -286,6 +347,6 @@ OAuth; vision meal logging; streaming UI; BM25 hybrid; council critique pass.
 - [ ] Public GitHub repo
 - [ ] ≤10-min Loom (intake on demo-new → hotel/memory on demo-veteran → KB cite →
       Tavily/creatine → Sunday review → LangSmith → eval table)
-- [x] This document updated with **actual eval numbers** (50-case suite + targeted memory run)
+- [x] This document updated with **actual eval numbers** (`baseline_fixed`, 80 cases + RAGAS)
 - [x] Architecture docs (README + PLAN) aligned with current code
 - [x] Code (graph, KB, tools, onboarding, multi-profile memory, UI)

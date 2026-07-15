@@ -3,6 +3,7 @@ import json
 import re
 from pathlib import Path
 from typing import Any
+import uuid
 
 from app.chat_pipeline import process_user_chat
 from app.graph.response import build_chat_payload, proposals_from_state
@@ -15,7 +16,13 @@ from app.security import (
     out_of_scope_reply,
     wrap_untrusted,
 )
-from ragas_metrics import RAGAS_METRIC_KEYS, average_ragas, ragas_scores
+from ragas_metrics import (
+    RAGAS_METRIC_KEYS,
+    average_ragas,
+    empty_context_case_ids,
+    ragas_scores,
+    sanitize_contexts,
+)
 
 # Demo profiles from scripts/seed_memory.py
 EVAL_USER_VETERAN = "demo-veteran"
@@ -168,7 +175,7 @@ def _seed_intake_food(user_id: str) -> None:
 def invoke_case(graph, row: dict) -> dict:
     """Run through the same normalize → scope gate → graph path as production chat."""
     user_id = eval_user_id(row)
-    conversation = f"eval-{row['id']}"
+    conversation = f"eval-{row['id']}-{uuid.uuid4().hex[:8]}"
     thread = make_thread_id(user_id, conversation)
     set_current_user_id(user_id)
 
@@ -243,13 +250,17 @@ def invoke_case(graph, row: dict) -> dict:
 
 
 def _contexts_from_state(state: Any) -> list[str]:
+    """Full retrieved chunk texts from checkpoint (eval-only path; not API)."""
     if state is None:
         return []
+    raw: list[str] = []
     if hasattr(state, "retrieved_context"):
-        return list(state.retrieved_context or [])
-    if isinstance(state, dict):
-        return list(state.get("retrieved_context") or [])
-    return []
+        raw = list(state.retrieved_context or [])
+    elif isinstance(state, dict):
+        raw = list(state.get("retrieved_context") or [])
+    # Keep original wrapped strings in results.json for debugging; RAGAS
+    # sanitizes when scoring. Prefer non-empty only.
+    return [c for c in raw if isinstance(c, str) and c.strip()]
 
 
 def parse_judge_scores(raw: str) -> dict:
@@ -289,7 +300,12 @@ def judge_reply(judge, row: dict, reply: str) -> dict:
 
 def summarize_results(results: list[dict]) -> dict:
     judge_dims = ("groundedness", "plan_sanity", "tone", "safety")
-    summary: dict[str, Any] = {"total": len(results), "by_category": {}}
+    summary: dict[str, Any] = {
+        "total": len(results),
+        "by_category": {},
+        "empty_context_ids": empty_context_case_ids(results),
+        "per_case_ragas": [],
+    }
     for dim in judge_dims:
         values = [
             r["judge_scores"][dim]
@@ -317,16 +333,38 @@ def summarize_results(results: list[dict]) -> dict:
             "avg_scores": cat_scores,
             "ragas": average_ragas(rows),
         }
+
+    for r in results:
+        ragas = r.get("ragas") if isinstance(r.get("ragas"), dict) else None
+        if ragas is None:
+            continue
+        entry: dict[str, Any] = {
+            "id": r.get("id"),
+            "category": r.get("category"),
+            "n_contexts": len(sanitize_contexts(r.get("contexts") or [])),
+        }
+        for key in RAGAS_METRIC_KEYS:
+            entry[key] = ragas.get(key)
+        if ragas.get("skipped"):
+            entry["skipped"] = ragas["skipped"]
+        if ragas.get("error"):
+            entry["error"] = ragas["error"]
+        summary["per_case_ragas"].append(entry)
     return summary
 
 
-def format_summary_table(summary: dict) -> str:
+def format_summary_table(summary: dict, *, label: str | None = None) -> str:
+    title = "# Eval summary"
+    if label:
+        title += f" (`{label}`)"
     lines = [
-        "# Eval summary",
+        title,
         "",
         f"Total cases: {summary['total']}",
         "",
-        "## Overall judge averages (0-5)",
+        "## LLM-as-judge (coaching behavior, 0–5)",
+        "",
+        "Covers tone, safety, plan sanity, and groundedness of the final reply.",
         "",
         "| Metric | Avg |",
         "|---|---|",
@@ -337,7 +375,13 @@ def format_summary_table(summary: dict) -> str:
     ragas = summary.get("ragas") or {}
     lines.extend([
         "",
-        "## Overall RAGAS averages (0-1)",
+        "## RAGAS (retrieval / answer quality, 0–1)",
+        "",
+        "Covers faithfulness & answer relevancy whenever contexts exist; "
+        "context precision/recall & answer correctness when a ground-truth "
+        "reference can be built from `expected_behavior` + `gold_sources`.",
+        "",
+        "### Overall RAGAS averages",
         "",
         "| Metric | Avg |",
         "|---|---|",
@@ -346,24 +390,120 @@ def format_summary_table(summary: dict) -> str:
         val = ragas.get(key)
         lines.append(f"| {key} | {val if val is not None else '—'} |")
 
-    lines.extend(["", "## By category", ""])
+    # Per-category RAGAS table
+    lines.extend([
+        "",
+        "### RAGAS by category",
+        "",
+        "| Category | N | " + " | ".join(RAGAS_METRIC_KEYS) + " |",
+        "|---|---|" + "|".join(["---"] * len(RAGAS_METRIC_KEYS)) + "|",
+    ])
+    for cat, data in sorted(summary.get("by_category", {}).items()):
+        cat_ragas = data.get("ragas") or {}
+        if not any(cat_ragas.get(k) is not None for k in RAGAS_METRIC_KEYS):
+            continue
+        cells = [
+            cat_ragas.get(k) if cat_ragas.get(k) is not None else "—"
+            for k in RAGAS_METRIC_KEYS
+        ]
+        lines.append(
+            f"| {cat} | {data['count']} | " + " | ".join(str(c) for c in cells) + " |"
+        )
+
+    # Per-case RAGAS
+    per_case = summary.get("per_case_ragas") or []
+    if per_case:
+        lines.extend([
+            "",
+            "### RAGAS per case",
+            "",
+            "| ID | Category | N ctx | " + " | ".join(RAGAS_METRIC_KEYS) + " | Notes |",
+            "|---|---|---|" + "|".join(["---"] * len(RAGAS_METRIC_KEYS)) + "|---|",
+        ])
+        for row in per_case:
+            cells = [
+                row.get(k) if row.get(k) is not None else "—"
+                for k in RAGAS_METRIC_KEYS
+            ]
+            note = row.get("skipped") or row.get("error") or ""
+            lines.append(
+                f"| {row.get('id')} | {row.get('category')} | {row.get('n_contexts', 0)} | "
+                + " | ".join(str(c) for c in cells)
+                + f" | {note} |"
+            )
+
+    empty_ids = summary.get("empty_context_ids") or []
+    if empty_ids:
+        lines.extend([
+            "",
+            "## ⚠️ Empty retrieval contexts (retrieval bug, not eval)",
+            "",
+            "Case IDs with no usable `retrieved_context`: "
+            + ", ".join(str(i) for i in empty_ids),
+            "",
+        ])
+
+    lines.extend(["", "## Judge scores by category", ""])
     for cat, data in sorted(summary.get("by_category", {}).items()):
         scores = data["avg_scores"]
-        line = (
+        lines.append(
             f"- **{cat}** ({data['count']}): "
             f"groundedness={scores.get('groundedness')}, "
             f"plan_sanity={scores.get('plan_sanity')}, "
             f"tone={scores.get('tone')}, "
             f"safety={scores.get('safety')}"
         )
-        cat_ragas = data.get("ragas") or {}
-        ragas_bits = [
-            f"{k}={cat_ragas[k]}"
-            for k in RAGAS_METRIC_KEYS
-            if cat_ragas.get(k) is not None
-        ]
-        if ragas_bits:
-            line += " | RAGAS: " + ", ".join(ragas_bits)
-        lines.append(line)
     lines.append("")
+    return "\n".join(lines)
+
+
+def compare_labeled_summaries(
+    a: dict,
+    b: dict,
+    *,
+    label_a: str,
+    label_b: str,
+) -> str:
+    """Markdown before/after table for Task 5/6 reporting."""
+    lines = [
+        f"# Eval comparison: `{label_a}` vs `{label_b}`",
+        "",
+        "## LLM-as-judge (0–5)",
+        "",
+        f"| Metric | {label_a} | {label_b} | Δ |",
+        "|---|---|---|---|",
+    ]
+    for dim in ("groundedness", "plan_sanity", "tone", "safety"):
+        va, vb = a.get(dim), b.get(dim)
+        delta = "—"
+        if isinstance(va, (int, float)) and isinstance(vb, (int, float)):
+            delta = round(vb - va, 2)
+        lines.append(f"| {dim} | {va if va is not None else '—'} | {vb if vb is not None else '—'} | {delta} |")
+
+    ra, rb = a.get("ragas") or {}, b.get("ragas") or {}
+    lines.extend([
+        "",
+        "## RAGAS (0–1)",
+        "",
+        f"| Metric | {label_a} | {label_b} | Δ |",
+        "|---|---|---|---|",
+    ])
+    for key in RAGAS_METRIC_KEYS:
+        va, vb = ra.get(key), rb.get(key)
+        delta = "—"
+        if isinstance(va, (int, float)) and isinstance(vb, (int, float)):
+            delta = round(vb - va, 4)
+        lines.append(
+            f"| {key} | {va if va is not None else '—'} | "
+            f"{vb if vb is not None else '—'} | {delta} |"
+        )
+
+    lines.extend([
+        "",
+        f"Empty-context IDs ({label_a}): "
+        + (", ".join(str(i) for i in (a.get("empty_context_ids") or [])) or "none"),
+        f"Empty-context IDs ({label_b}): "
+        + (", ".join(str(i) for i in (b.get("empty_context_ids") or [])) or "none"),
+        "",
+    ])
     return "\n".join(lines)

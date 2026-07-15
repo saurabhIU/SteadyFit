@@ -20,10 +20,9 @@ import { CoachingTeamPanel } from "@/components/chat/CoachingTeamPanel";
 import { PlanApprovalCard } from "@/components/chat/PlanApprovalCard";
 import { ApiError, fetchChatHistory, sendChat } from "@/lib/api";
 import { notifyPlanUpdated } from "@/lib/plan-events";
+import { threadStorageKey, useProfile } from "@/lib/profile";
 import type { ChatMessage, CoachingTeamProposals, PendingApproval } from "@/lib/types";
 import { cn } from "@/lib/utils";
-
-const THREAD_KEY = "steadyfit_thread_id";
 
 const WELCOME: ChatMessage = {
   id: "welcome",
@@ -43,6 +42,7 @@ function hasCoachingTeam(proposals?: CoachingTeamProposals) {
 }
 
 export function ChatView() {
+  const { userId, ready } = useProfile();
   const [messages, setMessages] = useState<ChatMessage[]>([WELCOME]);
   const [input, setInput] = useState("");
   const [threadId, setThreadId] = useState<string | null>(null);
@@ -53,8 +53,19 @@ export function ChatView() {
   const [restoring, setRestoring] = useState(false);
 
   useEffect(() => {
-    const storedThread = sessionStorage.getItem(THREAD_KEY);
-    if (!storedThread) return;
+    if (!ready) return;
+
+    setMessages([WELCOME]);
+    setPendingApproval(null);
+    setQuickReplies([]);
+    setError(null);
+    setInput("");
+
+    const storedThread = sessionStorage.getItem(threadStorageKey(userId));
+    if (!storedThread) {
+      setThreadId(null);
+      return;
+    }
 
     setThreadId(storedThread);
     setRestoring(true);
@@ -76,7 +87,7 @@ export function ChatView() {
         // Keep welcome state if history cannot be loaded.
       })
       .finally(() => setRestoring(false));
-  }, []);
+  }, [userId, ready]);
 
   const submitMessage = useCallback(
     async (text: string) => {
@@ -93,7 +104,7 @@ export function ChatView() {
       try {
         const data = await sendChat(text, threadId);
         setThreadId(data.thread_id);
-        sessionStorage.setItem(THREAD_KEY, data.thread_id);
+        sessionStorage.setItem(threadStorageKey(userId), data.thread_id);
 
         const assistantMsg: ChatMessage = {
           id: crypto.randomUUID(),
@@ -115,7 +126,7 @@ export function ChatView() {
         setLoading(false);
       }
     },
-    [threadId],
+    [threadId, userId],
   );
 
   async function handleSubmit(e?: React.FormEvent) {

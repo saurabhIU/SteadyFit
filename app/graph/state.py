@@ -65,6 +65,7 @@ class UserProfile(BaseModel):
 class CoachingTeamState(BaseModel):
     """State object every agent node reads and writes."""
     messages: Annotated[list, add_messages] = []
+    user_id: str = ""
     profile: UserProfile = Field(default_factory=UserProfile)
     week_plan: Optional[WeekPlan] = None
     intent: Optional[str] = None

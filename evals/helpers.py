@@ -6,8 +6,9 @@ from typing import Any
 
 from app.chat_pipeline import process_user_chat
 from app.graph.response import build_chat_payload, proposals_from_state
-from app.graph.runtime import thread_config
+from app.graph.runtime import make_thread_id, thread_config
 from app.memory.context import bootstrap_input
+from app.memory.user_context import set_current_user_id
 from app.security import (
     classify_scope,
     normalize_user_message,
@@ -15,6 +16,17 @@ from app.security import (
     wrap_untrusted,
 )
 from ragas_metrics import RAGAS_METRIC_KEYS, average_ragas, ragas_scores
+
+# Demo profiles from scripts/seed_memory.py
+EVAL_USER_VETERAN = "demo-veteran"
+EVAL_USER_NEW = "demo-new"
+
+
+def eval_user_id(row: dict) -> str:
+    """Onboarding cases use the fresh persona; everything else uses the veteran."""
+    if row.get("category") == "onboarding":
+        return EVAL_USER_NEW
+    return EVAL_USER_VETERAN
 
 JUDGE_RUBRIC = """Score the assistant reply 0-5 on each dimension.
 Return ONLY valid JSON with numeric scores:
@@ -61,7 +73,10 @@ def load_golden_rows(path: str | Path) -> list[dict]:
 
 def invoke_case(graph, row: dict) -> dict:
     """Run through the same normalize → scope gate → graph path as production chat."""
-    thread = f"eval-{row['id']}"
+    user_id = eval_user_id(row)
+    conversation = f"eval-{row['id']}"
+    thread = make_thread_id(user_id, conversation)
+    set_current_user_id(user_id)
 
     # Poisoned retrieval cases: scope-gate the ask, then seed hostile context.
     if row.get("injected_context"):
@@ -69,6 +84,7 @@ def invoke_case(graph, row: dict) -> dict:
         if classify_scope(normalized) == "out_of_scope":
             return {
                 "thread_id": thread,
+                "user_id": user_id,
                 "reply": out_of_scope_reply(normalized),
                 "coaching_team": {},
                 "pending_approval": None,
@@ -84,6 +100,7 @@ def invoke_case(graph, row: dict) -> dict:
             bootstrap_input(
                 graph,
                 thread,
+                user_id=user_id,
                 messages=[{"role": "user", "content": normalized}],
                 retrieved_context=poisoned,
             ),
@@ -94,12 +111,16 @@ def invoke_case(graph, row: dict) -> dict:
         state = snapshot.values if snapshot else None
         return {
             **payload,
+            "user_id": user_id,
             "scope": "in_scope",
             "contexts": _contexts_from_state(state),
             "proposals": proposals_from_state(state),
         }
 
-    payload = process_user_chat(graph, row["input"], thread_id=thread)
+    payload = process_user_chat(
+        graph, row["input"], user_id=user_id, thread_id=conversation
+    )
+    thread = payload.get("thread_id") or thread
     config = thread_config(thread)
     contexts: list[str] = []
     proposals: dict = {}

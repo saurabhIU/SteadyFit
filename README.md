@@ -33,7 +33,7 @@ Tools (agentic): calendar · USDA · Tavily · find_exercises / substitutions ·
 RAG:
   personal uploads  ──► ingest.py      ──► documents (doc_type=personal)
   curated KB Volumes──► ingest_kb.py   ──► documents (kb_exercise|guide|template|science)
-Memory: SQLite profile/adherence · Gateway: Vercel AI Gateway · Traces: LangSmith
+Memory: Postgres profiles/adherence (multi-user via `X-User-Id`) · Gateway: Vercel AI Gateway · Traces: LangSmith
 ```
 
 ### Turn flow (mermaid)
@@ -73,10 +73,13 @@ cp .env.example .env        # fill in API keys and DATABASE_URL
 uv run python scripts/init_db.py
 uv run python scripts/migrate_documents_kb.py   # KB metadata columns (idempotent)
 uv run python -m app.rag.ingest_kb data/knowledge_base/   # curated KB → pgvector
-uv run python scripts/seed_memory.py            # complete demo profile
-# uv run python scripts/seed_memory.py --fresh  # empty profile → intake demo
+uv run python scripts/seed_memory.py --profile fresh    # demo-new (onboarding)
+uv run python scripts/seed_memory.py --profile veteran --no-llm   # demo-veteran (history)
+# Add --yes if DATABASE_URL is not localhost (e.g. Neon)
 uv run uvicorn app.main:app --reload --port 8000
 ```
+
+Demo profiles switch in the UI (`?profile=demo-new` / `demo-veteran`); every API call sends `X-User-Id`.
 
 ### Frontend (Next.js)
 

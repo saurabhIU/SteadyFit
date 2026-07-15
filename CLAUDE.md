@@ -87,7 +87,7 @@ Shared Pydantic state every `app/` agent node reads/writes:
 | Embeddings | OpenAI `text-embedding-3-small` (direct OpenAI key, not the gateway) |
 | Vector store | Postgres + pgvector (`documents` table); was Qdrant in PLAN.md — **code uses pgvector** |
 | Short-term memory | LangGraph Postgres checkpointer (thread_id per chat / weekly-review) |
-| Long-term memory | SQLite `data/profile.sqlite` — workout_log, weight_log, profile (`app/memory/store.py`) |
+| Long-term memory | Postgres `app_users` / `user_profiles` / logs / `week_plans` (`app/memory/store.py`); request header `X-User-Id` |
 | Web search | Tavily (`app/tools/tavily_search.py`) — degrades with `[web:error]` |
 | Nutrition API | USDA FoodData Central (`app/tools/food_api.py`) |
 | Calendar | Mock JSON `data/mock_calendar.json` (`app/tools/calendar_tool.py`) |
@@ -134,7 +134,7 @@ scripts/seed_memory.py        # Demo profile, week plan, workout logs (SQLite)
 evals/                        # golden_dataset.jsonl (20 cases), run_evals.py, summary.md output
 tests/test_graph.py           # Routing smoke tests (no LLM calls)
 tests/test_evals.py           # Eval helper unit tests
-data/                         # Runtime: uploads/, profile.sqlite, mock_calendar.json, knowledge_base/
+data/                         # Runtime: uploads/, mock_calendar.json, knowledge_base/
 PLAN.md                       # Capstone Tasks 1–7 (architecture diagrams, eval plan)
 render.yaml                   # Render web service + Sunday cron
 pyproject.toml                # uv project; ships `app` package

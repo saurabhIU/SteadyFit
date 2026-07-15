@@ -26,7 +26,7 @@ def intake_node(state: CoachingTeamState) -> dict:
         if ext.confirmation == "yes" or looks_like_confirmation_yes(user_msg):
             profile.onboarding_complete = True
             profile.awaiting_onboarding_confirm = False
-            save_profile(profile)
+            save_profile(state.user_id, profile)
             return {
                 "profile": profile,
                 "intent": "first_plan",
@@ -47,7 +47,7 @@ def intake_node(state: CoachingTeamState) -> dict:
         profile = apply_extraction(profile, ext)
         if required_slots_filled(profile):
             profile.awaiting_onboarding_confirm = True
-            save_profile(profile)
+            save_profile(state.user_id, profile)
             return {
                 "profile": profile,
                 "intent": "intake",
@@ -89,11 +89,11 @@ def intake_node(state: CoachingTeamState) -> dict:
         except Exception:
             aside = ""
 
-    save_profile(profile)
+    save_profile(state.user_id, profile)
 
     # Profile update path after onboarding (re-entry)
     if profile.onboarding_complete:
-        save_profile(profile)
+        save_profile(state.user_id, profile)
         return {
             "profile": profile,
             "intent": "intake",
@@ -109,7 +109,7 @@ def intake_node(state: CoachingTeamState) -> dict:
 
     if required_slots_filled(profile):
         profile.awaiting_onboarding_confirm = True
-        save_profile(profile)
+        save_profile(state.user_id, profile)
         return {
             "profile": profile,
             "intent": "intake",
@@ -123,7 +123,7 @@ def intake_node(state: CoachingTeamState) -> dict:
     prompt = next_intake_question(profile)
     if prompt is None:
         profile.awaiting_onboarding_confirm = True
-        save_profile(profile)
+        save_profile(state.user_id, profile)
         return {
             "profile": profile,
             "intent": "intake",

@@ -1,94 +1,266 @@
-"""Seed demo profile, week plan, and workout logs for local development.
+"""Seed demo profiles into Neon/Postgres.
 
-  uv run python scripts/seed_memory.py           # complete profile (skip onboarding)
-  uv run python scripts/seed_memory.py --fresh   # empty profile for intake demo
+  uv run python scripts/seed_memory.py --profile fresh
+  uv run python scripts/seed_memory.py --profile veteran --history-weeks 12 --no-llm
+  uv run python scripts/seed_memory.py --profile veteran --yes   # required if not localhost
 """
+from __future__ import annotations
+
 import argparse
+import random
+import sys
 from datetime import date, timedelta
+from pathlib import Path
+from urllib.parse import urlparse
 
-from app.graph.state import UserProfile, WeekPlan, WorkoutDay
-from app.memory import store
-from app.memory.store import clear_profile_slots, log_workout, save_profile, save_week_plan
+from dotenv import load_dotenv
 
-PROFILE = UserProfile(
-    name="Saurabh",
-    goal="lose 8kg by November while keeping strength",
-    age=34,
-    sex="male",
-    preferred_workout_modes=["gym", "walking"],
-    food_preference="non-vegetarian",
-    sessions_per_week=5,
-    constraints=["mild lower-back sensitivity"],
-    constraints_asked=True,
-    onboarding_complete=True,
-    awaiting_onboarding_confirm=False,
+load_dotenv(Path(__file__).resolve().parents[1] / ".env", override=False)
+
+from app.config import settings  # noqa: E402
+from app.graph.state import UserProfile, WeekPlan, WorkoutDay  # noqa: E402
+from app.memory.store import (  # noqa: E402
+    ensure_user,
+    log_weight,
+    log_workout,
+    reset_user,
+    save_profile,
+    save_week_plan,
+    user_exists,
 )
+from app.memory.weekly_summary import WeeklySummary  # noqa: E402
+from app.rag.memory_store import upsert_weekly_memory  # noqa: E402
 
-FRESH_PROFILE = UserProfile(
-    name="athlete",
-    goal="",
-    onboarding_complete=False,
-    awaiting_onboarding_confirm=False,
-)
-
-WEEK_START = (date.today() - timedelta(days=date.today().weekday())).isoformat()
-WEEK_PLAN = WeekPlan(
-    week_start=WEEK_START,
-    days=[
-        WorkoutDay(day="Mon", focus="Upper push", duration_min=45),
-        WorkoutDay(day="Wed", focus="Lower body", duration_min=50),
-        WorkoutDay(day="Fri", focus="Full body + conditioning", duration_min=40),
-    ],
-    calorie_target=2200,
-    protein_target_g=155,
-    notes="Default 3-day split — scheduler will adapt around travel and misses.",
-)
+FOCUS_POOL = [
+    "Upper push",
+    "Lower body",
+    "Full body",
+    "Pull + core",
+    "Walk 30m",
+    "Hotel full body 20m",
+]
 
 
-def seed_complete():
-    save_profile(PROFILE)
-    save_week_plan(WEEK_PLAN)
+def _require_yes_for_remote(yes: bool) -> None:
+    url = settings.database_url or ""
+    host = urlparse(url).hostname or ""
+    print(f"DATABASE_URL host: {host or '(unset)'}")
+    if not url:
+        sys.exit("DATABASE_URL is not set")
+    local = host in {"localhost", "127.0.0.1", "::1"} or host.endswith(".local")
+    if not local and not yes:
+        sys.exit(
+            f"Refusing to write to non-localhost host '{host}'. Re-run with --yes to confirm."
+        )
 
-    with store._conn() as c:
-        c.execute("DELETE FROM workout_log")
+
+def seed_fresh() -> str:
+    uid = "demo-new"
+    if user_exists(uid):
+        reset_user(uid)
+    else:
+        ensure_user(uid, "Demo New")
+    save_profile(
+        uid,
+        UserProfile(
+            name="Demo New",
+            goal="",
+            onboarding_complete=False,
+            awaiting_onboarding_confirm=False,
+        ),
+    )
+    print(f"Seeded FRESH profile {uid} (onboarding_complete=False)")
+    return uid
+
+
+def _template_memory(
+    week_start: date,
+    *,
+    kind: str,
+    planned: int,
+    done: int,
+    skipped: int,
+) -> WeeklySummary:
+    if kind == "travel":
+        return WeeklySummary(
+            week_start=week_start,
+            context_tags=["travel", "hotel_gym"],
+            planned_vs_done=f"{planned} planned, {done} done (hotel), {skipped} skipped",
+            what_worked=(
+                "Short 3×20-min hotel sessions (push-up chest_010, band row, goblet squat) "
+                "completed on planned days."
+            ),
+            what_didnt="none noted" if skipped == 0 else f"{skipped} sessions skipped",
+            council_adjustments=(
+                "Switched gym barbell work to hotel bodyweight; kept short sessions."
+            ),
+            user_signals="User said travel week with hotel gym only.",
+        )
+    if kind == "bad":
+        return WeeklySummary(
+            week_start=week_start,
+            context_tags=["high_work_stress", "simplified_plan", "risk_flag"],
+            planned_vs_done=f"{planned} planned, {done} done, {skipped} skipped",
+            what_worked="Two short walks completed mid-week." if done else "none noted",
+            what_didnt=f"{skipped} gym sessions skipped after late workdays.",
+            council_adjustments=(
+                "Adherence flagged RISK; council simplified next week to 3 shorter sessions."
+            ),
+            user_signals="User said work was crazy and felt overwhelmed.",
+        )
+    return WeeklySummary(
+        week_start=week_start,
+        context_tags=["steady_week"],
+        planned_vs_done=f"{planned} planned, {done} done, {skipped} skipped",
+        what_worked=f"{done} sessions completed as planned.",
+        what_didnt="none noted" if skipped == 0 else f"{skipped} skips logged",
+        council_adjustments="none noted",
+        user_signals="none noted",
+    )
+
+
+def seed_veteran(*, history_weeks: int, no_llm: bool) -> str:
+    uid = "demo-veteran"
+    if user_exists(uid):
+        reset_user(uid)
+    else:
+        ensure_user(uid, "Demo Veteran")
+    save_profile(
+        uid,
+        UserProfile(
+            name="Demo Veteran",
+            goal="lose 8kg",
+            age=34,
+            sex="male",
+            preferred_workout_modes=["gym", "walking"],
+            food_preference="vegetarian",
+            sessions_per_week=3,
+            constraints=[],
+            constraints_asked=True,
+            onboarding_complete=True,
+            awaiting_onboarding_confirm=False,
+        ),
+    )
 
     today = date.today()
-    samples = [
-        (today - timedelta(days=10), "Upper push", "done"),
-        (today - timedelta(days=8), "Lower body", "skipped"),
-        (today - timedelta(days=6), "Conditioning", "skipped"),
-        (today - timedelta(days=4), "Upper pull", "skipped"),
-        (today - timedelta(days=2), "Lower body", "done"),
-    ]
-    for day, focus, status in samples:
-        log_workout(day.isoformat(), focus, status)
+    this_monday = today - timedelta(days=today.weekday())
+    rng = random.Random(42)
+    weight = 86.0
+    travel_week_idx = max(3, history_weeks // 3)
+    bad_week_idx = max(1, history_weeks // 6)
 
-    print(f"Seeded complete profile for {PROFILE.name} (onboarding_complete=True)")
-    print(f"Seeded week plan starting {WEEK_START}")
-    print(f"Logged {len(samples)} workouts (3 skipped in last 14d → drop-off signal)")
+    for w in range(history_weeks, 0, -1):
+        week_start = this_monday - timedelta(days=7 * w)
+        kind = "steady"
+        if w == travel_week_idx:
+            kind = "travel"
+        elif w == bad_week_idx:
+            kind = "bad"
+
+        days_meta: list[tuple[str, str, str]] = []
+        if kind == "travel":
+            plan_days = [
+                WorkoutDay(day="Mon", focus="Hotel full body 20m", duration_min=20, status="done"),
+                WorkoutDay(day="Wed", focus="Hotel push + core 20m", duration_min=20, status="done"),
+                WorkoutDay(day="Fri", focus="Hotel legs 20m", duration_min=20, status="done"),
+            ]
+            for i, d in enumerate(plan_days):
+                log_workout(uid, (week_start + timedelta(days=i * 2)).isoformat(), d.focus, "done")
+                days_meta.append((d.day, d.focus, "done"))
+        elif kind == "bad":
+            statuses = ["done", "skipped", "skipped", "skipped", "done"]
+            plan_days = []
+            for i, st in enumerate(statuses[:3]):
+                focus = FOCUS_POOL[i % len(FOCUS_POOL)]
+                day = ["Mon", "Wed", "Fri"][i]
+                plan_days.append(
+                    WorkoutDay(day=day, focus=focus, duration_min=40, status=st if st != "skipped" else "planned")
+                )
+                log_workout(uid, (week_start + timedelta(days=i * 2)).isoformat(), focus, st)
+                days_meta.append((day, focus, st))
+        else:
+            plan_days = []
+            for i, day in enumerate(["Mon", "Wed", "Fri"]):
+                focus = FOCUS_POOL[(w + i) % len(FOCUS_POOL)]
+                st = "done" if rng.random() < 0.75 else "skipped"
+                plan_days.append(
+                    WorkoutDay(day=day, focus=focus, duration_min=45, status="planned")
+                )
+                log_workout(uid, (week_start + timedelta(days=i * 2)).isoformat(), focus, st)
+                days_meta.append((day, focus, st))
+
+        plan = WeekPlan(
+            week_start=week_start.isoformat(),
+            days=plan_days,
+            calorie_target=2100,
+            protein_target_g=140,
+            notes=(
+                "hotel travel week"
+                if kind == "travel"
+                else ("high work stress" if kind == "bad" else "steady training week")
+            ),
+        )
+        save_week_plan(uid, plan)
+
+        done = sum(1 for _, _, s in days_meta if s == "done")
+        skipped = sum(1 for _, _, s in days_meta if s == "skipped")
+        summary = _template_memory(
+            week_start, kind=kind, planned=len(days_meta), done=done, skipped=skipped
+        )
+        # --no-llm always uses templates (deterministic demo). LLM path can extend later.
+        _ = no_llm
+        upsert_weekly_memory(summary, uid)
+
+        # Gentle weight trend with noise
+        weight -= 0.2 + rng.uniform(-0.15, 0.05)
+        log_weight(uid, (week_start + timedelta(days=6)).isoformat(), round(weight, 1))
+
+    # Current week plan
+    save_week_plan(
+        uid,
+        WeekPlan(
+            week_start=this_monday.isoformat(),
+            days=[
+                WorkoutDay(day="Mon", focus="Upper push", duration_min=45),
+                WorkoutDay(day="Wed", focus="Lower body", duration_min=50),
+                WorkoutDay(day="Fri", focus="Walk + core", duration_min=40),
+            ],
+            calorie_target=2100,
+            protein_target_g=140,
+            notes="Current training week for demo-veteran.",
+        ),
+    )
+    print(
+        f"Seeded VETERAN profile {uid} with {history_weeks} history weeks "
+        f"(travel=w-{travel_week_idx}, bad=w-{bad_week_idx})"
+    )
+    return uid
 
 
-def seed_fresh():
-    clear_profile_slots()
-    save_profile(FRESH_PROFILE)
-    with store._conn() as c:
-        c.execute("DELETE FROM workout_log")
-        c.execute("DELETE FROM profile WHERE key = 'week_plan'")
-    print("Seeded INCOMPLETE profile (onboarding_complete=False) — ready for intake demo")
-
-
-def main():
+def main() -> None:
     parser = argparse.ArgumentParser()
+    parser.add_argument("--profile", choices=["fresh", "veteran"], required=True)
+    parser.add_argument("--history-weeks", type=int, default=12)
+    parser.add_argument("--no-llm", action="store_true", help="Template memories only")
     parser.add_argument(
-        "--fresh",
+        "--yes",
         action="store_true",
-        help="Seed an incomplete profile so conversational onboarding can be demoed",
+        help="Required to write when DATABASE_URL host is not localhost",
     )
     args = parser.parse_args()
-    if args.fresh:
+    _require_yes_for_remote(args.yes)
+
+    import subprocess
+
+    subprocess.run(
+        [sys.executable, str(Path(__file__).resolve().parent / "init_db.py")],
+        check=False,
+    )
+
+    if args.profile == "fresh":
         seed_fresh()
     else:
-        seed_complete()
+        seed_veteran(history_weeks=args.history_weeks, no_llm=args.no_llm)
 
 
 if __name__ == "__main__":

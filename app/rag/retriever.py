@@ -34,8 +34,17 @@ def _citation_from_row(row: Any) -> dict:
     }
 
 
-def retrieve_personal(query: str, k: int = 4, collection_filter: str | None = None) -> list[str]:
-    """Personal/reference uploads only — never curated KB doc_types."""
+def retrieve_personal(
+    query: str,
+    k: int = 4,
+    collection_filter: str | None = None,
+    *,
+    user_id: str | None = None,
+) -> list[str]:
+    """Personal/reference uploads only — never curated KB or other users."""
+    from app.memory.user_context import require_current_user_id
+
+    uid = user_id or require_current_user_id()
     try:
         vec = _embed_query(query)
         with psycopg.connect(settings.database_url) as conn:
@@ -43,11 +52,12 @@ def retrieve_personal(query: str, k: int = 4, collection_filter: str | None = No
             rows = conn.execute(
                 f"""
                 SELECT source, text FROM {TABLE}
-                WHERE doc_type IN ('personal', 'program', 'recipes', 'reference', 'knowledge')
+                WHERE user_id = %s
+                  AND doc_type IN ('personal', 'program', 'recipes', 'reference', 'knowledge')
                 ORDER BY embedding <=> %s
                 LIMIT %s
                 """,
-                (Vector(vec), k),
+                (uid, Vector(vec), k),
             ).fetchall()
         return [
             wrap_untrusted(f"[doc:{source}] {text}", source="doc")
@@ -77,10 +87,12 @@ def retrieve(
             params.append(modality)
         where = " AND ".join(clauses)
         params.extend([Vector(vec), k])
+        # Shared KB corpus: never filter by user_id (kb rows keep user_id NULL).
         sql = f"""
             SELECT source, text, kb_id, source_file, meta
             FROM {TABLE}
-            WHERE {where}
+            WHERE ({where})
+              AND (user_id IS NULL OR doc_type LIKE 'kb_%%')
             ORDER BY embedding <=> %s
             LIMIT %s
         """

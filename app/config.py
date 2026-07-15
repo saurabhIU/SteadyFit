@@ -19,7 +19,6 @@ class Settings(BaseSettings):
     internal_cron_secret: str = ""
     # Vercel frontend origin for CORS (localhost is always allowed for dev)
     frontend_url: str = ""
-    profile_db: str = "data/profile.sqlite"
     # Blast-radius / input caps
     max_message_length: int = 2000
     llm_max_tokens: int = 1024

@@ -1,11 +1,12 @@
 """Builds the SteadyFit AI Coaching Team graph.
 
 Topology:
-    coach (supervisor) -> {scheduler | nutrition | adherence | rag}
-    specialists -> coaching_team
-    coaching_team -> coach   (if conflict, e.g. risk_flag while plan got denser)
-    coaching_team -> approve (human-in-the-loop interrupt, if plan changed)
-    coaching_team -> END     (informational answer)
+    coach (supervisor) -> {scheduler | nutrition | adherence | rag | intake}
+    specialists -> coaching_team -> memory_write
+    memory_write -> coach   (if conflict, e.g. risk_flag while plan got denser)
+    memory_write -> approve (human-in-the-loop interrupt, if plan changed)
+    memory_write -> END     (informational answer)
+    memory_write persists doc_type=memory summaries on weekly-review turns only.
 """
 from typing import cast
 
@@ -19,6 +20,7 @@ from app.config import settings
 from app.graph.agents.adherence import adherence_node
 from app.graph.agents.intake import intake_node
 from app.graph.agents.knowledge import knowledge_node
+from app.graph.agents.memory_write import memory_write_node
 from app.graph.agents.nutrition import nutrition_node
 from app.graph.agents.scheduler import scheduler_node
 from app.graph.state import CoachingTeamState
@@ -94,6 +96,7 @@ def build_graph():
     g.add_node("adherence", adherence_node)
     g.add_node("knowledge", knowledge_node)   # agentic RAG: personal docs vs Tavily
     g.add_node("coaching_team", coaching_team_node)
+    g.add_node("memory_write", memory_write_node)  # coaching memory after weekly review
     g.add_node("approve", approve_node)       # uses langgraph interrupt()
 
     g.set_entry_point("coach")
@@ -111,7 +114,9 @@ def build_graph():
     })
     for node in ("scheduler", "nutrition", "adherence", "knowledge"):
         g.add_edge(node, "coaching_team")
-    g.add_conditional_edges("coaching_team", route_from_coaching_team, {
+    # Summarize the completed week before HITL pause / END so cron still persists memory.
+    g.add_edge("coaching_team", "memory_write")
+    g.add_conditional_edges("memory_write", route_from_coaching_team, {
         "coach": "coach",
         "approve": "approve",
         "end": END,

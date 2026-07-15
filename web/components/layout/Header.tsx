@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useProfile } from "@/lib/profile";
 import { useWeekStreak } from "@/lib/use-week-streak";
 import { cn } from "@/lib/utils";
 
@@ -15,7 +16,15 @@ function isActive(pathname: string, href: string) {
   return pathname === href || pathname.startsWith(`${href}/`);
 }
 
-function PillTabs({ pathname, className }: { pathname: string; className?: string }) {
+function PillTabs({
+  pathname,
+  className,
+  hrefWithProfile,
+}: {
+  pathname: string;
+  className?: string;
+  hrefWithProfile: (path: string) => string;
+}) {
   return (
     <nav
       className={cn(
@@ -29,7 +38,7 @@ function PillTabs({ pathname, className }: { pathname: string; className?: strin
         return (
           <Link
             key={href}
-            href={href}
+            href={hrefWithProfile(href)}
             className={cn(
               "rounded-[var(--radius-pill)] px-3.5 py-1.5 text-sm font-medium transition-colors duration-150 ease-out",
               active
@@ -64,7 +73,13 @@ function StreakBadge({ weeks }: { weeks: number }) {
   );
 }
 
-function BottomNav({ pathname }: { pathname: string }) {
+function BottomNav({
+  pathname,
+  hrefWithProfile,
+}: {
+  pathname: string;
+  hrefWithProfile: (path: string) => string;
+}) {
   return (
     <nav
       className="fixed inset-x-0 bottom-0 z-50 border-t border-beige-border/20 bg-navy/95 backdrop-blur-md md:hidden"
@@ -76,7 +91,7 @@ function BottomNav({ pathname }: { pathname: string }) {
           return (
             <Link
               key={href}
-              href={href}
+              href={hrefWithProfile(href)}
               className={cn(
                 "flex flex-1 flex-col items-center gap-1 py-1 text-xs font-medium transition-colors duration-150 ease-out",
                 active ? "text-navy-text" : "text-navy-muted-dim",
@@ -98,8 +113,36 @@ function BottomNav({ pathname }: { pathname: string }) {
   );
 }
 
+function ProfileSwitcher() {
+  const { userId, profiles, setUserId, ready } = useProfile();
+  if (!ready || profiles.length === 0) return null;
+
+  return (
+    <label className="flex items-center gap-2 text-xs text-navy-muted">
+      <span className="hidden sm:inline">Profile</span>
+      <select
+        value={userId}
+        onChange={(e) => setUserId(e.target.value)}
+        aria-label="Demo profile"
+        className={cn(
+          "max-w-[9.5rem] rounded-[var(--radius-pill)] border border-beige-border/30 bg-navy px-2.5 py-1.5",
+          "text-xs font-medium text-navy-text outline-none",
+          "focus-visible:border-sage/50",
+        )}
+      >
+        {profiles.map((p) => (
+          <option key={p.user_id} value={p.user_id}>
+            {p.name}
+          </option>
+        ))}
+      </select>
+    </label>
+  );
+}
+
 export function Header() {
   const pathname = usePathname();
+  const { hrefWithProfile } = useProfile();
   const streakWeeks = useWeekStreak();
   const showStreak =
     (pathname === "/chat" || pathname === "/plan") &&
@@ -110,7 +153,10 @@ export function Header() {
     <>
       <header className="sticky top-0 z-40 border-b border-beige-border/15 bg-navy/95 backdrop-blur-md">
         <div className="content-width flex h-[var(--header-h)] items-center justify-between gap-3">
-          <Link href="/chat" className="flex shrink-0 items-center gap-2.5">
+          <Link
+            href={hrefWithProfile("/chat")}
+            className="flex shrink-0 items-center gap-2.5"
+          >
             <span
               className="size-2.5 shrink-0 rounded-full bg-sage"
               aria-hidden
@@ -121,17 +167,26 @@ export function Header() {
           </Link>
 
           <div className="flex items-center gap-3">
-            <PillTabs pathname={pathname} className="hidden sm:flex" />
+            <PillTabs
+              pathname={pathname}
+              hrefWithProfile={hrefWithProfile}
+              className="hidden sm:flex"
+            />
             {showStreak ? <StreakBadge weeks={streakWeeks} /> : null}
+            <ProfileSwitcher />
           </div>
         </div>
 
         <div className="content-width pb-2 sm:hidden">
-          <PillTabs pathname={pathname} className="w-full justify-center" />
+          <PillTabs
+            pathname={pathname}
+            hrefWithProfile={hrefWithProfile}
+            className="w-full justify-center"
+          />
         </div>
       </header>
 
-      <BottomNav pathname={pathname} />
+      <BottomNav pathname={pathname} hrefWithProfile={hrefWithProfile} />
     </>
   );
 }

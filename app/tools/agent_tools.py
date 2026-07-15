@@ -71,7 +71,9 @@ def web_search_fitness(query: str) -> str:
 def adherence_stats() -> str:
     """Fetch the user's adherence stats: streaks, recent skips, logging gaps.
     Call this before deciding if drop-off RISK is present."""
-    return json.dumps(get_adherence_stats())
+    from app.memory.user_context import require_current_user_id
+
+    return json.dumps(get_adherence_stats(require_current_user_id()))
 
 
 @tool

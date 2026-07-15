@@ -5,10 +5,9 @@ import Link from "next/link";
 import { ChevronDown, ChevronRight } from "lucide-react";
 import { ApiError, fetchPlan } from "@/lib/api";
 import { PLAN_UPDATED } from "@/lib/plan-events";
+import { threadStorageKey, useProfile } from "@/lib/profile";
 import type { PlanResponse, WorkoutDay } from "@/lib/types";
 import { cn } from "@/lib/utils";
-
-const THREAD_KEY = "steadyfit_thread_id";
 
 const DAY_ABBR: Record<string, string> = {
   Monday: "Mon",
@@ -135,18 +134,22 @@ function DayRow({ day, index }: { day: WorkoutDay; index: number }) {
 }
 
 export function PlanView() {
+  const { userId, ready } = useProfile();
   const [data, setData] = useState<PlanResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   const loadPlan = useCallback(async () => {
-    const threadId = sessionStorage.getItem(THREAD_KEY);
+    if (!ready) return;
+    const threadId = sessionStorage.getItem(threadStorageKey(userId));
     const plan = await fetchPlan(threadId);
     setData(plan);
     setError(null);
-  }, []);
+  }, [userId, ready]);
 
   useEffect(() => {
+    if (!ready) return;
+    setLoading(true);
     loadPlan()
       .catch((err) => {
         const message =
@@ -176,7 +179,7 @@ export function PlanView() {
       window.removeEventListener(PLAN_UPDATED, onRefresh);
       window.removeEventListener("focus", onRefresh);
     };
-  }, [loadPlan]);
+  }, [loadPlan, ready]);
 
   if (loading && !data) {
     return (

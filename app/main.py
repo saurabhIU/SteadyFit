@@ -27,6 +27,7 @@ from app.memory.store import (
 )
 from app.memory.user_context import set_current_user_id
 from app.rag.ingest import ingest
+from app.tracing import configure_tracing
 
 graph: CompiledStateGraph | None = None
 limiter = Limiter(key_func=get_remote_address)
@@ -51,7 +52,8 @@ def require_user_id(x_user_id: str | None) -> str:
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     global graph
-    Path("data").mkdir(exist_ok=True)
+    configure_tracing()
+    Path("data").mkdir(parents=True, exist_ok=True)
     graph = build_graph()
     try:
         yield
@@ -121,7 +123,7 @@ def weekly_review(x_internal_secret: str | None = Header(default=None)):
         uid = user["user_id"]
         set_current_user_id(uid)
         thread = weekly_review_thread(uid)
-        config = thread_config(thread)
+        config = thread_config(thread, user_id=uid, endpoint="internal/weekly-review")
         result = g.invoke(
             bootstrap_input(
                 g,
@@ -159,6 +161,7 @@ def chat(
         body.message,
         user_id=uid,
         thread_id=body.thread_id,
+        endpoint="api/chat",
     )
 
 
@@ -184,8 +187,8 @@ def approve(
 ):
     uid = require_user_id(x_user_id)
     thread = make_thread_id(uid, body.thread_id)
-    config = thread_config(thread)
     g = require_graph()
+    config = thread_config(thread, user_id=uid, endpoint="api/approve")
     result = g.invoke(Command(resume=body.decision), config=config)
     if body.decision == "accept":
         persist_approved_plan(g, thread, uid)

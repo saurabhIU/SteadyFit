@@ -12,6 +12,7 @@ from app.config import get_llm, settings
 from app.graph.state import WeekPlan
 from app.memory.store import get_adherence_stats, get_saved_week_plan, get_workouts_between
 from app.security import as_text, wrap_untrusted
+from langsmith import traceable
 
 logger = logging.getLogger("steadyfit.memory")
 
@@ -111,6 +112,7 @@ def gather_week_facts(
     }
 
 
+@traceable(name="weekly_summary", run_type="chain")
 def generate_weekly_summary(
     week_start: date,
     *,

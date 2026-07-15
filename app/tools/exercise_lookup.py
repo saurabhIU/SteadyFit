@@ -9,6 +9,10 @@ import json
 from functools import lru_cache
 from pathlib import Path
 
+from langsmith import traceable
+
+from app.tracing import annotate_run, exercise_tool_outputs
+
 DIFFICULTY_RANK = {"beginner": 1, "intermediate": 2, "advanced": 3}
 DEFAULT_LIBRARY = Path("data/knowledge_base/exercise_library.json")
 
@@ -24,6 +28,11 @@ def get_exercise(exercise_id: str) -> dict | None:
     return _load_library().get(exercise_id)
 
 
+@traceable(
+    name="find_exercises",
+    run_type="tool",
+    process_outputs=exercise_tool_outputs,
+)
 def find_exercises(
     muscle: str | None = None,
     equipment_available: list[str] | None = None,
@@ -32,6 +41,13 @@ def find_exercises(
     exclude_contraindications: list[str] | None = None,
 ) -> list[dict]:
     """Filter the exercise index. Returns matching exercise records."""
+    annotate_run(inputs={
+        "muscle": muscle,
+        "equipment_available": equipment_available,
+        "modality": modality,
+        "difficulty_max": difficulty_max,
+        "exclude_contraindications": exclude_contraindications,
+    })
     library = _load_library()
     max_rank = DIFFICULTY_RANK.get((difficulty_max or "advanced").lower(), 99)
     exclude = {c.lower() for c in (exclude_contraindications or [])}
@@ -81,11 +97,17 @@ def find_exercises(
     return results
 
 
+@traceable(
+    name="get_substitutions",
+    run_type="tool",
+    process_outputs=exercise_tool_outputs,
+)
 def get_substitutions(exercise_id: str, constraint: str) -> list[dict]:
     """Resolve substitutions map entries to full exercise records.
 
     Example: get_substitutions('chest_001', 'home_only') → [{chest_010}, {chest_011}]
     """
+    annotate_run(inputs={"exercise_id": exercise_id, "constraint": constraint})
     library = _load_library()
     ex = library.get(exercise_id)
     if not ex:

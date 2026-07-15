@@ -3,6 +3,8 @@ from __future__ import annotations
 
 from langchain_core.runnables import RunnableConfig
 
+from app.tracing import thread_run_config
+
 
 def make_thread_id(user_id: str, conversation_id: str) -> str:
     """Namespace checkpointer threads: ``{user_id}:{conversation_id}``."""
@@ -34,5 +36,12 @@ def weekly_review_thread(user_id: str) -> str:
     return make_thread_id(user_id, "weekly-review")
 
 
-def thread_config(thread_id: str) -> RunnableConfig:
-    return {"configurable": {"thread_id": thread_id}}
+def thread_config(
+    thread_id: str,
+    *,
+    user_id: str | None = None,
+    endpoint: str | None = None,
+) -> RunnableConfig:
+    """Build invoke config. Prefer passing user_id/endpoint for LangSmith filters."""
+    uid = user_id or user_id_from_thread(thread_id)
+    return thread_run_config(thread_id, user_id=uid, endpoint=endpoint)

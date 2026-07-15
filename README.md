@@ -121,6 +121,8 @@ LANGCHAIN_TRACING_V2=true
 LANGCHAIN_API_KEY=your-key
 LANGCHAIN_PROJECT=steadyfit
 # Full experiment: uv run python evals/run_evals.py --experiment
+
+LangSmith tracing (optional): see **TRACING.md**.
 ```
 
 ## Deploy

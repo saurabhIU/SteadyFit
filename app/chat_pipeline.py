@@ -5,6 +5,7 @@ import logging
 import uuid
 
 from langgraph.types import Command
+from langsmith import traceable
 
 from app.graph.intake import needs_intake
 from app.graph.response import (
@@ -30,6 +31,8 @@ from app.security import (
 )
 
 logger = logging.getLogger("steadyfit.chat")
+
+CHAT_ENDPOINT = "api/chat"
 
 
 def _snapshot_messages(graph, thread: str) -> list[dict]:
@@ -61,12 +64,36 @@ def should_skip_scope_gate(*, profile, pending_approval: dict | None) -> bool:
     return False
 
 
+@traceable(name="scope_gate", run_type="chain")
+def scope_gate(
+    message: str,
+    *,
+    prior_assistant: str | None = None,
+    prior_user: str | None = None,
+    bypass: bool = False,
+    bypass_reason: str | None = None,
+) -> dict:
+    """Traced scope decision. Returns {verdict, reason} without changing gate logic."""
+    if bypass:
+        return {
+            "verdict": "bypassed_pending_state",
+            "reason": bypass_reason or "pending_state",
+        }
+    verdict = classify_scope(
+        message,
+        prior_assistant=prior_assistant,
+        prior_user=prior_user,
+    )
+    return {"verdict": verdict, "reason": "classifier"}
+
+
 def process_user_chat(
     graph,
     message: str,
     *,
     user_id: str,
     thread_id: str | None = None,
+    endpoint: str = CHAT_ENDPOINT,
 ) -> dict:
     """Run defenses then the coaching team graph. Used by API and evals."""
     set_current_user_id(user_id)
@@ -86,14 +113,23 @@ def process_user_chat(
         }
 
     profile = get_profile(user_id)
-    config = thread_config(thread)
+    config = thread_config(thread, user_id=user_id, endpoint=endpoint)
     pending = _pending_approval(graph, thread)
     history = _snapshot_messages(graph, thread)
     prior_assistant, prior_user = prior_turns_from_messages(history)
 
     # ── 1) Pending-state bypass (approve interrupt / intake) ───────────────
     if should_skip_scope_gate(profile=profile, pending_approval=pending):
-        verdict = "in_scope_pending_bypass"
+        gate = scope_gate(
+            normalized,
+            prior_assistant=prior_assistant,
+            prior_user=prior_user,
+            bypass=True,
+            bypass_reason=(
+                "plan_approval" if pending else "intake_pending"
+            ),
+        )
+        verdict = gate["verdict"]
         # Chat-side affirmations resume HITL when UI uses free text instead of /api/approve
         if pending and pending.get("type") == "plan_approval":
             if looks_like_short_affirmation(normalized):
@@ -139,11 +175,13 @@ def process_user_chat(
         return payload
 
     # ── 2) Context-aware scope gate ────────────────────────────────────────
-    verdict = classify_scope(
+    gate = scope_gate(
         normalized,
         prior_assistant=prior_assistant,
         prior_user=prior_user,
+        bypass=False,
     )
+    verdict = gate["verdict"]
 
     # Cold thread + vague affirmation → gentle clarify (do not firm-refuse)
     if (

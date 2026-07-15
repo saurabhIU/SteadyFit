@@ -22,6 +22,12 @@ services:
         sync: false
       - key: FRONTEND_URL          # Vercel origin, for CORS
         sync: false
+      - key: LANGSMITH_TRACING
+        sync: false
+      - key: LANGSMITH_API_KEY
+        sync: false
+      - key: LANGSMITH_PROJECT
+        value: steadyfit-prod
 
   # Weekly review trigger — replaces the old in-process APScheduler cron
   - type: cron

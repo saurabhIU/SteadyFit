@@ -9,6 +9,7 @@ from typing import Any
 
 import psycopg
 from langchain_openai import OpenAIEmbeddings
+from langsmith import traceable
 from pgvector import Vector
 from pgvector.psycopg import register_vector
 
@@ -16,6 +17,7 @@ from app.config import openai_api_key, settings
 from app.memory.weekly_summary import WeeklySummary
 from app.rag.ingest import TABLE
 from app.security import safe_tool_error, wrap_untrusted
+from app.tracing import annotate_run, memory_retriever_outputs
 
 logger = logging.getLogger("steadyfit.memory_store")
 
@@ -133,6 +135,11 @@ def memory_citation(week_start: date, snippet: str = "") -> dict:
     }
 
 
+@traceable(
+    name="retrieve_memory",
+    run_type="retriever",
+    process_outputs=memory_retriever_outputs,
+)
 def retrieve_memories(
     query: str,
     *,
@@ -146,6 +153,13 @@ def retrieve_memories(
     from app.memory.user_context import require_current_user_id
 
     uid = user_id or require_current_user_id()
+    annotate_run(inputs={
+        "query": query,
+        "user_id": uid,
+        "k": k,
+        "fetch_n": fetch_n,
+        "half_life_weeks": half_life_weeks,
+    })
     try:
         embedder = OpenAIEmbeddings(model="text-embedding-3-small", api_key=openai_api_key)
         vec = embedder.embed_query(query)
@@ -172,14 +186,17 @@ def retrieve_memories(
             )
             if math.isnan(score):
                 continue
-            ranked.append((score, (ws, text, source_file, meta)))
+            ranked.append((score, (ws, text, source_file, meta, float(dist))))
         ranked.sort(key=lambda x: x[0], reverse=True)
 
         chunks: list[str] = []
         citations: list[dict] = []
         header = "This user's relevant past weeks:"
-        for score, (ws, text, _sf, _meta) in ranked[:k]:
+        for score, (ws, text, _sf, _meta, dist) in ranked[:k]:
             cite = memory_citation(ws, snippet=text)
+            cite["score"] = round(score, 6)
+            cite["distance"] = round(dist, 6)
+            cite["source_file"] = _sf
             citations.append(cite)
             body = f"{cite['tag']}\n{text}"
             chunks.append(wrap_untrusted(body, source="memory"))

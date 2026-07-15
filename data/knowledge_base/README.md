@@ -1,25 +1,13 @@
 # Knowledge base
 
-Drop curated sources here (Markdown, plain text, or PDF). PDFs are extracted
-with pypdf, then chunked the same way as Markdown.
-
-Current guidelines corpus (open HHS docs):
-
-- `Physical_Activity_Guidelines_2nd_edition.pdf`
-- `PAG_ExecutiveSummary.pdf`
-
-Plus optional personal templates (`sample_my_program.txt`, etc.).
-
-Seed everything in this folder into pgvector:
+Curated SteadyFit KB (Volumes 1–7) plus optional personal templates.
 
 ```bash
-uv run python scripts/init_db.py          # once
-uv run python scripts/seed_knowledge_base.py
+uv run python scripts/init_db.py
+uv run python scripts/migrate_documents_kb.py
+uv run python -m app.rag.ingest_kb data/knowledge_base/
 ```
 
-Or upload a single file via the API (backend running):
+Structured exercise index: `exercise_library.json` (used by `find_exercises` / substitutions — no embeddings).
 
-```bash
-curl -F "file=@data/knowledge_base/PAG_ExecutiveSummary.pdf" \
-  http://localhost:8000/api/upload
-```
+Personal uploads still go through `POST /api/upload` → `doc_type=personal`.

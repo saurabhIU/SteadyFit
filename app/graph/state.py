@@ -75,3 +75,4 @@ class CoachingTeamState(BaseModel):
     retrieved_context: list[str] = []
     # UI chips for the latest intake question
     quick_replies: list[str] = Field(default_factory=list)
+    citations: list[dict] = Field(default_factory=list)

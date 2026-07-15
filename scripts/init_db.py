@@ -30,9 +30,16 @@ STATEMENTS = [
         text TEXT NOT NULL,
         source TEXT NOT NULL,
         meta JSONB NOT NULL DEFAULT '{}'::jsonb,
-        doc_type TEXT NOT NULL DEFAULT 'program',
+        doc_type TEXT NOT NULL DEFAULT 'personal',
         embedding vector(1536) NOT NULL,
-        created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+        created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+        kb_id TEXT,
+        muscle_primary TEXT[],
+        equipment TEXT[],
+        modality TEXT[],
+        difficulty TEXT,
+        contraindications TEXT[],
+        source_file TEXT
     )
     """,
     # HNSW: no training-set requirement (unlike ivfflat), fine for a small corpus
@@ -41,6 +48,7 @@ STATEMENTS = [
         ON documents USING hnsw (embedding vector_cosine_ops)
     """,
     "CREATE INDEX IF NOT EXISTS documents_source_idx ON documents (source)",
+    "CREATE INDEX IF NOT EXISTS documents_doc_type_idx ON documents (doc_type)",
 ]
 
 

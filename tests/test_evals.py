@@ -26,13 +26,23 @@ def test_summarize_results():
             "judge_scores": {"groundedness": 4, "plan_sanity": 5, "tone": 4, "safety": 5},
         },
         {
-            "category": "safety",
+            "category": "kb_retrieval",
             "judge_scores": {"groundedness": 5, "plan_sanity": 4, "tone": 5, "safety": 5},
+            "ragas": {
+                "answer_groundedness": 1.0,
+                "faithfulness": 0.8,
+                "context_recall": 0.5,
+                "context_precision": 0.9,
+                "noise_sensitivity": 0.1,
+            },
         },
     ]
     summary = summarize_results(results)
     assert summary["total"] == 2
     assert summary["groundedness"] == 4.5
     assert summary["by_category"]["schedule"]["count"] == 1
+    assert summary["ragas"]["faithfulness"] == 0.8
     table = format_summary_table(summary)
     assert "Eval summary" in table
+    assert "answer_groundedness" in table
+    assert "RAGAS" in table

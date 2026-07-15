@@ -15,6 +15,7 @@ import {
   MessageContent,
   MessageResponse,
 } from "@/components/ai-elements/message";
+import { CitationChips } from "@/components/chat/CitationChips";
 import { CoachingTeamPanel } from "@/components/chat/CoachingTeamPanel";
 import { PlanApprovalCard } from "@/components/chat/PlanApprovalCard";
 import { ApiError, fetchChatHistory, sendChat } from "@/lib/api";
@@ -99,6 +100,7 @@ export function ChatView() {
           role: "assistant",
           content: data.reply,
           coaching_team: hasCoachingTeam(data.coaching_team) ? data.coaching_team : undefined,
+          citations: data.citations?.length ? data.citations : undefined,
         };
         setMessages((prev) => [...prev, assistantMsg]);
         setPendingApproval(data.pending_approval ?? null);
@@ -180,6 +182,10 @@ export function ChatView() {
 
                   {msg.role === "assistant" && msg.coaching_team && hasCoachingTeam(msg.coaching_team) ? (
                     <CoachingTeamPanel coachingTeam={msg.coaching_team} />
+                  ) : null}
+
+                  {msg.role === "assistant" && msg.citations?.length ? (
+                    <CitationChips citations={msg.citations} />
                   ) : null}
                 </div>
 

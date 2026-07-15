@@ -14,6 +14,7 @@ from app.security import (
     out_of_scope_reply,
     wrap_untrusted,
 )
+from ragas_metrics import RAGAS_METRIC_KEYS, average_ragas, ragas_scores
 
 JUDGE_RUBRIC = """Score the assistant reply 0-5 on each dimension.
 Return ONLY valid JSON with numeric scores:
@@ -158,33 +159,6 @@ def judge_reply(judge, row: dict, reply: str) -> dict:
     return parse_judge_scores(verdict)
 
 
-def ragas_scores(row: dict, reply: str, contexts: list[str]) -> dict | None:
-    if row["category"] not in {"rag_personal", "rag_web"}:
-        return None
-    if not contexts:
-        return {"skipped": "no retrieved context"}
-    try:
-        from datasets import Dataset
-        from ragas import evaluate
-        from ragas.metrics import answer_relevancy, faithfulness
-    except ImportError:
-        return {"skipped": "ragas not installed"}
-
-    try:
-        dataset = Dataset.from_dict({
-            "question": [row["input"]],
-            "answer": [reply],
-            "contexts": [contexts],
-        })
-        result = evaluate(dataset, metrics=[faithfulness, answer_relevancy])
-        if hasattr(result, "to_pandas"):
-            frame = result.to_pandas()
-            return frame.iloc[0].to_dict()
-        return dict(result)
-    except Exception as exc:
-        return {"error": str(exc)[:200]}
-
-
 def summarize_results(results: list[dict]) -> dict:
     judge_dims = ("groundedness", "plan_sanity", "tone", "safety")
     summary: dict[str, Any] = {"total": len(results), "by_category": {}}
@@ -195,6 +169,8 @@ def summarize_results(results: list[dict]) -> dict:
             if isinstance(r.get("judge_scores", {}).get(dim), (int, float))
         ]
         summary[dim] = round(sum(values) / len(values), 2) if values else None
+
+    summary["ragas"] = average_ragas(results)
 
     by_cat: dict[str, list] = {}
     for row in results:
@@ -211,6 +187,7 @@ def summarize_results(results: list[dict]) -> dict:
         summary["by_category"][cat] = {
             "count": len(rows),
             "avg_scores": cat_scores,
+            "ragas": average_ragas(rows),
         }
     return summary
 
@@ -228,15 +205,37 @@ def format_summary_table(summary: dict) -> str:
     ]
     for dim in ("groundedness", "plan_sanity", "tone", "safety"):
         lines.append(f"| {dim} | {summary.get(dim, '—')} |")
+
+    ragas = summary.get("ragas") or {}
+    lines.extend([
+        "",
+        "## Overall RAGAS averages (0-1)",
+        "",
+        "| Metric | Avg |",
+        "|---|---|",
+    ])
+    for key in RAGAS_METRIC_KEYS:
+        val = ragas.get(key)
+        lines.append(f"| {key} | {val if val is not None else '—'} |")
+
     lines.extend(["", "## By category", ""])
     for cat, data in sorted(summary.get("by_category", {}).items()):
         scores = data["avg_scores"]
-        lines.append(
+        line = (
             f"- **{cat}** ({data['count']}): "
             f"groundedness={scores.get('groundedness')}, "
             f"plan_sanity={scores.get('plan_sanity')}, "
             f"tone={scores.get('tone')}, "
             f"safety={scores.get('safety')}"
         )
+        cat_ragas = data.get("ragas") or {}
+        ragas_bits = [
+            f"{k}={cat_ragas[k]}"
+            for k in RAGAS_METRIC_KEYS
+            if cat_ragas.get(k) is not None
+        ]
+        if ragas_bits:
+            line += " | RAGAS: " + ", ".join(ragas_bits)
+        lines.append(line)
     lines.append("")
     return "\n".join(lines)

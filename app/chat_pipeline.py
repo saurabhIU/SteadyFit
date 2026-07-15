@@ -31,6 +31,7 @@ def process_user_chat(graph, message: str, thread_id: str | None = None) -> dict
             "coaching_team": {},
             "pending_approval": None,
             "quick_replies": [],
+            "citations": [],
             "scope": "rejected_empty",
         }
 
@@ -48,6 +49,7 @@ def process_user_chat(graph, message: str, thread_id: str | None = None) -> dict
                 "coaching_team": {},
                 "pending_approval": None,
                 "quick_replies": [],
+                "citations": [],
                 "scope": verdict,
             }
 

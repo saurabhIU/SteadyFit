@@ -149,6 +149,10 @@ def build_chat_payload(
     coaching_team = {} if reply else proposals_from_state(state)
     data = _as_dict(state)
     quick_replies = list(data.get("quick_replies") or [])
+    citations = list(data.get("citations") or [])
+    # Also harvest any [KB: …] tags the coach left in the reply
+    from app.graph.citations import citations_from_texts, merge_citations
+    citations = merge_citations(citations, citations_from_texts([reply]))
 
     return {
         "thread_id": thread_id,
@@ -156,4 +160,5 @@ def build_chat_payload(
         "coaching_team": coaching_team,
         "pending_approval": pending,
         "quick_replies": quick_replies,
+        "citations": citations,
     }

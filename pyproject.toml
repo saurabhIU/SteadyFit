@@ -22,6 +22,7 @@ dependencies = [
     "tavily-python",
     "requests",
     "pypdf",
+    "pyyaml",
     # API
     "fastapi",
     "python-multipart",
@@ -30,6 +31,7 @@ dependencies = [
     # Evals
     "ragas",
     "datasets",
+    "langchain-community<0.4",
 ]
 
 [dependency-groups]

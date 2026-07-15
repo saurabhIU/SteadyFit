@@ -21,12 +21,21 @@ export type PendingApproval = {
   scheduler_summary?: string;
 };
 
+export type Citation = {
+  source_file: string;
+  section: string;
+  kb_id?: string | null;
+  snippet?: string;
+  tag?: string;
+};
+
 export type ChatResponse = {
   thread_id: string;
   reply: string;
   coaching_team: CoachingTeamProposals;
   pending_approval?: PendingApproval | null;
   quick_replies?: string[];
+  citations?: Citation[];
 };
 
 export type ChatHistoryMessage = {
@@ -46,6 +55,7 @@ export type ChatMessage = {
   role: "user" | "assistant" | "system";
   content: string;
   coaching_team?: CoachingTeamProposals;
+  citations?: Citation[];
 };
 
 export type UserProfile = {

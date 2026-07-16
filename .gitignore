@@ -18,6 +18,7 @@ evals/summary.md
 !evals/summary_*.json
 !evals/summary_*.md
 evals/compare_*.md
+evals/comparison_*.md
 evals/*.partial.json
 .DS_Store
 web/node_modules/

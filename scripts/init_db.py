@@ -50,6 +50,18 @@ STATEMENTS = [
     "CREATE INDEX IF NOT EXISTS documents_source_idx ON documents (source)",
     "CREATE INDEX IF NOT EXISTS documents_doc_type_idx ON documents (doc_type)",
     "CREATE INDEX IF NOT EXISTS documents_user_doc_type_idx ON documents (user_id, doc_type)",
+    # Sparse / FTS leg for hybrid retrieval (Task 6). Existing DBs: migrate_add_fts.py
+    "DROP INDEX IF EXISTS documents_content_tsv_idx",
+    "ALTER TABLE documents DROP COLUMN IF EXISTS content_tsv",
+    """
+    ALTER TABLE documents
+      ADD COLUMN content_tsv tsvector
+      GENERATED ALWAYS AS (to_tsvector('simple', coalesce(text, ''))) STORED
+    """,
+    """
+    CREATE INDEX IF NOT EXISTS documents_content_tsv_idx
+      ON documents USING GIN (content_tsv)
+    """,
     # Drop pre-multi-user unique index (doc_type, source_file only).
     "DROP INDEX IF EXISTS documents_memory_upsert_uidx",
     """

@@ -113,28 +113,35 @@ flowchart TD
     LG --> LS
     EV -.->|tests| GATE
 
-    style UI fill:#dbeafe,stroke:#93c5fd,color:#1e3a8a
-    style GATE fill:#e2e8f0,stroke:#94a3b8,color:#0f172a
-    style LG fill:#ede9fe,stroke:#c4b5fd,color:#1e1b4b
-    style GW fill:#ede9fe,stroke:#c4b5fd,color:#1e1b4b
-    style CRON fill:#e2e8f0,stroke:#94a3b8,color:#0f172a
-    style COACH fill:#c7d2fe,stroke:#818cf8,color:#1e1b4b
-    style INT fill:#c7d2fe,stroke:#818cf8,color:#1e1b4b
-    style SCH fill:#c7d2fe,stroke:#818cf8,color:#1e1b4b
-    style NUT fill:#c7d2fe,stroke:#818cf8,color:#1e1b4b
-    style ADH fill:#c7d2fe,stroke:#818cf8,color:#1e1b4b
-    style KNOW fill:#c7d2fe,stroke:#818cf8,color:#1e1b4b
-    style T1 fill:#ccfbf1,stroke:#5eead4,color:#0f4c3a
-    style T2 fill:#ccfbf1,stroke:#5eead4,color:#0f4c3a
-    style T3 fill:#ccfbf1,stroke:#5eead4,color:#0f4c3a
-    style T4 fill:#ccfbf1,stroke:#5eead4,color:#0f4c3a
-    style T5 fill:#ccfbf1,stroke:#5eead4,color:#0f4c3a
-    style KB fill:#ede9fe,stroke:#c4b5fd,color:#1e1b4b
-    style PERS fill:#ede9fe,stroke:#c4b5fd,color:#1e1b4b
-    style MEM fill:#ede9fe,stroke:#c4b5fd,color:#1e1b4b
-    style APP fill:#ede9fe,stroke:#c4b5fd,color:#1e1b4b
-    style LS fill:#fef3c7,stroke:#fcd34d,color:#78350f
-    style EV fill:#fef3c7,stroke:#fcd34d,color:#78350f
+    style CLIENT fill:#0891b2,stroke:#164e63,color:#fff
+    style BACKEND fill:#7c3aed,stroke:#4c1d95,color:#fff
+    style AGENTS fill:#db2777,stroke:#831843,color:#fff
+    style TOOLS fill:#16a34a,stroke:#14532d,color:#fff
+    style STORAGE fill:#d97706,stroke:#78350f,color:#fff
+    style OBS fill:#e11d48,stroke:#881337,color:#fff
+
+    style UI fill:#06b6d4,stroke:#164e63,color:#fff
+    style GATE fill:#8b5cf6,stroke:#4c1d95,color:#fff
+    style LG fill:#8b5cf6,stroke:#4c1d95,color:#fff
+    style GW fill:#8b5cf6,stroke:#4c1d95,color:#fff
+    style CRON fill:#8b5cf6,stroke:#4c1d95,color:#fff
+    style COACH fill:#ec4899,stroke:#831843,color:#fff
+    style INT fill:#ec4899,stroke:#831843,color:#fff
+    style SCH fill:#ec4899,stroke:#831843,color:#fff
+    style NUT fill:#ec4899,stroke:#831843,color:#fff
+    style ADH fill:#ec4899,stroke:#831843,color:#fff
+    style KNOW fill:#ec4899,stroke:#831843,color:#fff
+    style T1 fill:#22c55e,stroke:#14532d,color:#fff
+    style T2 fill:#22c55e,stroke:#14532d,color:#fff
+    style T3 fill:#22c55e,stroke:#14532d,color:#fff
+    style T4 fill:#22c55e,stroke:#14532d,color:#fff
+    style T5 fill:#22c55e,stroke:#14532d,color:#fff
+    style KB fill:#f59e0b,stroke:#78350f,color:#fff
+    style PERS fill:#f59e0b,stroke:#78350f,color:#fff
+    style MEM fill:#f59e0b,stroke:#78350f,color:#fff
+    style APP fill:#f59e0b,stroke:#78350f,color:#fff
+    style LS fill:#f43f5e,stroke:#881337,color:#fff
+    style EV fill:#f43f5e,stroke:#881337,color:#fff
 ```
 
 ### Turn flow (mermaid)

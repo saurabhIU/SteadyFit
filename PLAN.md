@@ -149,30 +149,30 @@ flowchart TD
     LG --> LS
     EV -.->|tests| API
 
-    style CLIENT fill:#0891b2,stroke:#0e7490,color:#fff
-    style FRONTEND fill:#2563eb,stroke:#1d4ed8,color:#fff
-    style BACKEND fill:#7c3aed,stroke:#6d28d9,color:#fff
-    style AGENTS fill:#d946ef,stroke:#a21caf,color:#fff
-    style TOOLS fill:#10b981,stroke:#047857,color:#fff
-    style STORAGE fill:#f59e0b,stroke:#b45309,color:#fff
-    style OBS fill:#f43f5e,stroke:#be123c,color:#fff
+    style CLIENT fill:#0891b2,stroke:#164e63,color:#fff
+    style FRONTEND fill:#2563eb,stroke:#1e3a8a,color:#fff
+    style BACKEND fill:#7c3aed,stroke:#4c1d95,color:#fff
+    style AGENTS fill:#db2777,stroke:#831843,color:#fff
+    style TOOLS fill:#16a34a,stroke:#14532d,color:#fff
+    style STORAGE fill:#d97706,stroke:#78350f,color:#fff
+    style OBS fill:#e11d48,stroke:#881337,color:#fff
 
-    style U fill:#cffafe,stroke:#22d3ee,color:#164e63
-    style FE fill:#dbeafe,stroke:#60a5fa,color:#1e3a8a
-    style API fill:#ede9fe,stroke:#a78bfa,color:#4c1d95
-    style GATE fill:#ede9fe,stroke:#a78bfa,color:#4c1d95
-    style CRON fill:#ede9fe,stroke:#a78bfa,color:#4c1d95
-    style LG fill:#fae8ff,stroke:#e879f9,color:#701a75
-    style GW fill:#fae8ff,stroke:#e879f9,color:#701a75
-    style TAV fill:#d1fae5,stroke:#34d399,color:#065f46
-    style FOOD fill:#d1fae5,stroke:#34d399,color:#065f46
-    style CAL fill:#d1fae5,stroke:#34d399,color:#065f46
-    style XL fill:#d1fae5,stroke:#34d399,color:#065f46
-    style RET fill:#d1fae5,stroke:#34d399,color:#065f46
-    style PG fill:#fef3c7,stroke:#fbbf24,color:#78350f
-    style APP fill:#fef3c7,stroke:#fbbf24,color:#78350f
-    style LS fill:#ffe4e6,stroke:#fb7185,color:#881337
-    style EV fill:#ffe4e6,stroke:#fb7185,color:#881337
+    style U fill:#06b6d4,stroke:#164e63,color:#fff
+    style FE fill:#3b82f6,stroke:#1e3a8a,color:#fff
+    style API fill:#8b5cf6,stroke:#4c1d95,color:#fff
+    style GATE fill:#8b5cf6,stroke:#4c1d95,color:#fff
+    style CRON fill:#8b5cf6,stroke:#4c1d95,color:#fff
+    style LG fill:#ec4899,stroke:#831843,color:#fff
+    style GW fill:#ec4899,stroke:#831843,color:#fff
+    style TAV fill:#22c55e,stroke:#14532d,color:#fff
+    style FOOD fill:#22c55e,stroke:#14532d,color:#fff
+    style CAL fill:#22c55e,stroke:#14532d,color:#fff
+    style XL fill:#22c55e,stroke:#14532d,color:#fff
+    style RET fill:#22c55e,stroke:#14532d,color:#fff
+    style PG fill:#f59e0b,stroke:#78350f,color:#fff
+    style APP fill:#f59e0b,stroke:#78350f,color:#fff
+    style LS fill:#f43f5e,stroke:#881337,color:#fff
+    style EV fill:#f43f5e,stroke:#881337,color:#fff
 ```
 
 ### Component choices (one sentence each)

@@ -102,76 +102,77 @@ HITL plan approval — that re-plans training and nutrition around real life.
 
 ```mermaid
 flowchart TD
-    subgraph CLIENT[Client]
-        U[Browser UI chat plan profile switcher]
+    subgraph CLIENT["🖥️  Client"]
+        U["📱 Browser UI<br/>chat · plan · profile switcher"]
     end
 
-    subgraph FRONTEND[Vercel]
-        FE[Next.js Responsive mobile + desktop]
+    subgraph FRONTEND["▲  Vercel"]
+        FE["Next.js<br/>Responsive · mobile + desktop"]
     end
 
-    subgraph BACKEND[Render]
-        API[FastAPI chat profiles weekly-review]
-        GATE[Scope gate normalize rate-limit]
-        CRON[Sunday cron weekly review all profiles]
+    subgraph BACKEND["⚙️  Render"]
+        API["FastAPI<br/>/api/chat · /api/profiles<br/>/internal/weekly-review"]
+        GATE["🛡️ Scope gate<br/>normalize · rate-limit"]
+        CRON["⏰ Sunday cron<br/>weekly review, all profiles"]
     end
 
-    subgraph AGENTS[LangGraph]
-        LG[CoachingTeamState thread = user_id:conv]
-        GW[Vercel AI Gateway Claude Sonnet GPT-4o-mini]
+    subgraph AGENTS["🧠  LangGraph Coaching Team"]
+        LG["CoachingTeamState<br/>thread = user_id:conv"]
+        GW["☁️ Vercel AI Gateway<br/>Claude Sonnet · GPT-4o-mini"]
     end
 
-    subgraph TOOLS[Tools]
-        TAV[Tavily web search]
-        FOOD[USDA FoodData macro grounding]
-        CAL[Calendar mock Google OAuth later]
-        XL[exercise_lookup.json deterministic filter]
-        RET[Hybrid retriever dense + BM25 + RRF]
+    subgraph TOOLS["🔧  Agentic Tools"]
+        TAV["🌐 Tavily<br/>web search"]
+        FOOD["🥗 USDA FoodData<br/>macro grounding"]
+        CAL["📅 Calendar mock"]
+        XL["📦 exercise_lookup.json"]
+        RET["🔍 Hybrid retriever<br/>dense + BM25 + RRF"]
     end
 
-    subgraph STORAGE[Neon Postgres]
-        PG[(pgvector documents checkpointer)]
-        APP[(App state profiles plans logs)]
+    subgraph STORAGE["🗄️  Neon Postgres"]
+        PG[("pgvector<br/>documents + checkpointer")]
+        APP[("App state<br/>profiles · plans · logs")]
     end
 
-    subgraph OBS[Observability and Evals]
-        LS[LangSmith traces tool calls RAG spans]
-        EV[Eval harness RAGAS + LLM-judge 80 cases]
+    subgraph OBS["📊  Observability"]
+        LS["🔭 LangSmith"]
+        EV["🧪 Eval harness<br/>RAGAS + judge · 80 cases"]
     end
 
-    U --> FE
-    FE -->|X-User-Id profile| API
+    U --> FE --> API
     CRON --> API
-    API --> GATE
-    GATE --> LG
+    API --> GATE --> LG
     LG --> GW
-    LG --> TAV
-    LG --> FOOD
-    LG --> CAL
-    LG --> XL
-    LG --> RET
+    LG --> TAV & FOOD & CAL & XL & RET
     RET --> PG
-    LG --> PG
-    LG --> APP
+    LG --> PG & APP
     LG --> LS
     EV -.->|tests| API
 
-    style U fill:#dbeafe,stroke:#93c5fd,color:#1e3a8a
-    style FE fill:#e0e7ff,stroke:#a5b4fc,color:#1e1b4b
-    style API fill:#e2e8f0,stroke:#94a3b8,color:#0f172a
-    style GATE fill:#e2e8f0,stroke:#94a3b8,color:#0f172a
-    style CRON fill:#e2e8f0,stroke:#94a3b8,color:#0f172a
-    style LG fill:#ede9fe,stroke:#c4b5fd,color:#1e1b4b
-    style GW fill:#ede9fe,stroke:#c4b5fd,color:#1e1b4b
-    style TAV fill:#ccfbf1,stroke:#5eead4,color:#0f4c3a
-    style FOOD fill:#ccfbf1,stroke:#5eead4,color:#0f4c3a
-    style CAL fill:#ccfbf1,stroke:#5eead4,color:#0f4c3a
-    style XL fill:#ccfbf1,stroke:#5eead4,color:#0f4c3a
-    style RET fill:#ccfbf1,stroke:#5eead4,color:#0f4c3a
-    style PG fill:#ede9fe,stroke:#c4b5fd,color:#1e1b4b
-    style APP fill:#ede9fe,stroke:#c4b5fd,color:#1e1b4b
-    style LS fill:#fef3c7,stroke:#fcd34d,color:#78350f
-    style EV fill:#fef3c7,stroke:#fcd34d,color:#78350f
+    style CLIENT fill:#0891b2,stroke:#0e7490,color:#fff
+    style FRONTEND fill:#2563eb,stroke:#1d4ed8,color:#fff
+    style BACKEND fill:#7c3aed,stroke:#6d28d9,color:#fff
+    style AGENTS fill:#d946ef,stroke:#a21caf,color:#fff
+    style TOOLS fill:#10b981,stroke:#047857,color:#fff
+    style STORAGE fill:#f59e0b,stroke:#b45309,color:#fff
+    style OBS fill:#f43f5e,stroke:#be123c,color:#fff
+
+    style U fill:#cffafe,stroke:#22d3ee,color:#164e63
+    style FE fill:#dbeafe,stroke:#60a5fa,color:#1e3a8a
+    style API fill:#ede9fe,stroke:#a78bfa,color:#4c1d95
+    style GATE fill:#ede9fe,stroke:#a78bfa,color:#4c1d95
+    style CRON fill:#ede9fe,stroke:#a78bfa,color:#4c1d95
+    style LG fill:#fae8ff,stroke:#e879f9,color:#701a75
+    style GW fill:#fae8ff,stroke:#e879f9,color:#701a75
+    style TAV fill:#d1fae5,stroke:#34d399,color:#065f46
+    style FOOD fill:#d1fae5,stroke:#34d399,color:#065f46
+    style CAL fill:#d1fae5,stroke:#34d399,color:#065f46
+    style XL fill:#d1fae5,stroke:#34d399,color:#065f46
+    style RET fill:#d1fae5,stroke:#34d399,color:#065f46
+    style PG fill:#fef3c7,stroke:#fbbf24,color:#78350f
+    style APP fill:#fef3c7,stroke:#fbbf24,color:#78350f
+    style LS fill:#ffe4e6,stroke:#fb7185,color:#881337
+    style EV fill:#ffe4e6,stroke:#fb7185,color:#881337
 ```
 
 ### Component choices (one sentence each)

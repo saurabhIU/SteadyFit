@@ -63,11 +63,11 @@ flowchart TD
     style B fill:#1e293b,stroke:#334155,color:#fff
     style C fill:#1e293b,stroke:#334155,color:#fff
     style D fill:#1e293b,stroke:#334155,color:#fff
-    style E fill:#fef9c3,stroke:#ca8a04,color:#92400e
-    style H fill:#fef9c3,stroke:#ca8a04,color:#92400e
-    style F fill:#fef2f2,stroke:#fca5a5,color:#b91c1c
-    style G fill:#fef2f2,stroke:#fca5a5,color:#b91c1c
-    style I fill:#fef2f2,stroke:#fca5a5,color:#b91c1c
+    style E fill:#f59e0b,stroke:#b45309,color:#fff
+    style H fill:#f59e0b,stroke:#b45309,color:#fff
+    style F fill:#dc2626,stroke:#991b1b,color:#fff
+    style G fill:#dc2626,stroke:#991b1b,color:#fff
+    style I fill:#dc2626,stroke:#991b1b,color:#fff
 ```
 
 Pain points (red): the re-planning step is manual and usually skipped; missed sessions are

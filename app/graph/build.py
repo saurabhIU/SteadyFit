@@ -81,7 +81,8 @@ def route_from_intake(state: CoachingTeamState) -> str:
 def route_from_coaching_team(state: CoachingTeamState) -> str:
     if state.risk_flag and state.coaching_team_rounds < MAX_COACHING_TEAM_ROUNDS:
         return "coach"          # renegotiate: simplify the plan
-    if state.proposals.get("plan_changed"):
+    # Require a concrete proposed_week_plan so Accept always has something to persist.
+    if state.proposals.get("plan_changed") and state.proposals.get("proposed_week_plan"):
         return "approve"        # human-in-the-loop
     return "end"
 

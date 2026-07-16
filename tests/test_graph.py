@@ -27,8 +27,18 @@ def test_route_from_coaching_team_risk_loops_to_coach():
 
 
 def test_route_from_coaching_team_plan_change_to_approve():
-    state = CoachingTeamState(proposals={"plan_changed": True})
+    state = CoachingTeamState(
+        proposals={
+            "plan_changed": True,
+            "proposed_week_plan": {"week_start": "2026-07-14", "days": []},
+        }
+    )
     assert route_from_coaching_team(state) == "approve"
+
+
+def test_route_from_coaching_team_plan_change_without_plan_ends():
+    state = CoachingTeamState(proposals={"plan_changed": True})
+    assert route_from_coaching_team(state) == "end"
 
 
 def test_route_from_coaching_team_defaults_to_end():

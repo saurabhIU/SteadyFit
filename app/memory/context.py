@@ -1,10 +1,13 @@
 """Load profile and plan context into graph state; persist approved plans."""
+import logging
 from typing import Any
 
 from app.graph.runtime import thread_config, user_id_from_thread
 from app.graph.state import CoachingTeamState, WeekPlan
 from app.memory.store import get_adherence_stats, get_profile, get_saved_week_plan, save_week_plan
 from app.memory.user_context import set_current_user_id
+
+logger = logging.getLogger("steadyfit.plan")
 
 
 def _coerce_week_plan(raw: Any) -> WeekPlan | None:
@@ -59,8 +62,14 @@ def persist_approved_plan(graph, thread_id: str, user_id: str | None = None):
     if not uid:
         return
     plan = week_plan_from_graph(graph, thread_id)
-    if plan:
+    if plan and plan.days:
         save_week_plan(uid, plan)
+        return
+    logger.warning(
+        "persist_approved_plan: no week_plan with days for user=%s thread=%s",
+        uid,
+        thread_id,
+    )
 
 
 def plan_snapshot(graph, thread_id: str, user_id: str) -> dict:

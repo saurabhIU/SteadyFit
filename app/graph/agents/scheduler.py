@@ -85,9 +85,18 @@ def scheduler_node(state: CoachingTeamState) -> dict:
     )
     proposal = result.text
     parsed = parse_week_plan(proposal)
-    proposals = {**state.proposals, "scheduler": proposal, "plan_changed": True}
-    if parsed:
+    proposals = {**state.proposals, "scheduler": proposal}
+    # Only pause for HITL when we have a structured plan to save. Otherwise a
+    # fresh user can "approve" prose and still land with an empty Plan tab.
+    if parsed and parsed.days:
         proposals["proposed_week_plan"] = parsed.model_dump()
+        proposals["plan_changed"] = True
+    elif first_plan:
+        proposals["scheduler"] = (
+            f"{proposal}\n\n"
+            "(Could not lock a structured week JSON — ask the user to say "
+            "\"try my first week again\" so we can re-draft.)"
+        )
     if result.tools_called:
         proposals["scheduler_tools"] = result.tools_called
     rag_bits = [

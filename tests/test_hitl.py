@@ -26,6 +26,24 @@ SAMPLE = """Here's a lighter week while you travel.
 ```"""
 
 
+NESTED_WITH_TOOL_NOISE = """
+Looking at {"kb_id": "tmpl_007"} for hotel week.
+
+```json
+{
+  "week_start": "2026-07-14",
+  "days": [
+    {"day": "Mon", "focus": "Push-Up (chest_010)", "duration_min": "40", "status": "planned"},
+    {"day": "Wed", "focus": "Goblet squat (legs_002)", "duration_min": 35}
+  ],
+  "calorie_target": 2100,
+  "protein_target_g": 140,
+  "notes": "hotel bodyweight"
+}
+```
+"""
+
+
 def test_parse_week_plan_from_fenced_json():
     plan = parse_week_plan(SAMPLE)
     assert plan is not None
@@ -33,6 +51,33 @@ def test_parse_week_plan_from_fenced_json():
     assert len(plan.days) == 2
     assert plan.days[0].focus == "Upper push"
     assert plan.calorie_target == 2100
+
+
+def test_parse_week_plan_nested_json_despite_tool_noise():
+    plan = parse_week_plan(NESTED_WITH_TOOL_NOISE)
+    assert plan is not None
+    assert len(plan.days) == 2
+    assert plan.days[0].duration_min == 40
+    assert plan.days[1].status == "planned"
+
+
+def test_coerce_week_plan_from_dict():
+    from app.graph.plan_utils import coerce_week_plan
+
+    plan = coerce_week_plan(
+        {
+            "week_start": "2026-07-14",
+            "days": [{"day": "Mon", "focus": "Push", "duration_min": 40}],
+        }
+    )
+    assert plan is not None
+    assert plan.days[0].focus == "Push"
+
+
+def test_coerce_week_plan_rejects_missing_week_start():
+    from app.graph.plan_utils import coerce_week_plan
+
+    assert coerce_week_plan({"days": [{"day": "Mon", "focus": "Push"}]}) is None
 
 
 def test_pending_approval_from_interrupt():

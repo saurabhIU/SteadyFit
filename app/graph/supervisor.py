@@ -3,7 +3,7 @@ from langgraph.types import interrupt
 
 from app.config import get_llm
 from app.graph.intake import looks_like_profile_change_request, needs_intake
-from app.graph.state import CoachingTeamState, WeekPlan
+from app.graph.state import CoachingTeamState
 from app.security import (
     as_text,
     llm_history,
@@ -156,24 +156,39 @@ def coaching_team_node(state: CoachingTeamState) -> dict:
 
 def approve_node(state: CoachingTeamState) -> dict:
     """Human-in-the-loop: pause the graph until the user accepts/edits the plan change."""
-    raw = state.proposals.get("proposed_week_plan")
-    proposed_plan = WeekPlan(**raw) if isinstance(raw, dict) else state.week_plan
+    from app.graph.plan_utils import coerce_week_plan
+
+    proposed_plan = coerce_week_plan(state.proposals.get("proposed_week_plan")) or state.week_plan
     decision = interrupt({
         "type": "plan_approval",
         "proposed_plan": proposed_plan.model_dump() if proposed_plan else None,
         "scheduler_summary": (state.proposals.get("scheduler") or "")[:600],
     })
     accepted = decision == "accept"
-    note = (
-        "Plan approved and saved — you're set for the week."
-        if accepted
-        else "No worries — kept your previous plan. Tell me if you want a different adjustment."
-    )
     updates: dict = {
-        "messages": [{"role": "assistant", "content": note}],
         "proposals": {},
         "quick_replies": [],
     }
     if accepted and proposed_plan:
         updates["week_plan"] = proposed_plan
+        updates["messages"] = [{
+            "role": "assistant",
+            "content": "Plan approved and saved — you're set for the week.",
+        }]
+    elif accepted:
+        updates["messages"] = [{
+            "role": "assistant",
+            "content": (
+                "I couldn't lock in a structured week from that draft — "
+                "say \"try my first week again\" and I'll re-generate one to approve."
+            ),
+        }]
+    else:
+        updates["messages"] = [{
+            "role": "assistant",
+            "content": (
+                "No worries — kept your previous plan. "
+                "Tell me if you want a different adjustment."
+            ),
+        }]
     return updates

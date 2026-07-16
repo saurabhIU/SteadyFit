@@ -21,6 +21,7 @@ from app.security import (
     OUT_OF_SCOPE_REPLY,
     classify_scope,
     gentle_clarification_reply,
+    is_first_user_turn,
     log_out_of_scope,
     looks_like_fitness_query,
     looks_like_short_affirmation,
@@ -53,13 +54,24 @@ def _pending_approval(graph, thread: str):
     return pending_approval_from_snapshot(snapshot)
 
 
-def should_skip_scope_gate(*, profile, pending_approval: dict | None) -> bool:
-    """Deterministic bypass when the system explicitly asked for this reply."""
+def should_skip_scope_gate(
+    *,
+    profile,
+    pending_approval: dict | None,
+    history: list | None = None,
+) -> bool:
+    """Deterministic bypass when the system explicitly asked for this reply.
+
+    Also bypasses on the very first user turn in a thread (UI greeting is not
+    persisted). Callers must still refuse clear off-topic asks on that path.
+    """
     if pending_approval and pending_approval.get("type") == "plan_approval":
         return True
     if needs_intake(profile) and not profile.onboarding_complete:
         return True
     if profile.awaiting_onboarding_confirm:
+        return True
+    if history is not None and is_first_user_turn(history):
         return True
     return False
 
@@ -117,18 +129,70 @@ def process_user_chat(
     pending = _pending_approval(graph, thread)
     history = _snapshot_messages(graph, thread)
     prior_assistant, prior_user = prior_turns_from_messages(history)
+    first_turn = is_first_user_turn(history)
+    pending_skip = should_skip_scope_gate(
+        profile=profile, pending_approval=pending, history=None
+    )
+    # First-turn bypass (option b): UI greeting isn't in the checkpointer, so the
+    # gate has no coaching context. Skip firm gating and let intake/coach handle
+    # the message — except genuine off-topic asks, which still refuse.
+    first_turn_skip = first_turn and not pending_skip
 
-    # ── 1) Pending-state bypass (approve interrupt / intake) ───────────────
-    if should_skip_scope_gate(profile=profile, pending_approval=pending):
-        gate = scope_gate(
-            normalized,
-            prior_assistant=prior_assistant,
-            prior_user=prior_user,
-            bypass=True,
-            bypass_reason=(
-                "plan_approval" if pending else "intake_pending"
-            ),
-        )
+    # ── 1) Pending-state / first-turn bypass ────────────────────────────────
+    if pending_skip or first_turn_skip:
+        if first_turn_skip:
+            # Still refuse clear OOS so "what's the weather" never enters the graph.
+            oos_check = classify_scope(
+                normalized,
+                prior_assistant=prior_assistant,
+                prior_user=prior_user,
+            )
+            if oos_check == "out_of_scope":
+                log_out_of_scope(
+                    thread_id=thread, message=normalized, verdict=oos_check
+                )
+                return {
+                    "thread_id": thread,
+                    "user_id": user_id,
+                    "reply": out_of_scope_reply(normalized),
+                    "coaching_team": {},
+                    "pending_approval": None,
+                    "quick_replies": [],
+                    "citations": [],
+                    "scope": oos_check,
+                }
+            # Cold-thread vague affirmation → gentle clarify (do not enter graph)
+            if (
+                looks_like_short_affirmation(normalized)
+                and not looks_like_fitness_query(normalized)
+            ):
+                return {
+                    "thread_id": thread,
+                    "user_id": user_id,
+                    "reply": gentle_clarification_reply(),
+                    "coaching_team": {},
+                    "pending_approval": None,
+                    "quick_replies": ["my plan", "food", "a workout"],
+                    "citations": [],
+                    "scope": "gentle_clarify",
+                }
+            gate = scope_gate(
+                normalized,
+                prior_assistant=prior_assistant,
+                prior_user=prior_user,
+                bypass=True,
+                bypass_reason="first_user_turn",
+            )
+        else:
+            gate = scope_gate(
+                normalized,
+                prior_assistant=prior_assistant,
+                prior_user=prior_user,
+                bypass=True,
+                bypass_reason=(
+                    "plan_approval" if pending else "intake_pending"
+                ),
+            )
         verdict = gate["verdict"]
         # Chat-side affirmations resume HITL when UI uses free text instead of /api/approve
         if pending and pending.get("type") == "plan_approval":
@@ -159,7 +223,7 @@ def process_user_chat(
                 "citations": [],
                 "scope": verdict,
             }
-        # Intake pending (or confirm) — skip gate and enter graph
+        # Intake pending, confirm, or first user turn — enter graph
         result = graph.invoke(
             bootstrap_input(
                 graph,

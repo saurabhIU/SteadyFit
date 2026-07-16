@@ -13,7 +13,7 @@ before coaching; plan changes pause for human approval.
 `?profile=demo-new|demo-veteran`. Profiles, plans, adherence, personal uploads, and
 memories are scoped per user in Postgres.
 
-See **PLAN.md** for the full capstone plan (Tasks 1–7).
+See **deliverables.md** for the full capstone plan (Tasks 1–7).
 
 ## Architecture
 
@@ -316,6 +316,6 @@ evals/            golden_dataset.jsonl (80) + harness + compare.py + labeled res
 data/eval_uploads/ personal fixtures for rag_personal (seeded onto demo-veteran)
 scripts/          init_db, migrate_documents_*, migrate_add_fts, seed_memory, backfill_memories
 tests/            routing, HITL, gate_context, hybrid RRF, KB, memory isolation, security
-PLAN.md           Capstone Tasks 1–7 (incl. hybrid before/after)
+deliverables.md   Capstone Tasks 1–7 (incl. hybrid before/after)
 TRACING.md        LangSmith setup
 ```

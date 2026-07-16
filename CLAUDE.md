@@ -2,7 +2,7 @@
 
 Multi-agent LangGraph fitness coaching copilot (capstone scaffold). A **Coach supervisor** routes user messages to specialist agents, merges their proposals in a **council** step, optionally **renegotiates** when adherence risk conflicts with plan density, and pauses for **human-in-the-loop approval** before persisting plan changes.
 
-Full product/architecture rationale: **PLAN.md**. Quick start and deploy: **README.md**.
+Full product/architecture rationale: **deliverables.md**. Quick start and deploy: **README.md**.
 
 ---
 
@@ -85,7 +85,7 @@ Shared Pydantic state every `app/` agent node reads/writes:
 |---|---|
 | LLM gateway | Vercel AI Gateway (`app/config.py` → `get_llm()`); primary `anthropic/claude-sonnet-4.5`, judge `openai/gpt-4o-mini` |
 | Embeddings | OpenAI `text-embedding-3-small` (direct OpenAI key, not the gateway) |
-| Vector store | Postgres + pgvector (`documents` table); was Qdrant in PLAN.md — **code uses pgvector** |
+| Vector store | Postgres + pgvector (`documents` table); was Qdrant in deliverables.md — **code uses pgvector** |
 | Short-term memory | LangGraph Postgres checkpointer (thread_id per chat / weekly-review) |
 | Long-term memory | Postgres `app_users` / `user_profiles` / logs / `week_plans` (`app/memory/store.py`); request header `X-User-Id` |
 | Web search | Tavily (`app/tools/tavily_search.py`) — degrades with `[web:error]` |
@@ -135,7 +135,7 @@ evals/                        # golden_dataset.jsonl (20 cases), run_evals.py, s
 tests/test_graph.py           # Routing smoke tests (no LLM calls)
 tests/test_evals.py           # Eval helper unit tests
 data/                         # Runtime: uploads/, mock_calendar.json, knowledge_base/
-PLAN.md                       # Capstone Tasks 1–7 (architecture diagrams, eval plan)
+deliverables.md               # Capstone Tasks 1–7 (architecture diagrams, eval plan)
 render.yaml                   # Render web service + Sunday cron
 pyproject.toml                # uv project; ships `app` package
 ```
@@ -192,4 +192,4 @@ Do not commit `.env`. See `.env.example` for the full checklist.
 
 ## Build status (scaffold)
 
-Per PLAN.md Task 4–5, remaining work may include: hybrid retrieval (Task 6), council critique loop, Loom demo. **Phase 1** (upload UI, plan refresh, workout prefs) and **Phase 2** (20-case eval harness + RAGAS) are wired. Check git history and PLAN.md checklist for current completion state.
+Per deliverables.md Task 4–5, remaining work may include: hybrid retrieval (Task 6), council critique loop, Loom demo. **Phase 1** (upload UI, plan refresh, workout prefs) and **Phase 2** (20-case eval harness + RAGAS) are wired. Check git history and deliverables.md checklist for current completion state.

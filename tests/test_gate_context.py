@@ -7,6 +7,8 @@ from app.security import (
     GENTLE_CLARIFICATION_REPLY,
     classify_scope,
     gentle_clarification_reply,
+    is_first_user_turn,
+    looks_like_fitness_query,
     looks_like_short_affirmation,
     looks_like_short_reject,
     prior_turns_from_messages,
@@ -92,3 +94,49 @@ def test_prior_turns_from_messages():
     prior_a, prior_u = prior_turns_from_messages(msgs[:-1])
     assert prior_a and "protein" in prior_a.lower()
     assert prior_u and "supplements" in prior_u.lower()
+
+
+def test_empty_history_is_first_user_turn():
+    assert is_first_user_turn([]) is True
+    assert is_first_user_turn(None) is True  # type: ignore[arg-type]
+
+
+def test_history_with_turns_is_not_first_user_turn():
+    assert is_first_user_turn([{"role": "assistant", "content": "Hi — I'm Steady."}]) is False
+    assert is_first_user_turn([{"role": "user", "content": "hello"}]) is False
+
+
+def test_first_user_turn_skips_scope_gate_for_complete_profile():
+    profile = UserProfile(
+        name="Saurabh",
+        goal="lose 8kg",
+        sessions_per_week=5,
+        preferred_workout_modes=["gym"],
+        food_preference="vegetarian",
+        onboarding_complete=True,
+    )
+    assert should_skip_scope_gate(profile=profile, pending_approval=None, history=[]) is True
+    assert (
+        should_skip_scope_gate(
+            profile=profile,
+            pending_approval=None,
+            history=[{"role": "user", "content": "hi"}, {"role": "assistant", "content": "hey"}],
+        )
+        is False
+    )
+
+
+def test_declarative_goal_statements_are_fitness_scope():
+    for msg in (
+        "I am looking for fat loss",
+        "I want to build muscle",
+        "trying to get fit",
+        "goal is to lose weight",
+        "I'm 34 and vegetarian",
+    ):
+        assert looks_like_fitness_query(msg), msg
+        assert classify_scope(msg, prior_assistant=None) == "in_scope", msg
+
+
+def test_weather_is_out_of_scope_without_llm():
+    assert classify_scope("what's the weather today", prior_assistant=None) == "out_of_scope"

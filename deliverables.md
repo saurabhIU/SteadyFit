@@ -589,9 +589,9 @@ Artifacts: `evals/summary_hybrid_retrieval.md`,
 - [ ] ≤10-min Loom video (script: demo-new intake → demo-veteran hotel
       re-plan with Memory citation → KB push-up cues → Tavily creatine →
       Sunday review trigger → LangSmith trace → eval comparison table)
-- [x] PLAN.md updated with actual eval numbers (baseline_fixed +
+- [x] deliverables.md updated with actual eval numbers (baseline_fixed +
       hybrid_retrieval, 80 cases, RAGAS + judge)
-- [x] Architecture docs (README + PLAN) aligned with current code
+- [x] Architecture docs (README + deliverables) aligned with current code
 - [x] All code (graph, KB, tools, onboarding, multi-profile, memory, UI)
 - [x] Eval artifacts committed (results_baseline_fixed.json,
       results_hybrid_retrieval.json, comparison table)

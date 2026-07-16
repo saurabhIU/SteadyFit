@@ -17,194 +17,214 @@ See **PLAN.md** for the full capstone plan (Tasks 1–7).
 
 ## Architecture
 
+```
+Next.js UI (Vercel) ──► FastAPI API (Render)
+  ?profile=…                     X-User-Id header
+         │                     │
+         │            normalize + scope gate
+         │                     │
+         │            LangGraph (Postgres checkpointer)
+         │            thread = {user_id}:{conversation}
+         │                     │
+         │              coach (completeness gate)
+         │               ├─ intake ──► END | first_plan → scheduler
+         │               ├─ scheduler  ┐
+         │               ├─ nutrition  ┼─► coaching_team → memory_write
+         │               ├─ adherence  │         │
+         │               └─ knowledge ─┘         ├─ approve (HITL) | coach loop | END
+         │
+         └── citations / quick_replies / plan approval cards
+
+External cron ──► POST /internal/weekly-review  (loops every profile)
+
+Tools (agentic): calendar · USDA · Tavily · find_exercises / substitutions · retrieve_*
+RAG / memory (all in Postgres + pgvector `documents`):
+  personal uploads  ──► ingest.py       ──► doc_type=personal   (user_id required; dense)
+  curated KB Volumes──► ingest_kb.py    ──► doc_type=kb_*       (shared; **hybrid dense+FTS RRF**)
+  weekly summaries  ──► memory_store.py ──► doc_type=memory     (user_id required; dense+recency)
+App state: app_users · user_profiles · week_plans · workout_log · weight_log
+Gateway: Vercel AI Gateway · Traces: LangSmith
+```
+
 ```mermaid
-%%{init: {
-  "theme": "base",
-  "themeVariables": {
-    "primaryColor": "#0f172a",
-    "primaryTextColor": "#ffffff",
-    "primaryBorderColor": "#1e293b",
-    "lineColor": "#64748b",
-    "background": "#f8fafc",
-    "fontFamily": "system-ui, sans-serif",
-    "edgeLabelBackground": "#f1f5f9",
-    "clusterBkg": "#f1f5f9",
-    "clusterBorder": "#cbd5e1"
-  }
-}}%%
-flowchart LR
-    subgraph CLIENT["🖥️  Client"]
-        UI["📱 Next.js · Vercel\nchat · plan · profile switcher\n?profile= · X-User-Id"]
+flowchart TD
+    subgraph CLIENT[Client]
+        UI[Next.js on Vercel<br/>chat / plan / profile switcher]
     end
 
-    subgraph BACKEND["⚙️  Render · FastAPI"]
-        GATE["🛡️ Scope gate\nnormalize · rate-limit"]
-        LG["🧠 LangGraph\nthread = user_id:conv\nPostgres checkpointer"]
-        GW["☁️ Vercel AI Gateway\nClaude Sonnet · GPT-4o-mini"]
-        CRON["⏰ Sunday cron\nPOST /internal/weekly-review"]
+    subgraph BACKEND[Render FastAPI]
+        GATE[Scope gate<br/>normalize + rate-limit]
+        LG[LangGraph<br/>thread = user_id:conv]
+        GW[Vercel AI Gateway<br/>Claude Sonnet / GPT-4o-mini]
+        CRON[Sunday cron<br/>POST /internal/weekly-review]
     end
 
-    subgraph AGENTS["🤝  Coaching Team"]
-        COACH["🎯 Coach\nsupervisor"]
-        INT["📝 Intake"]
-        SCH["📆 Scheduler"]
-        NUT["🥗 Nutrition"]
-        ADH["💪 Adherence"]
-        KNOW["📚 Knowledge"]
+    subgraph AGENTS[Coaching Team]
+        COACH[Coach supervisor]
+        INT[Intake]
+        SCH[Scheduler]
+        NUT[Nutrition]
+        ADH[Adherence]
+        KNOW[Knowledge]
     end
 
-    subgraph TOOLS["🔧  Agentic Tools"]
-        direction TB
-        T1["📅 Calendar mock"]
-        T2["🥗 USDA FoodData"]
-        T3["🌐 Tavily web"]
-        T4["📦 exercise_lookup.json"]
-        T5["🔍 Hybrid retriever\ndense + BM25 + RRF"]
+    subgraph TOOLS[Agentic Tools]
+        T1[Calendar mock]
+        T2[USDA FoodData]
+        T3[Tavily web]
+        T4[exercise_lookup.json]
+        T5[Hybrid retriever<br/>dense + BM25 + RRF]
     end
 
-    subgraph STORAGE["🗄️  Neon Postgres + pgvector"]
-        direction TB
-        KB["📖 doc_type=kb_*\nVolumes 1–7 · shared"]
-        PERS["📄 doc_type=personal\nper user_id"]
-        MEM["🧠 doc_type=memory\nweekly summaries · per user_id"]
-        APP["💿 App state\nprofiles · plans · logs"]
+    subgraph STORAGE[Neon Postgres + pgvector]
+        KB[doc_type kb shared Volumes]
+        PERS[doc_type personal per user]
+        MEM[doc_type memory weekly]
+        APP[App state profiles plans logs]
     end
 
-    subgraph OBS["📊  Observability"]
-        LS["🔭 LangSmith\ntraces · tool calls"]
-        EV["🧪 RAGAS + LLM-judge\n80 cases"]
+    subgraph OBS[Observability]
+        LS[LangSmith traces]
+        EV[RAGAS + LLM-judge 80 cases]
     end
 
-    UI -->|"X-User-Id"| GATE
+    UI -->|X-User-Id| GATE
     CRON --> LG
-    GATE --> LG --> GW
+    GATE --> LG
+    LG --> GW
     LG --> COACH
-    COACH --> INT & SCH & NUT & ADH & KNOW
-    SCH & NUT & ADH & KNOW --> T1 & T2 & T3 & T4 & T5
-    T5 --> KB & PERS & MEM
-    LG --> APP & LS
-    EV -.->|"tests"| GATE
+    COACH --> INT
+    COACH --> SCH
+    COACH --> NUT
+    COACH --> ADH
+    COACH --> KNOW
+    SCH --> T1
+    SCH --> T4
+    SCH --> T5
+    NUT --> T2
+    NUT --> T5
+    ADH --> T5
+    KNOW --> T3
+    KNOW --> T5
+    T5 --> KB
+    T5 --> PERS
+    T5 --> MEM
+    LG --> APP
+    LG --> LS
+    EV -.->|tests| GATE
 
-    style CLIENT fill:#f0f9ff,stroke:#bae6fd,color:#0f172a
-    style BACKEND fill:#1e293b,stroke:#334155,color:#fff
-    style AGENTS fill:#4f46e5,stroke:#4338ca,color:#fff
-    style TOOLS fill:#0f766e,stroke:#0d9488,color:#fff
-    style STORAGE fill:#7c3aed,stroke:#6d28d9,color:#fff
-    style OBS fill:#b45309,stroke:#92400e,color:#fff
-    style UI fill:#dbeafe,color:#1e3a8a,stroke:#93c5fd
-    style GATE fill:#e2e8f0,color:#0f172a,stroke:#94a3b8
-    style LG fill:#ede9fe,color:#1e1b4b,stroke:#c4b5fd
-    style GW fill:#ede9fe,color:#1e1b4b,stroke:#c4b5fd
-    style CRON fill:#e2e8f0,color:#0f172a,stroke:#94a3b8
-    style COACH fill:#c7d2fe,color:#1e1b4b,stroke:#818cf8
-    style INT fill:#c7d2fe,color:#1e1b4b,stroke:#818cf8
-    style SCH fill:#c7d2fe,color:#1e1b4b,stroke:#818cf8
-    style NUT fill:#c7d2fe,color:#1e1b4b,stroke:#818cf8
-    style ADH fill:#c7d2fe,color:#1e1b4b,stroke:#818cf8
-    style KNOW fill:#c7d2fe,color:#1e1b4b,stroke:#818cf8
-    style T1 fill:#ccfbf1,color:#0f4c3a,stroke:#5eead4
-    style T2 fill:#ccfbf1,color:#0f4c3a,stroke:#5eead4
-    style T3 fill:#ccfbf1,color:#0f4c3a,stroke:#5eead4
-    style T4 fill:#ccfbf1,color:#0f4c3a,stroke:#5eead4
-    style T5 fill:#ccfbf1,color:#0f4c3a,stroke:#5eead4
-    style KB fill:#ede9fe,color:#1e1b4b,stroke:#c4b5fd
-    style PERS fill:#ede9fe,color:#1e1b4b,stroke:#c4b5fd
-    style MEM fill:#ede9fe,color:#1e1b4b,stroke:#c4b5fd
-    style APP fill:#ede9fe,color:#1e1b4b,stroke:#c4b5fd
-    style LS fill:#fef3c7,color:#78350f,stroke:#fcd34d
-    style EV fill:#fef3c7,color:#78350f,stroke:#fcd34d
+    style UI fill:#dbeafe,stroke:#93c5fd,color:#1e3a8a
+    style GATE fill:#e2e8f0,stroke:#94a3b8,color:#0f172a
+    style LG fill:#ede9fe,stroke:#c4b5fd,color:#1e1b4b
+    style GW fill:#ede9fe,stroke:#c4b5fd,color:#1e1b4b
+    style CRON fill:#e2e8f0,stroke:#94a3b8,color:#0f172a
+    style COACH fill:#c7d2fe,stroke:#818cf8,color:#1e1b4b
+    style INT fill:#c7d2fe,stroke:#818cf8,color:#1e1b4b
+    style SCH fill:#c7d2fe,stroke:#818cf8,color:#1e1b4b
+    style NUT fill:#c7d2fe,stroke:#818cf8,color:#1e1b4b
+    style ADH fill:#c7d2fe,stroke:#818cf8,color:#1e1b4b
+    style KNOW fill:#c7d2fe,stroke:#818cf8,color:#1e1b4b
+    style T1 fill:#ccfbf1,stroke:#5eead4,color:#0f4c3a
+    style T2 fill:#ccfbf1,stroke:#5eead4,color:#0f4c3a
+    style T3 fill:#ccfbf1,stroke:#5eead4,color:#0f4c3a
+    style T4 fill:#ccfbf1,stroke:#5eead4,color:#0f4c3a
+    style T5 fill:#ccfbf1,stroke:#5eead4,color:#0f4c3a
+    style KB fill:#ede9fe,stroke:#c4b5fd,color:#1e1b4b
+    style PERS fill:#ede9fe,stroke:#c4b5fd,color:#1e1b4b
+    style MEM fill:#ede9fe,stroke:#c4b5fd,color:#1e1b4b
+    style APP fill:#ede9fe,stroke:#c4b5fd,color:#1e1b4b
+    style LS fill:#fef3c7,stroke:#fcd34d,color:#78350f
+    style EV fill:#fef3c7,stroke:#fcd34d,color:#78350f
 ```
 
 ### Turn flow (mermaid)
 
 ```mermaid
-%%{init: {
-  "theme": "base",
-  "themeVariables": {
-    "primaryColor": "#1e293b",
-    "primaryTextColor": "#ffffff",
-    "lineColor": "#94a3b8",
-    "background": "#f8fafc",
-    "fontFamily": "system-ui, sans-serif",
-    "edgeLabelBackground": "#f1f5f9"
-  }
-}}%%
 flowchart TD
-    MSG(["💬 User message\nOR Sunday cron"])
-    HDR["👤 Resolve X-User-Id"]
-    GATE{"🛡️ Scope gate\nnormalize + classify"}
-    REFUSE(["🚫 Fixed fitness\nredirect"])
-    BOOT["⚙️ Bootstrap\nprofile + week plan"]
-    COACH["🎯 Coach\nsupervisor"]
+    MSG[User message or Sunday cron]
+    HDR[Resolve X-User-Id]
+    GATE{Scope gate normalize + classify}
+    REFUSE[Fixed fitness redirect]
+    BOOT[Bootstrap profile + week plan]
+    COACH[Coach supervisor]
 
-    subgraph INTAKE["📝  Onboarding"]
-        INT["Intake node\nextract → save → ask one question"]
-        SCH1["Scheduler\nfirst WeekPlan"]
+    subgraph INTAKE[Onboarding]
+        INT[Intake extract save ask]
+        SCH1[Scheduler first WeekPlan]
     end
 
-    subgraph SPECIALISTS["🤝  Specialists + Tools"]
-        SCH["📆 Scheduler\ncalendar · exercises · KB · memories"]
-        NUT["🥗 Nutrition\nUSDA · recipes · science KB"]
-        ADH["💪 Adherence\nstats · memories"]
-        KNOW["📚 Knowledge\npersonal · KB · web"]
+    subgraph SPECIALISTS[Specialists and Tools]
+        SCH[Scheduler calendar exercises KB memories]
+        NUT[Nutrition USDA recipes science KB]
+        ADH[Adherence stats memories]
+        KNOW[Knowledge personal KB web]
     end
 
-    subgraph RETRIEVAL["🔍  Four Corpora"]
-        R1["📖 Curated KB\nhybrid BM25 + RRF"]
-        R2["🧠 Coaching memory\nrecency-weighted"]
-        R3["📄 Personal uploads"]
-        R4["🌐 Tavily web"]
+    subgraph RETRIEVAL[Four Corpora]
+        R1[Curated KB hybrid BM25 RRF]
+        R2[Coaching memory recency-weighted]
+        R3[Personal uploads]
+        R4[Tavily web]
     end
 
-    TEAM["⚖️ Coaching team merge\ncitations · risk check"]
-    MWRITE["💾 memory_write\nweekly summary upsert"]
-    HITL(["✋ Approve interrupt\nhuman-in-the-loop"])
-    OUT(["✅ Reply\ncitation chips · quick replies"])
+    TEAM[Coaching team merge citations risk]
+    MWRITE[memory_write weekly summary]
+    HITL[Approve interrupt HITL]
+    OUT[Reply citation chips quick replies]
 
-    MSG --> HDR --> GATE
-    GATE -->|"out of scope"| REFUSE
-    GATE -->|"in scope"| BOOT --> COACH
-    COACH -->|"incomplete profile"| INT
-    INT -->|"still filling"| OUT
-    INT -->|"confirmed"| SCH1 --> TEAM
-    COACH -->|"profile change"| INT
-    COACH -->|"schedule"| SCH
-    COACH -->|"nutrition"| NUT
-    COACH -->|"adherence"| ADH
-    COACH -->|"knowledge"| KNOW
-    SCH & NUT --> R1 & R2
-    ADH --> R2
-    KNOW --> R1 & R3 & R4
+    MSG --> HDR
+    HDR --> GATE
+    GATE -->|out of scope| REFUSE
+    GATE -->|in scope| BOOT
+    BOOT --> COACH
+    COACH -->|incomplete profile| INT
+    INT -->|still filling| OUT
+    INT -->|confirmed| SCH1
+    SCH1 --> TEAM
+    COACH -->|profile change| INT
+    COACH -->|schedule| SCH
+    COACH -->|nutrition| NUT
+    COACH -->|adherence| ADH
+    COACH -->|knowledge| KNOW
+    SCH --> R1
+    SCH --> R2
+    NUT --> R1
+    NUT --> R2
     NUT --> R4
-    SCH & NUT & ADH & KNOW --> TEAM
+    ADH --> R2
+    KNOW --> R1
+    KNOW --> R3
+    KNOW --> R4
+    SCH --> TEAM
+    NUT --> TEAM
+    ADH --> TEAM
+    KNOW --> TEAM
     TEAM --> MWRITE
-    MWRITE -->|"risk renegotiate"| COACH
-    MWRITE -->|"plan changed"| HITL --> OUT
-    MWRITE -->|"informational"| OUT
+    MWRITE -->|risk renegotiate| COACH
+    MWRITE -->|plan changed| HITL
+    HITL --> OUT
+    MWRITE -->|informational| OUT
 
-    style MSG fill:#4f46e5,color:#fff,stroke:#4338ca
-    style OUT fill:#059669,color:#fff,stroke:#047857
-    style REFUSE fill:#dc2626,color:#fff,stroke:#b91c1c
-    style BOOT fill:#1e293b,color:#fff,stroke:#334155
-    style COACH fill:#0f172a,color:#fff,stroke:#334155
-    style TEAM fill:#b45309,color:#fff,stroke:#92400e
-    style MWRITE fill:#0f172a,color:#fff,stroke:#334155
-    style HITL fill:#dc2626,color:#fff,stroke:#b91c1c
-    style HDR fill:#f1f5f9,color:#0f172a,stroke:#cbd5e1
-    style GATE fill:#fef9c3,color:#92400e,stroke:#ca8a04
-    style INTAKE fill:#7c3aed,stroke:#6d28d9,color:#fff
-    style INT fill:#ede9fe,color:#1e1b4b,stroke:#c4b5fd
-    style SCH1 fill:#ede9fe,color:#1e1b4b,stroke:#c4b5fd
-    style SPECIALISTS fill:#0f766e,stroke:#0d9488,color:#fff
-    style SCH fill:#ccfbf1,color:#0f4c3a,stroke:#5eead4
-    style NUT fill:#ccfbf1,color:#0f4c3a,stroke:#5eead4
-    style ADH fill:#ccfbf1,color:#0f4c3a,stroke:#5eead4
-    style KNOW fill:#ccfbf1,color:#0f4c3a,stroke:#5eead4
-    style RETRIEVAL fill:#1e3a5f,stroke:#1e40af,color:#fff
-    style R1 fill:#dbeafe,color:#1e3a8a,stroke:#93c5fd
-    style R2 fill:#dbeafe,color:#1e3a8a,stroke:#93c5fd
-    style R3 fill:#dbeafe,color:#1e3a8a,stroke:#93c5fd
-    style R4 fill:#dbeafe,color:#1e3a8a,stroke:#93c5fd
+    style MSG fill:#4f46e5,stroke:#4338ca,color:#fff
+    style OUT fill:#059669,stroke:#047857,color:#fff
+    style REFUSE fill:#dc2626,stroke:#b91c1c,color:#fff
+    style BOOT fill:#1e293b,stroke:#334155,color:#fff
+    style COACH fill:#0f172a,stroke:#334155,color:#fff
+    style TEAM fill:#b45309,stroke:#92400e,color:#fff
+    style MWRITE fill:#0f172a,stroke:#334155,color:#fff
+    style HITL fill:#dc2626,stroke:#b91c1c,color:#fff
+    style HDR fill:#f1f5f9,stroke:#cbd5e1,color:#0f172a
+    style GATE fill:#fef9c3,stroke:#ca8a04,color:#92400e
+    style INT fill:#ede9fe,stroke:#c4b5fd,color:#1e1b4b
+    style SCH1 fill:#ede9fe,stroke:#c4b5fd,color:#1e1b4b
+    style SCH fill:#ccfbf1,stroke:#5eead4,color:#0f4c3a
+    style NUT fill:#ccfbf1,stroke:#5eead4,color:#0f4c3a
+    style ADH fill:#ccfbf1,stroke:#5eead4,color:#0f4c3a
+    style KNOW fill:#ccfbf1,stroke:#5eead4,color:#0f4c3a
+    style R1 fill:#dbeafe,stroke:#93c5fd,color:#1e3a8a
+    style R2 fill:#dbeafe,stroke:#93c5fd,color:#1e3a8a
+    style R3 fill:#dbeafe,stroke:#93c5fd,color:#1e3a8a
+    style R4 fill:#dbeafe,stroke:#93c5fd,color:#1e3a8a
 ```
 
 ## Quick start

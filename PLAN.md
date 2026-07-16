@@ -37,51 +37,37 @@ real life.
 ### Current-state workflow diagram
 
 ```mermaid
-%%{init: {
-  "theme": "base",
-  "themeVariables": {
-    "primaryColor": "#1e293b",
-    "primaryTextColor": "#ffffff",
-    "primaryBorderColor": "#334155",
-    "lineColor": "#94a3b8",
-    "secondaryColor": "#f1f5f9",
-    "tertiaryColor": "#fef2f2",
-    "tertiaryTextColor": "#b91c1c",
-    "tertiaryBorderColor": "#fca5a5",
-    "background": "#f8fafc",
-    "nodeBorder": "#cbd5e1",
-    "clusterBkg": "#f1f5f9",
-    "titleColor": "#1e293b",
-    "edgeLabelBackground": "#ffffff",
-    "fontFamily": "system-ui, sans-serif"
-  }
-}}%%
 flowchart TD
-    A(["📋 Pick a static plan\nYouTube · PDF · trainer template"])
-    B(["📅 Manually schedule workouts\nin calendar app"])
-    C(["🏋️ Train & log sets\nHevy / Strong"])
-    D(["🥗 Log food manually\nMyFitnessPal"])
-    E{"⚡ Life interferes?\nmeeting · travel · fatigue"}
-    F(["⚠️ Workout silently skipped\nNothing reschedules it"])
-    G(["⚠️ Manual re-plan attempt\nSlow — usually skipped"])
-    H{"😓 Motivation\ncheck"}
-    I(["💔 Gradual drop-off\nNo one notices"])
+    A[Pick a static plan<br/>YouTube / PDF / trainer template]
+    B[Manually schedule workouts<br/>in calendar app]
+    C[Train and log sets<br/>Hevy / Strong]
+    D[Log food manually<br/>MyFitnessPal]
+    E{Life interferes?<br/>meeting / travel / fatigue}
+    F[Workout silently skipped<br/>Nothing reschedules it]
+    G[Manual re-plan attempt<br/>Slow - usually skipped]
+    H{Motivation check}
+    I[Gradual drop-off<br/>No one notices]
 
-    A --> B --> C --> D --> E
-    E -- No --> C
-    E -- Yes --> F --> G --> H
-    H -- "Still going" --> C
-    H -- Low --> I
+    A --> B
+    B --> C
+    C --> D
+    D --> E
+    E -->|No| C
+    E -->|Yes| F
+    F --> G
+    G --> H
+    H -->|Still going| C
+    H -->|Low| I
 
-    style A fill:#1e293b,color:#fff,stroke:#334155
-    style B fill:#1e293b,color:#fff,stroke:#334155
-    style C fill:#1e293b,color:#fff,stroke:#334155
-    style D fill:#1e293b,color:#fff,stroke:#334155
-    style E fill:#fef9c3,color:#92400e,stroke:#ca8a04
-    style H fill:#fef9c3,color:#92400e,stroke:#ca8a04
-    style F fill:#fef2f2,color:#b91c1c,stroke:#fca5a5
-    style G fill:#fef2f2,color:#b91c1c,stroke:#fca5a5
-    style I fill:#fef2f2,color:#b91c1c,stroke:#fca5a5
+    style A fill:#1e293b,stroke:#334155,color:#fff
+    style B fill:#1e293b,stroke:#334155,color:#fff
+    style C fill:#1e293b,stroke:#334155,color:#fff
+    style D fill:#1e293b,stroke:#334155,color:#fff
+    style E fill:#fef9c3,stroke:#ca8a04,color:#92400e
+    style H fill:#fef9c3,stroke:#ca8a04,color:#92400e
+    style F fill:#fef2f2,stroke:#fca5a5,color:#b91c1c
+    style G fill:#fef2f2,stroke:#fca5a5,color:#b91c1c
+    style I fill:#fef2f2,stroke:#fca5a5,color:#b91c1c
 ```
 
 Pain points (red): the re-planning step is manual and usually skipped; missed sessions are
@@ -115,93 +101,77 @@ HITL plan approval — that re-plans training and nutrition around real life.
 ### Infrastructure diagram
 
 ```mermaid
-%%{init: {
-  "theme": "base",
-  "themeVariables": {
-    "primaryColor": "#0f172a",
-    "primaryTextColor": "#ffffff",
-    "primaryBorderColor": "#1e293b",
-    "lineColor": "#64748b",
-    "secondaryColor": "#f8fafc",
-    "background": "#f8fafc",
-    "fontFamily": "system-ui, sans-serif",
-    "edgeLabelBackground": "#f1f5f9",
-    "clusterBkg": "#f1f5f9",
-    "clusterBorder": "#cbd5e1"
-  }
-}}%%
 flowchart TD
-    subgraph CLIENT["🖥️  Client"]
-        U["📱 Browser UI\nchat · plan · profile switcher"]
+    subgraph CLIENT[Client]
+        U[Browser UI chat plan profile switcher]
     end
 
-    subgraph FRONTEND["▲  Vercel"]
-        FE["Next.js\nResponsive · mobile + desktop"]
+    subgraph FRONTEND[Vercel]
+        FE[Next.js Responsive mobile + desktop]
     end
 
-    subgraph BACKEND["⚙️  Render"]
-        API["FastAPI\n/api/chat · /api/profiles\n/internal/weekly-review"]
-        GATE["🛡️ Scope gate\nnormalize · rate-limit · untrusted wrap"]
-        CRON["⏰ Sunday cron\nweekly review all profiles"]
+    subgraph BACKEND[Render]
+        API[FastAPI chat profiles weekly-review]
+        GATE[Scope gate normalize rate-limit]
+        CRON[Sunday cron weekly review all profiles]
     end
 
-    subgraph AGENTS["🧠  LangGraph"]
-        LG["CoachingTeamState\nthread = user_id:conv"]
-        GW["☁️ Vercel AI Gateway\nClaude Sonnet · GPT-4o-mini"]
+    subgraph AGENTS[LangGraph]
+        LG[CoachingTeamState thread = user_id:conv]
+        GW[Vercel AI Gateway Claude Sonnet GPT-4o-mini]
     end
 
-    subgraph TOOLS["🔧  Tools"]
-        TAV["🌐 Tavily\nweb search"]
-        FOOD["🥗 USDA FoodData\nmacro grounding"]
-        CAL["📅 Calendar mock\n→ Google OAuth later"]
-        XL["📦 exercise_lookup.json\ndeterministic filter"]
-        RET["🔍 Hybrid retriever\ndense + BM25 + RRF"]
+    subgraph TOOLS[Tools]
+        TAV[Tavily web search]
+        FOOD[USDA FoodData macro grounding]
+        CAL[Calendar mock Google OAuth later]
+        XL[exercise_lookup.json deterministic filter]
+        RET[Hybrid retriever dense + BM25 + RRF]
     end
 
-    subgraph STORAGE["🗄️  Neon Postgres"]
-        PG[("pgvector\ndocuments · checkpointer")]
-        APP[("App state\nprofiles · plans · logs")]
+    subgraph STORAGE[Neon Postgres]
+        PG[(pgvector documents checkpointer)]
+        APP[(App state profiles plans logs)]
     end
 
-    subgraph OBS["📊  Observability & Evals"]
-        LS["🔭 LangSmith\ntraces · tool calls · RAG spans"]
-        EV["🧪 Eval harness\nRAGAS + LLM-judge · 80 cases"]
+    subgraph OBS[Observability and Evals]
+        LS[LangSmith traces tool calls RAG spans]
+        EV[Eval harness RAGAS + LLM-judge 80 cases]
     end
 
     U --> FE
-    FE -->|"X-User-Id · ?profile="| API
+    FE -->|X-User-Id profile| API
     CRON --> API
-    API --> GATE --> LG
+    API --> GATE
+    GATE --> LG
     LG --> GW
-    LG --> TAV & FOOD & CAL & XL & RET
+    LG --> TAV
+    LG --> FOOD
+    LG --> CAL
+    LG --> XL
+    LG --> RET
     RET --> PG
-    LG --> PG & APP
+    LG --> PG
+    LG --> APP
     LG --> LS
-    EV -.->|"tests"| API
+    EV -.->|tests| API
 
-    style CLIENT fill:#f0f9ff,stroke:#bae6fd,color:#0f172a
-    style FRONTEND fill:#0f172a,stroke:#1e293b,color:#fff
-    style BACKEND fill:#1e293b,stroke:#334155,color:#fff
-    style AGENTS fill:#4f46e5,stroke:#4338ca,color:#fff
-    style TOOLS fill:#0f766e,stroke:#0d9488,color:#fff
-    style STORAGE fill:#7c3aed,stroke:#6d28d9,color:#fff
-    style OBS fill:#b45309,stroke:#92400e,color:#fff
-    style U fill:#dbeafe,color:#1e3a8a,stroke:#93c5fd
-    style FE fill:#e0e7ff,color:#1e1b4b,stroke:#a5b4fc
-    style API fill:#e2e8f0,color:#0f172a,stroke:#94a3b8
-    style GATE fill:#e2e8f0,color:#0f172a,stroke:#94a3b8
-    style CRON fill:#e2e8f0,color:#0f172a,stroke:#94a3b8
-    style LG fill:#ede9fe,color:#1e1b4b,stroke:#c4b5fd
-    style GW fill:#ede9fe,color:#1e1b4b,stroke:#c4b5fd
-    style TAV fill:#ccfbf1,color:#0f4c3a,stroke:#5eead4
-    style FOOD fill:#ccfbf1,color:#0f4c3a,stroke:#5eead4
-    style CAL fill:#ccfbf1,color:#0f4c3a,stroke:#5eead4
-    style XL fill:#ccfbf1,color:#0f4c3a,stroke:#5eead4
-    style RET fill:#ccfbf1,color:#0f4c3a,stroke:#5eead4
-    style PG fill:#ede9fe,color:#1e1b4b,stroke:#c4b5fd
-    style APP fill:#ede9fe,color:#1e1b4b,stroke:#c4b5fd
-    style LS fill:#fef3c7,color:#78350f,stroke:#fcd34d
-    style EV fill:#fef3c7,color:#78350f,stroke:#fcd34d
+    style U fill:#dbeafe,stroke:#93c5fd,color:#1e3a8a
+    style FE fill:#e0e7ff,stroke:#a5b4fc,color:#1e1b4b
+    style API fill:#e2e8f0,stroke:#94a3b8,color:#0f172a
+    style GATE fill:#e2e8f0,stroke:#94a3b8,color:#0f172a
+    style CRON fill:#e2e8f0,stroke:#94a3b8,color:#0f172a
+    style LG fill:#ede9fe,stroke:#c4b5fd,color:#1e1b4b
+    style GW fill:#ede9fe,stroke:#c4b5fd,color:#1e1b4b
+    style TAV fill:#ccfbf1,stroke:#5eead4,color:#0f4c3a
+    style FOOD fill:#ccfbf1,stroke:#5eead4,color:#0f4c3a
+    style CAL fill:#ccfbf1,stroke:#5eead4,color:#0f4c3a
+    style XL fill:#ccfbf1,stroke:#5eead4,color:#0f4c3a
+    style RET fill:#ccfbf1,stroke:#5eead4,color:#0f4c3a
+    style PG fill:#ede9fe,stroke:#c4b5fd,color:#1e1b4b
+    style APP fill:#ede9fe,stroke:#c4b5fd,color:#1e1b4b
+    style LS fill:#fef3c7,stroke:#fcd34d,color:#78350f
+    style EV fill:#fef3c7,stroke:#fcd34d,color:#78350f
 ```
 
 ### Component choices (one sentence each)
@@ -223,89 +193,88 @@ flowchart TD
 ### Agent workflow diagram (end to end)
 
 ```mermaid
-%%{init: {
-  "theme": "base",
-  "themeVariables": {
-    "primaryColor": "#1e293b",
-    "primaryTextColor": "#ffffff",
-    "lineColor": "#94a3b8",
-    "background": "#f8fafc",
-    "fontFamily": "system-ui, sans-serif",
-    "edgeLabelBackground": "#f1f5f9"
-  }
-}}%%
 flowchart TD
-    IN(["💬 User message\nOR Sunday cron"])
-    UID["👤 Resolve user_id\nfrom X-User-Id header"]
-    SG{"🛡️ Scope gate\nfitness coaching?"}
-    REJ(["🚫 Fitness-only refusal\nfixed template"])
-    COACH["🎯 Coach\nload profile + week plan"]
-    INT["📝 Intake node\nextract → persist → one question"]
-    FIRST["📅 First plan\n→ Scheduler"]
+    IN[User message or Sunday cron]
+    UID[Resolve user_id from X-User-Id]
+    SG{Scope gate fitness coaching?}
+    REJ[Fitness-only refusal fixed template]
+    COACH[Coach load profile + week plan]
+    INT[Intake extract persist one question]
+    FIRST[First plan to Scheduler]
 
-    subgraph SPECIALISTS["🧠  Specialist Agents"]
-        SCH["📆 Scheduler"]
-        NUT["🥗 Nutrition"]
-        ADH["💪 Adherence"]
-        KNOW["📚 Knowledge"]
+    subgraph SPECIALISTS[Specialist Agents]
+        SCH[Scheduler]
+        NUT[Nutrition]
+        ADH[Adherence]
+        KNOW[Knowledge]
     end
 
-    subgraph RETRIEVAL["🔍  Four Retrieval Corpora"]
-        KB["📖 Curated KB\nVolumes 1–7 · hybrid BM25+RRF"]
-        MEM["🧠 Coaching memory\nrecency-weighted · [Memory: …]"]
-        PERS["📄 Personal uploads\n[doc: …]"]
-        WEB["🌐 Tavily web\n[web: …]"]
+    subgraph RETRIEVAL[Four Retrieval Corpora]
+        KB[Curated KB Volumes hybrid BM25 RRF]
+        MEM[Coaching memory recency-weighted]
+        PERS[Personal uploads]
+        WEB[Tavily web]
     end
 
-    TEAM["⚖️ Coaching team merge\ncitations · risk check"]
-    MWRITE["💾 memory_write\nweekly summary → pgvector"]
-    HITL(["✋ Approve interrupt\nhuman-in-the-loop"])
-    SAVE["💿 Persist week plan\nPostgres"]
-    OUT(["✅ Reply\ncitation chips · quick replies"])
+    TEAM[Coaching team merge citations risk]
+    MWRITE[memory_write weekly summary to pgvector]
+    HITL[Approve interrupt human-in-the-loop]
+    SAVE[Persist week plan Postgres]
+    OUT[Reply citation chips quick replies]
 
-    IN --> UID --> SG
-    SG -->|"Out of scope"| REJ
-    SG -->|"OK"| COACH
-    COACH -->|"profile incomplete"| INT
-    INT -->|"still filling"| OUT
-    INT -->|"confirmed"| FIRST --> SCH
-    COACH -->|"profile update"| INT
-    COACH -->|"schedule"| SCH
-    COACH -->|"nutrition"| NUT
-    COACH -->|"adherence"| ADH
-    COACH -->|"knowledge"| KNOW
-    SCH & NUT --> KB & MEM
-    ADH --> MEM
+    IN --> UID
+    UID --> SG
+    SG -->|Out of scope| REJ
+    SG -->|OK| COACH
+    COACH -->|profile incomplete| INT
+    INT -->|still filling| OUT
+    INT -->|confirmed| FIRST
+    FIRST --> SCH
+    COACH -->|profile update| INT
+    COACH -->|schedule| SCH
+    COACH -->|nutrition| NUT
+    COACH -->|adherence| ADH
+    COACH -->|knowledge| KNOW
+    SCH --> KB
+    SCH --> MEM
+    NUT --> KB
+    NUT --> MEM
     NUT --> WEB
-    KNOW --> KB & PERS & WEB
-    SCH & NUT & ADH & KNOW --> TEAM
+    ADH --> MEM
+    KNOW --> KB
+    KNOW --> PERS
+    KNOW --> WEB
+    SCH --> TEAM
+    NUT --> TEAM
+    ADH --> TEAM
+    KNOW --> TEAM
     TEAM --> MWRITE
-    MWRITE -->|"risk + dense plan"| COACH
-    MWRITE -->|"plan changed"| HITL --> SAVE --> OUT
-    MWRITE -->|"informational"| OUT
+    MWRITE -->|risk + dense plan| COACH
+    MWRITE -->|plan changed| HITL
+    HITL --> SAVE
+    SAVE --> OUT
+    MWRITE -->|informational| OUT
 
-    style IN fill:#4f46e5,color:#fff,stroke:#4338ca
-    style OUT fill:#059669,color:#fff,stroke:#047857
-    style REJ fill:#dc2626,color:#fff,stroke:#b91c1c
-    style COACH fill:#0f172a,color:#fff,stroke:#334155
-    style INT fill:#7c3aed,color:#fff,stroke:#6d28d9
-    style FIRST fill:#7c3aed,color:#fff,stroke:#6d28d9
-    style TEAM fill:#b45309,color:#fff,stroke:#92400e
-    style MWRITE fill:#0f172a,color:#fff,stroke:#334155
-    style HITL fill:#dc2626,color:#fff,stroke:#b91c1c
-    style SAVE fill:#0f172a,color:#fff,stroke:#334155
-    style UID fill:#f1f5f9,color:#0f172a,stroke:#cbd5e1
-    style SG fill:#fef9c3,color:#92400e,stroke:#ca8a04
-    style SPECIALISTS fill:#0f766e,stroke:#0d9488,color:#fff
-    style SCH fill:#ccfbf1,color:#0f4c3a,stroke:#5eead4
-    style NUT fill:#ccfbf1,color:#0f4c3a,stroke:#5eead4
-    style ADH fill:#ccfbf1,color:#0f4c3a,stroke:#5eead4
-    style KNOW fill:#ccfbf1,color:#0f4c3a,stroke:#5eead4
-    style RETRIEVAL fill:#1e3a5f,stroke:#1e40af,color:#fff
-    style KB fill:#dbeafe,color:#1e3a8a,stroke:#93c5fd
-    style MEM fill:#dbeafe,color:#1e3a8a,stroke:#93c5fd
-    style PERS fill:#dbeafe,color:#1e3a8a,stroke:#93c5fd
-    style WEB fill:#dbeafe,color:#1e3a8a,stroke:#93c5fd
+    style IN fill:#4f46e5,stroke:#4338ca,color:#fff
+    style OUT fill:#059669,stroke:#047857,color:#fff
+    style REJ fill:#dc2626,stroke:#b91c1c,color:#fff
+    style COACH fill:#0f172a,stroke:#334155,color:#fff
+    style INT fill:#7c3aed,stroke:#6d28d9,color:#fff
+    style FIRST fill:#7c3aed,stroke:#6d28d9,color:#fff
+    style TEAM fill:#b45309,stroke:#92400e,color:#fff
+    style MWRITE fill:#0f172a,stroke:#334155,color:#fff
+    style HITL fill:#dc2626,stroke:#b91c1c,color:#fff
+    style SAVE fill:#0f172a,stroke:#334155,color:#fff
+    style UID fill:#f1f5f9,stroke:#cbd5e1,color:#0f172a
+    style SG fill:#fef9c3,stroke:#ca8a04,color:#92400e
+    style SCH fill:#ccfbf1,stroke:#5eead4,color:#0f4c3a
+    style NUT fill:#ccfbf1,stroke:#5eead4,color:#0f4c3a
+    style ADH fill:#ccfbf1,stroke:#5eead4,color:#0f4c3a
+    style KNOW fill:#ccfbf1,stroke:#5eead4,color:#0f4c3a
+    style KB fill:#dbeafe,stroke:#93c5fd,color:#1e3a8a
+    style MEM fill:#dbeafe,stroke:#93c5fd,color:#1e3a8a
+    style PERS fill:#dbeafe,stroke:#93c5fd,color:#1e3a8a
+    style WEB fill:#dbeafe,stroke:#93c5fd,color:#1e3a8a
 ```
 
 **How it works:** Each request carries **`X-User-Id`**. Threads are namespaced

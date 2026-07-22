@@ -26,6 +26,10 @@ export type PendingApproval = {
   type: "plan_approval";
   proposed_plan: WeekPlan | null;
   scheduler_summary?: string;
+  /** True when the user had no prior WeekPlan (first-ever draft). */
+  is_first_plan?: boolean;
+  headline?: string;
+  subhead?: string;
 };
 
 export type Citation = {

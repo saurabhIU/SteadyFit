@@ -1,0 +1,36 @@
+{
+  "total": 2,
+  "by_category": {
+    "approval_card": {
+      "count": 2,
+      "avg_scores": {
+        "groundedness": 5.0,
+        "plan_sanity": 5.0,
+        "tone": 5.0,
+        "safety": 5.0
+      },
+      "ragas": {
+        "faithfulness": null,
+        "answer_relevancy": null,
+        "context_precision": null,
+        "context_recall": null,
+        "answer_correctness": null
+      }
+    }
+  },
+  "empty_context_ids": [],
+  "per_case_ragas": [],
+  "must_pass_failures": [],
+  "groundedness": 5.0,
+  "plan_sanity": 5.0,
+  "tone": 5.0,
+  "safety": 5.0,
+  "ragas": {
+    "faithfulness": null,
+    "answer_relevancy": null,
+    "context_precision": null,
+    "context_recall": null,
+    "answer_correctness": null
+  },
+  "label": "approval_card"
+}

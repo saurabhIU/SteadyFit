@@ -1,0 +1,162 @@
+[
+  {
+    "id": 102,
+    "category": "approval_card",
+    "input": "Please draft my first week plan.",
+    "expected_behavior": "First-ever plan (no prior WeekPlan). pending_approval.is_first_plan=true and headline is first-plan framing (e.g. Here's your first week), NOT 'a small tweak'.",
+    "reply": "Perfect! Let's get your first week rolling. You've got gym access and want to train 3\u00d7 per week for fat loss, so I'm building a **full-body split** that hits all the major muscle groups each session while leaving room for recovery. You'll also have walking on non-gym days to keep your step count up and support your calorie deficit.\n\nYour calendar is clear this week\u2014no conflicts\u2014so I've slotted sessions for **Monday, Wednesday, and Friday** with walking on the off days.\n\n### **Nutrition (starting estimates)**\n- **~1,800 kcal/day** *(starting estimate\u2014share your weight to refine this)*\n- **~120 g protein/day** *(starting estimate\u2014share your weight to refine this)*\n\nSince you're vegetarian, focus on lentils, chickpeas, tofu, tempeh, Greek yogurt, cottage cheese, eggs, and protein powder to hit that protein target.\n\n**What's your current weight?** I'll tighten these targets once I know.\n\n---\n\n### **Week at a glance**\n- **Mon/Wed/Fri:** Full-body gym sessions (~45 min each)\n- **Tue/Thu/Sat/Sun:** Walking (30\u201345 min, easy pace)\n\nEach gym day will include a squat or hinge pattern, a push, a pull, and optional core/accessory work\u2014all beginner-friendly and gym-appropriate.\n\nHere's your first week\u2014take a look below.",
+    "scope": "bypassed_pending_state",
+    "must_pass": true,
+    "expect_scope": null,
+    "priority": null,
+    "pending_approval": {
+      "type": "plan_approval",
+      "proposed_plan": {
+        "week_start": "2025-01-13",
+        "days": [
+          {
+            "day": "Mon",
+            "focus": "Full body \u2014 Goblet Squat (legs_002), Flat Dumbbell Press (chest_004), Lat Pulldown (back_007), Glute Bridge (legs_013)",
+            "duration_min": 45,
+            "status": "planned"
+          },
+          {
+            "day": "Tue",
+            "focus": "Walking 30\u201345 min, easy pace",
+            "duration_min": 35,
+            "status": "planned"
+          },
+          {
+            "day": "Wed",
+            "focus": "Full body \u2014 Leg Press (legs_004), Push-Up Standard (chest_010), Seated Cable Row (back_008), Step-Up (legs_016)",
+            "duration_min": 45,
+            "status": "planned"
+          },
+          {
+            "day": "Thu",
+            "focus": "Walking 30\u201345 min, easy pace",
+            "duration_min": 35,
+            "status": "planned"
+          },
+          {
+            "day": "Fri",
+            "focus": "Full body \u2014 Dumbbell Romanian Deadlift (back_004), Incline Dumbbell Press (chest_003), Dumbbell Single-Arm Row (back_010), Standing Calf Raise (legs_014)",
+            "duration_min": 45,
+            "status": "planned"
+          },
+          {
+            "day": "Sat",
+            "focus": "Walking 30\u201345 min, easy pace",
+            "duration_min": 35,
+            "status": "planned"
+          },
+          {
+            "day": "Sun",
+            "focus": "Rest or optional light walk",
+            "duration_min": 0,
+            "status": "planned"
+          }
+        ],
+        "calorie_target": 1800,
+        "protein_target_g": 120,
+        "notes": "Volume 3 full-body scaffold for fat loss, 3 gym sessions/week. KB exercises: legs_002, chest_004, back_007, legs_013, legs_004, chest_010, back_008, legs_016, back_004, chest_003, back_010, legs_014. Macros are starting estimates pending weight_kg."
+      },
+      "scheduler_summary": "",
+      "is_first_plan": true,
+      "headline": "Here's your first week",
+      "subhead": "The AI Coaching Team drafted this starting plan \u2014 only if it works for you."
+    },
+    "contexts": [
+      "[kb:error] temporarily unavailable"
+    ],
+    "n_contexts": 1,
+    "judge_scores": {
+      "groundedness": 5,
+      "plan_sanity": 5,
+      "tone": 5,
+      "safety": 5,
+      "notes": "The response effectively outlines a beginner-friendly plan while maintaining a supportive tone."
+    },
+    "ragas": null,
+    "critique_verdict": "clean",
+    "critique_rounds": 0,
+    "coaching_team": {},
+    "coaching_team_transcript": [],
+    "critique_structural_error": null,
+    "vision_usage": null
+  },
+  {
+    "id": 103,
+    "category": "approval_card",
+    "input": "I'm traveling Thu\u2013Fri \u2014 rebuild my week around hotel bodyweight work.",
+    "expected_behavior": "Existing profile with a prior week plan; travel adjustment. pending_approval.is_first_plan=false and headline uses tweak framing (A small tweak to your week).",
+    "reply": "Perfect\u2014no calendar conflicts, so I'll work from your stated travel window. Since you're away Thu\u2013Fri, I'll shift your three sessions to **Mon, Tue, Wed** and swap Friday's upper session for hotel bodyweight work.\n\n**Week of July 14, 2026**\n\n- **Mon** \u2013 Full body gym (45 min) \u2013 your usual strength session\n- **Tue** \u2013 Hotel bodyweight upper/lower circuit (40 min) \u2013 Push-Up Standard, Reverse Lunge, Superman Hold, Bodyweight Squat\n- **Wed** \u2013 Lower gym (40 min) \u2013 hit legs hard before you travel\n- **Thu\u2013Fri** \u2013 Travel days (rest or optional walk)\n\n**Nutrition:**\n~2,100 kcal *(starting estimate\u2014share your weight to refine this)* | ~140 g protein *(starting estimate\u2014share your weight to refine this)*\n\n**What's your current weight?** I'll tighten these targets once I know.\n\nHere's your first week\u2014take a look below.",
+    "scope": "bypassed_pending_state",
+    "must_pass": true,
+    "expect_scope": null,
+    "priority": null,
+    "pending_approval": {
+      "type": "plan_approval",
+      "proposed_plan": {
+        "week_start": "2026-07-14",
+        "days": [
+          {
+            "day": "Mon",
+            "focus": "Full body gym",
+            "duration_min": 45,
+            "status": "planned"
+          },
+          {
+            "day": "Tue",
+            "focus": "Hotel bodyweight \u2014 Push-Up Standard (chest_010), Reverse Lunge (legs_006), Superman Hold (back_014), Bodyweight Squat (legs_007)",
+            "duration_min": 40,
+            "status": "planned"
+          },
+          {
+            "day": "Wed",
+            "focus": "Lower gym",
+            "duration_min": 40,
+            "status": "planned"
+          },
+          {
+            "day": "Thu",
+            "focus": "Travel rest or walk",
+            "duration_min": 0,
+            "status": "planned"
+          },
+          {
+            "day": "Fri",
+            "focus": "Travel rest or walk",
+            "duration_min": 0,
+            "status": "planned"
+          }
+        ],
+        "calorie_target": 2100,
+        "protein_target_g": 140,
+        "notes": "User traveling Thu\u2013Fri; shifted 3\u00d7/wk to Mon/Tue/Wed. Tue = hotel bodyweight (chest_010, legs_006, back_014, legs_007). Macros provisional\u2014no weight_kg on profile."
+      },
+      "scheduler_summary": "",
+      "is_first_plan": false,
+      "headline": "A small tweak to your week",
+      "subhead": "The AI Coaching Team lined up these adjustments \u2014 only if they work for you."
+    },
+    "contexts": [
+      "[kb:error] temporarily unavailable"
+    ],
+    "n_contexts": 1,
+    "judge_scores": {
+      "groundedness": 5,
+      "plan_sanity": 5,
+      "tone": 5,
+      "safety": 5,
+      "notes": "The response is well-structured, realistic, and supportive."
+    },
+    "ragas": null,
+    "critique_verdict": "clean",
+    "critique_rounds": 0,
+    "coaching_team": {},
+    "coaching_team_transcript": [],
+    "critique_structural_error": null,
+    "vision_usage": null
+  }
+]

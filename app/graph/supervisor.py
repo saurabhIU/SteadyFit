@@ -321,13 +321,21 @@ def coaching_team_node(state: CoachingTeamState) -> dict:
 
 def approve_node(state: CoachingTeamState) -> dict:
     """Human-in-the-loop: pause the graph until the user accepts/edits the plan change."""
+    from app.graph.approval_copy import has_prior_week_plan, plan_approval_framing
     from app.graph.plan_utils import coerce_week_plan
+    from app.memory.store import get_saved_week_plan
 
     proposed_plan = coerce_week_plan(state.proposals.get("proposed_week_plan")) or state.week_plan
+    prior = state.week_plan
+    if not has_prior_week_plan(prior):
+        prior = get_saved_week_plan(state.user_id) if state.user_id else None
+    framing = plan_approval_framing(has_prior=has_prior_week_plan(prior))
+    is_first_plan = bool(framing["is_first_plan"])
     decision = interrupt({
         "type": "plan_approval",
         "proposed_plan": proposed_plan.model_dump() if proposed_plan else None,
         "scheduler_summary": (state.proposals.get("scheduler") or "")[:600],
+        **framing,
     })
     accepted = decision == "accept"
     updates: dict = {
@@ -354,6 +362,9 @@ def approve_node(state: CoachingTeamState) -> dict:
             "content": (
                 "No worries — kept your previous plan. "
                 "Tell me if you want a different adjustment."
+                if not is_first_plan
+                else "No worries — we won't lock a week in yet. "
+                "Tell me when you want to try a first-week draft again."
             ),
         }]
     return updates

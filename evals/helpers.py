@@ -423,6 +423,46 @@ def _seed_approved_plan_no_weight(user_id: str) -> None:
     )
 
 
+def _seed_existing_week_for_tweak(user_id: str) -> None:
+    """Onboarded user WITH a current WeekPlan (approval card should say tweak)."""
+    from app.graph.state import UserProfile, WeekPlan, WorkoutDay
+    from app.memory.store import ensure_user, get_profile, save_profile, save_week_plan, user_exists
+
+    if not user_exists(user_id):
+        ensure_user(user_id, "Demo Veteran")
+    base = get_profile(user_id)
+    save_profile(
+        user_id,
+        UserProfile(
+            name=base.name or "Saurabh",
+            goal=base.goal or "lose fat",
+            age=base.age,
+            sex=base.sex,
+            preferred_workout_modes=base.preferred_workout_modes or ["gym", "walking"],
+            food_preference=base.food_preference or "vegetarian",
+            sessions_per_week=base.sessions_per_week or 3,
+            constraints=[],
+            constraints_asked=True,
+            onboarding_complete=True,
+            awaiting_onboarding_confirm=False,
+        ),
+    )
+    save_week_plan(
+        user_id,
+        WeekPlan(
+            week_start="2026-07-14",
+            days=[
+                WorkoutDay(day="Mon", focus="Full body gym", duration_min=45, status="planned"),
+                WorkoutDay(day="Wed", focus="Lower", duration_min=40, status="planned"),
+                WorkoutDay(day="Fri", focus="Upper", duration_min=40, status="planned"),
+            ],
+            calorie_target=2100,
+            protein_target_g=140,
+            notes="Prior plan for tweak-card eval",
+        ),
+    )
+
+
 def invoke_case(graph, row: dict) -> dict:
     """Run through the same normalize → scope gate → graph path as production chat."""
     user_id = eval_user_id(row)
@@ -488,6 +528,8 @@ def invoke_case(graph, row: dict) -> dict:
         _seed_ready_first_plan(user_id)
     if setup == "approved_plan_no_weight":
         _seed_approved_plan_no_weight(user_id)
+    if setup == "existing_week_for_tweak":
+        _seed_existing_week_for_tweak(user_id)
     seed_messages = row.get("seed_messages")
     if seed_messages:
         _seed_thread_history(graph, thread, user_id, seed_messages)
@@ -776,11 +818,13 @@ def judge_reply(judge, row: dict, reply: str) -> dict:
 
 
 def critique_structural_failure(row: dict, out: dict) -> str | None:
-    """Deterministic checks for council_critique / try_profile_ux / photo_meal."""
+    """Deterministic checks for council_critique / try_profile_ux / photo_meal / approval_card."""
     if row.get("category") == "try_profile_ux":
         return try_profile_ux_structural_failure(row, out)
     if row.get("category") == "photo_meal":
         return photo_meal_structural_failure(row, out)
+    if row.get("category") == "approval_card":
+        return approval_card_structural_failure(row, out)
     if row.get("category") != "council_critique":
         return None
     verdict = out.get("critique_verdict")
@@ -872,6 +916,29 @@ def try_profile_ux_structural_failure(row: dict, out: dict) -> str | None:
         pending = out.get("pending_approval") or {}
         if not (isinstance(pending, dict) and pending.get("type") == "plan_approval"):
             return "expected pending_approval plan card; missing or wrong type"
+    return None
+
+
+def approval_card_structural_failure(row: dict, out: dict) -> str | None:
+    """Assert first-plan vs tweak framing on pending_approval payload."""
+    pending = out.get("pending_approval") or {}
+    if not (isinstance(pending, dict) and pending.get("type") == "plan_approval"):
+        return "expected pending_approval plan card"
+    headline = str(pending.get("headline") or "").lower()
+    if row.get("expect_first_plan_headline"):
+        if pending.get("is_first_plan") is not True:
+            return f"expected is_first_plan=True, got {pending.get('is_first_plan')!r}"
+        if "first" not in headline:
+            return f"expected first-plan headline, got {pending.get('headline')!r}"
+        if "tweak" in headline:
+            return f"first-plan card must not say tweak: {pending.get('headline')!r}"
+    if row.get("expect_tweak_headline"):
+        if pending.get("is_first_plan") is not False:
+            return f"expected is_first_plan=False, got {pending.get('is_first_plan')!r}"
+        if "tweak" not in headline:
+            return f"expected tweak headline, got {pending.get('headline')!r}"
+        if "first" in headline:
+            return f"tweak card must not say first week: {pending.get('headline')!r}"
     return None
 
 

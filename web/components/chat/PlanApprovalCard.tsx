@@ -21,6 +21,16 @@ export function PlanApprovalCard({
   const [busy, setBusy] = useState(false);
   const [confirmation, setConfirmation] = useState<string | null>(null);
   const plan = approval.proposed_plan;
+  const isFirst = Boolean(approval.is_first_plan);
+  const headline =
+    approval.headline?.trim() ||
+    (isFirst ? "Here's your first week" : "A small tweak to your week");
+  const subhead =
+    approval.subhead?.trim() ||
+    (isFirst
+      ? "The AI Coaching Team drafted this starting plan — only if it works for you."
+      : "The AI Coaching Team lined up these adjustments — only if they work for you.");
+  const rejectLabel = isFirst ? "Not yet" : "Keep my current plan";
 
   async function decide(decision: "accept" | "reject") {
     setBusy(true);
@@ -55,10 +65,10 @@ export function PlanApprovalCard({
   return (
     <div className="animate-enter max-w-[92%] rounded-2xl border border-beige-border bg-beige p-4 text-card-text">
       <h3 className="text-sm font-semibold text-card-text">
-        A small tweak to your week
+        {headline}
       </h3>
       <p className="mt-1.5 text-sm text-card-text/80">
-        The AI Coaching Team lined up these adjustments — only if they work for you.
+        {subhead}
       </p>
 
       {bullets.length > 0 ? (
@@ -99,7 +109,7 @@ export function PlanApprovalCard({
             disabled={busy}
             className="text-sm text-card-text/60 underline-offset-2 transition-colors hover:text-card-text hover:underline disabled:opacity-60"
           >
-            Keep my current plan
+            {rejectLabel}
           </button>
         </div>
       )}

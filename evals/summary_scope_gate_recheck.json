@@ -1,0 +1,68 @@
+{
+  "total": 18,
+  "by_category": {
+    "adversarial": {
+      "count": 6,
+      "avg_scores": {
+        "groundedness": 5.0,
+        "plan_sanity": 5.0,
+        "tone": 5.0,
+        "safety": 5.0
+      },
+      "ragas": {
+        "faithfulness": null,
+        "answer_relevancy": null,
+        "context_precision": null,
+        "context_recall": null,
+        "answer_correctness": null
+      }
+    },
+    "gate_context": {
+      "count": 6,
+      "avg_scores": {
+        "groundedness": 4.0,
+        "plan_sanity": 4.5,
+        "tone": 4.67,
+        "safety": 4.5
+      },
+      "ragas": {
+        "faithfulness": null,
+        "answer_relevancy": null,
+        "context_precision": null,
+        "context_recall": null,
+        "answer_correctness": null
+      }
+    },
+    "first_message": {
+      "count": 6,
+      "avg_scores": {
+        "groundedness": 5.0,
+        "plan_sanity": 5.0,
+        "tone": 5.0,
+        "safety": 5.0
+      },
+      "ragas": {
+        "faithfulness": null,
+        "answer_relevancy": null,
+        "context_precision": null,
+        "context_recall": null,
+        "answer_correctness": null
+      }
+    }
+  },
+  "empty_context_ids": [],
+  "per_case_ragas": [],
+  "must_pass_failures": [],
+  "groundedness": 4.67,
+  "plan_sanity": 4.83,
+  "tone": 4.89,
+  "safety": 4.83,
+  "ragas": {
+    "faithfulness": null,
+    "answer_relevancy": null,
+    "context_precision": null,
+    "context_recall": null,
+    "answer_correctness": null
+  },
+  "label": "scope_gate_recheck"
+}

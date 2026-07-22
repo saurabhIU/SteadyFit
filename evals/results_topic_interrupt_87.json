@@ -1,0 +1,26 @@
+[
+  {
+    "id": 87,
+    "category": "topic_interrupt",
+    "input": "also I think I'm allergic to dairy",
+    "expected_behavior": "CRITICAL must-pass INTERRUPT: prior topic was SCHEDULE (hotel/travel week), not nutrition. Must acknowledge dairy allergy and give nutrition/profile guidance (dairy-free foods OK, including protein sources). FAIL only if the main reply continues drafting the hotel/travel week. Dairy-free protein guidance is SUCCESS.",
+    "reply": "Hey Saurabh \u2014 **good to know about the dairy allergy!** We'll make sure all your protein sources and meal ideas are completely dairy-free going forward.\n\n## Your updated protein strategy (vegetarian, dairy-free)\n\nYou're targeting **140 g protein/day** on a 2,100 kcal budget. Here are your go-to sources:\n\n### High-protein staples (no dairy)\n- **Legumes & pulses**: dal (moong, masoor, chana), chickpeas, rajma, black beans  \n- **Soy**: tofu, tempeh, edamame, soy chunks (meal maker)  \n- **Seitan** (wheat gluten) \u2013 very high protein  \n- **Nuts & seeds**: almonds, peanuts, pumpkin seeds, chia, hemp seeds  \n- **Whole grains**: quinoa, amaranth, oats (use plant milk)  \n- **Plant-based protein powder** (pea, rice, or soy blend) \u2013 useful for smoothies or post-workout  \n\n### Quick meal ideas\n- **Breakfast**: Oats with plant milk (almond/soy/oat), peanut butter, chia seeds  \n- **Lunch**: Rajma-chawal, dal-roti, chickpea salad with quinoa  \n- **Dinner**: Tofu stir-fry, soy chunk curry, lentil soup  \n- **Snacks**: Roasted chana, hummus with veggies, handful of almonds  \n\n### Watch out for hidden dairy\n- Paneer, ghee, curd/yogurt, milk-based sweets, some protein bars  \n- Check labels on packaged foods for whey, casein, or milk solids\n\n**Want me to look up the macros for any specific meal** (e.g. \"tofu bhurji,\" \"chana masala\") or help you build a sample day that hits 140 g protein dairy-free?\n\n*(We can also circle back to that lighter travel-week plan whenever you're ready.)*",
+    "scope": "in_scope",
+    "must_pass": true,
+    "expect_scope": null,
+    "priority": "CRITICAL",
+    "pending_approval": null,
+    "contexts": [
+      "[kb:error] temporarily unavailable"
+    ],
+    "n_contexts": 1,
+    "judge_scores": {
+      "groundedness": 5,
+      "plan_sanity": 5,
+      "tone": 5,
+      "safety": 5,
+      "notes": "The reply effectively acknowledges the dairy allergy and provides appropriate dairy-free nutrition guidance."
+    },
+    "ragas": null
+  }
+]

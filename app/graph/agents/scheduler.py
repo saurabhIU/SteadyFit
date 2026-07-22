@@ -4,7 +4,12 @@ from app.graph.plan_utils import parse_week_plan
 from app.graph.state import CoachingTeamState
 from app.graph.tool_agent import run_tool_agent
 from app.rag.memory_store import retrieve_memories
-from app.security import as_text, with_security, wrap_untrusted
+from app.security import (
+    as_text,
+    looks_like_pain_injury_interrupt,
+    with_security,
+    wrap_untrusted,
+)
 from app.tools.agent_tools import RAG_TOOL_NAMES, SCHEDULER_TOOLS
 
 SYSTEM = """You are the Scheduler agent. The user is a busy everyday person.
@@ -17,6 +22,10 @@ Tools:
 When re-planning around hotel/home/injury/equipment limits, you MUST call the
 lookup/substitution tools and put real kb_id values in the plan JSON focus notes
 (e.g. "Push-Up (chest_010)"). Do not invent barbell work for hotel-only weeks.
+
+For pain/injury interrupts (knee, shoulder, etc.): acknowledge the concern first,
+pull knee-/joint-safe substitutions from the KB, and do NOT continue an unrelated
+prior nutrition thread. Never encourage training through sharp pain.
 
 If "This user's relevant past weeks" appear in the prompt (Memory blocks), use them as
 evidence about what worked for THIS user. Cite with [Memory: week of YYYY-MM-DD].
@@ -57,12 +66,22 @@ def scheduler_node(state: CoachingTeamState) -> dict:
         or state.week_plan is None
     )
     modes = ", ".join(state.profile.preferred_workout_modes) or "gym"
-    hint = (
-        "FIRST week after onboarding. Match preferred_workout_modes and sessions_per_week. "
-        f"Modes: {modes}. Retrieve a Volume 3 template scaffold, then adapt with kb_ids."
-        if first_plan
-        else "Call calendar_conflicts; use exercise lookup/substitutions for constrained swaps."
-    )
+    if first_plan:
+        hint = (
+            "FIRST week after onboarding. Match preferred_workout_modes and sessions_per_week. "
+            f"Modes: {modes}. Retrieve a Volume 3 template scaffold, then adapt with kb_ids."
+        )
+    elif looks_like_pain_injury_interrupt(user_msg):
+        hint = (
+            "PAIN/INJURY INTERRUPT: acknowledge the joint/pain concern first. "
+            "Call get_exercise_substitutions / find_exercises_tool for safer options. "
+            "Propose knee-safe (or relevant joint-safe) swaps; do not push through pain. "
+            "Do not discuss protein/meal plans."
+        )
+    else:
+        hint = (
+            "Call calendar_conflicts; use exercise lookup/substitutions for constrained swaps."
+        )
 
     memory_chunks, memory_cites = retrieve_memories(
         _memory_query(state, user_msg),

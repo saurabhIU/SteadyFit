@@ -61,6 +61,7 @@ export type ChatMessage = {
   id: string;
   role: "user" | "assistant" | "system";
   content: string;
+  imagePreviewUrl?: string;
   coaching_team?: CoachingTeamProposals;
   citations?: Citation[];
 };

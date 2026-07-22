@@ -42,6 +42,8 @@ def bootstrap_input(
     user_id: str,
     messages: list | None = None,
     retrieved_context: list[str] | None = None,
+    pending_image_base64: str | None = None,
+    pending_image_mime: str | None = None,
 ) -> CoachingTeamState:
     """Merge long-term memory into each graph invoke."""
     set_current_user_id(user_id)
@@ -53,6 +55,8 @@ def bootstrap_input(
         profile=profile,
         week_plan=week_plan,
         retrieved_context=retrieved_context or [],
+        pending_image_base64=pending_image_base64,
+        pending_image_mime=pending_image_mime,
     )
 
 

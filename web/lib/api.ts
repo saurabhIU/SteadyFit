@@ -69,11 +69,20 @@ export async function createTryProfile(): Promise<{ user_id: string }> {
 export async function sendChat(
   message: string,
   threadId?: string | null,
+  image?: { base64: string; mime: string } | null,
 ): Promise<ChatResponse> {
+  const body: Record<string, unknown> = {
+    message,
+    thread_id: threadId ?? undefined,
+  };
+  if (image?.base64) {
+    body.image_base64 = image.base64;
+    body.image_mime = image.mime || "image/jpeg";
+  }
   const res = await fetch(`${API_URL}/api/chat`, {
     method: "POST",
     headers: userHeaders({ "Content-Type": "application/json" }),
-    body: JSON.stringify({ message, thread_id: threadId ?? undefined }),
+    body: JSON.stringify(body),
   });
   return parseJson<ChatResponse>(res);
 }

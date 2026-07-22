@@ -85,3 +85,7 @@ class CoachingTeamState(BaseModel):
     # UI chips for the latest intake question
     quick_replies: list[str] = Field(default_factory=list)
     citations: list[dict] = Field(default_factory=list)
+    # Ephemeral meal photo for this turn only — cleared after nutrition_node.
+    # Never persist to food_log; checkpointer may briefly hold then null out.
+    pending_image_base64: str | None = None
+    pending_image_mime: str | None = None

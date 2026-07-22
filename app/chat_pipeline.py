@@ -106,13 +106,16 @@ def process_user_chat(
     user_id: str,
     thread_id: str | None = None,
     endpoint: str = CHAT_ENDPOINT,
+    image_base64: str | None = None,
+    image_mime: str | None = None,
 ) -> dict:
     """Run defenses then the coaching team graph. Used by API and evals."""
     set_current_user_id(user_id)
     conversation = thread_id or str(uuid.uuid4())
     thread = make_thread_id(user_id, conversation)
-    normalized = normalize_user_message(message)
-    if not normalized:
+    has_image = bool(image_base64 and image_base64.strip())
+    normalized = normalize_user_message(message or "")
+    if not normalized and not has_image:
         return {
             "thread_id": thread,
             "user_id": user_id,
@@ -123,6 +126,8 @@ def process_user_chat(
             "citations": [],
             "scope": "rejected_empty",
         }
+    if not normalized and has_image:
+        normalized = "Please look at this meal photo and log what I ate."
 
     profile = get_profile(user_id)
     config = thread_config(thread, user_id=user_id, endpoint=endpoint)
@@ -139,8 +144,11 @@ def process_user_chat(
             normalized,
             prior_assistant=prior_assistant,
             prior_user=prior_user,
-            bypass=bypass,
-            bypass_reason=bypass_reason,
+            bypass=bypass or has_image,
+            bypass_reason=(
+                "meal_photo" if has_image and not bypass
+                else (bypass_reason or "pending_state")
+            ),
         )
         result = graph.invoke(
             bootstrap_input(
@@ -148,11 +156,13 @@ def process_user_chat(
                 thread,
                 user_id=user_id,
                 messages=[{"role": "user", "content": normalized}],
+                pending_image_base64=image_base64 if has_image else None,
+                pending_image_mime=(image_mime or "image/jpeg") if has_image else None,
             ),
             config=config,
         )
         payload = build_chat_payload(thread, result, graph=graph, config=config)
-        payload["scope"] = gate["verdict"]
+        payload["scope"] = gate["verdict"] if not has_image else "in_scope_meal_photo"
         payload["user_id"] = user_id
         return payload
 
@@ -210,6 +220,10 @@ def process_user_chat(
     # UI greeting is client-only — never rely on it. Skip firm gating and route
     # to Coach/Intake, but still refuse clear off-topic / injection asks so the
     # bypass is not a hole (including when intake would also skip).
+    # Meal photos are always in-scope nutrition — never gate them as OOS.
+    if has_image:
+        return _enter_graph(bypass=True, bypass_reason="meal_photo")
+
     if first_turn:
         oos_check = classify_scope(
             normalized,

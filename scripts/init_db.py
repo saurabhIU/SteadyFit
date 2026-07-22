@@ -158,6 +158,26 @@ STATEMENTS = [
     )
     """,
     "CREATE INDEX IF NOT EXISTS weight_log_user_date_idx ON weight_log (user_id, date)",
+    """
+    CREATE TABLE IF NOT EXISTS food_log (
+        id BIGSERIAL PRIMARY KEY,
+        user_id TEXT NOT NULL REFERENCES app_users(user_id) ON DELETE CASCADE,
+        logged_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+        meal_label TEXT,
+        foods JSONB NOT NULL DEFAULT '[]'::jsonb,
+        kcal REAL,
+        protein_g REAL,
+        carbs_g REAL,
+        fat_g REAL,
+        source TEXT NOT NULL DEFAULT 'text',
+        notes TEXT
+    )
+    """,
+    """
+    ALTER TABLE food_log
+      ADD COLUMN IF NOT EXISTS source TEXT DEFAULT 'text'
+    """,
+    "CREATE INDEX IF NOT EXISTS food_log_user_logged_idx ON food_log (user_id, logged_at DESC)",
 ]
 
 

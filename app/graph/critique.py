@@ -96,7 +96,11 @@ def should_critique(state: CoachingTeamState) -> bool:
 
     Safety interrupts (pain/allergy/pregnancy) are acknowledgments, not draft plans to
     optimize — critique must not second-guess them (same skip path as pure knowledge).
+    Meal logging (photo or text "I ate…") is informational — skip critique for speed.
     """
+    if state.proposals.get("meal_log_only"):
+        return False
+
     user_msg = as_text(state.messages[-1].content) if state.messages else ""
     if looks_like_topic_interrupt(user_msg):
         return False

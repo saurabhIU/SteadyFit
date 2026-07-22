@@ -188,8 +188,12 @@ def cleanup_expired_profiles(x_internal_secret: str | None = Header(default=None
 
 
 class ChatIn(BaseModel):
-    message: str
+    message: str = ""
     thread_id: str | None = None
+    # Optional meal photo (client-compressed base64, no data: prefix required).
+    # Discarded after vision analysis — never written to food_log.
+    image_base64: str | None = None
+    image_mime: str | None = None
 
 
 @app.post("/api/chat")
@@ -200,12 +204,22 @@ def chat(
     x_user_id: str | None = Header(default=None),
 ):
     uid = require_user_id(x_user_id)
+    mime = body.image_mime or "image/jpeg"
+    if body.image_base64 and mime not in {
+        "image/jpeg", "image/jpg", "image/png", "image/webp", "image/gif",
+    }:
+        raise HTTPException(status_code=400, detail="unsupported image_mime")
+    # Cap raw base64 length (~4MB decoded) to bound vision cost.
+    if body.image_base64 and len(body.image_base64) > 5_500_000:
+        raise HTTPException(status_code=400, detail="image too large")
     return process_user_chat(
         require_graph(),
-        body.message,
+        body.message or "",
         user_id=uid,
         thread_id=body.thread_id,
         endpoint="api/chat",
+        image_base64=body.image_base64,
+        image_mime=mime if body.image_base64 else None,
     )
 
 

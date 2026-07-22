@@ -69,6 +69,15 @@ def coach_node(state: CoachingTeamState) -> dict:
         "coaching_team_transcript": [],
     }
 
+    # Meal photo → nutrition directly (even mid-intake — logging is in-scope).
+    if state.pending_image_base64:
+        return {
+            "intent": "nutrition",
+            "coaching_team_rounds": rounds,
+            "quick_replies": [],
+            **critique_reset,
+        }
+
     # Completeness gate — unfinished onboarding never goes to specialists.
     if needs_intake(state.profile) and not state.profile.onboarding_complete:
         return {

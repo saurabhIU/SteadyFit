@@ -398,6 +398,77 @@ def clear_current_week_plan(user_id: str) -> None:
         c.commit()
 
 
+def log_food_entry(
+    user_id: str,
+    *,
+    foods: list[dict] | list,
+    kcal: float | None = None,
+    protein_g: float | None = None,
+    carbs_g: float | None = None,
+    fat_g: float | None = None,
+    source: str = "text",
+    meal_label: str | None = None,
+    notes: str | None = None,
+) -> int:
+    """Persist structured meal summary only — never store images."""
+    src = source if source in {"text", "photo"} else "text"
+    with _conn() as c:
+        row = c.execute(
+            """
+            INSERT INTO food_log (
+                user_id, meal_label, foods, kcal, protein_g, carbs_g, fat_g, source, notes
+            ) VALUES (%s, %s, %s::jsonb, %s, %s, %s, %s, %s, %s)
+            RETURNING id
+            """,
+            (
+                user_id,
+                meal_label,
+                json.dumps(list(foods)),
+                kcal,
+                protein_g,
+                carbs_g,
+                fat_g,
+                src,
+                notes,
+            ),
+        ).fetchone()
+        c.commit()
+    return int(row["id"])
+
+
+def recent_food_logs(user_id: str, *, limit: int = 10) -> list[dict]:
+    with _conn() as c:
+        rows = c.execute(
+            """
+            SELECT id, logged_at, meal_label, foods, kcal, protein_g, carbs_g, fat_g,
+                   source, notes
+            FROM food_log
+            WHERE user_id = %s
+            ORDER BY logged_at DESC
+            LIMIT %s
+            """,
+            (user_id, limit),
+        ).fetchall()
+    out = []
+    for r in rows:
+        foods = r["foods"]
+        if isinstance(foods, str):
+            foods = json.loads(foods)
+        out.append({
+            "id": r["id"],
+            "logged_at": r["logged_at"].isoformat() if r.get("logged_at") else None,
+            "meal_label": r.get("meal_label"),
+            "foods": foods,
+            "kcal": r.get("kcal"),
+            "protein_g": r.get("protein_g"),
+            "carbs_g": r.get("carbs_g"),
+            "fat_g": r.get("fat_g"),
+            "source": r.get("source") or "text",
+            "notes": r.get("notes"),
+        })
+    return out
+
+
 def clear_profile_slots(user_id: str):
     """Reset profile fields for re-onboarding; keep logs/plans unless reset_user."""
     save_profile(

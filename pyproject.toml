@@ -34,6 +34,7 @@ dependencies = [
     "langchain-community<0.4",
     "python-dotenv",
     "nest-asyncio>=1.6",
+    "pillow>=10.0",
 ]
 
 [dependency-groups]

@@ -176,9 +176,12 @@ def run_local(
                 "coaching_team": out.get("coaching_team"),
                 "coaching_team_transcript": out.get("coaching_team_transcript"),
                 "critique_structural_error": struct_err,
+                "vision_usage": out.get("vision_usage"),
             })
             if struct_err:
                 print(f"    ! structural: {struct_err}", flush=True)
+            if out.get("vision_usage"):
+                print(f"    vision_usage: {out.get('vision_usage')}", flush=True)
         except Exception as exc:
             print(f"    ! case {row['id']} failed: {exc}", flush=True)
             results.append({

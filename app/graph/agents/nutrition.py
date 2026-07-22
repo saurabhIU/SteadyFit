@@ -1,5 +1,6 @@
 """Nutrition agent: USDA + recipes + KB nutrition science."""
 from app.graph.citations import citations_from_texts, merge_citations
+from app.graph.critique import looks_like_nutrition_plan_change, revision_block
 from app.graph.state import CoachingTeamState
 from app.graph.tool_agent import run_tool_agent
 from app.security import (
@@ -60,6 +61,7 @@ def nutrition_node(state: CoachingTeamState) -> dict:
         f"{wrap_untrusted(user_msg, source='user')}\n\n"
         f"{fulfill_hint}"
         "Use tools as needed, then give your nutrition proposal."
+        f"{revision_block(state)}"
     )
     result = run_tool_agent(
         system=with_security(SYSTEM),
@@ -71,6 +73,8 @@ def nutrition_node(state: CoachingTeamState) -> dict:
         if name in RAG_TOOL_NAMES
     ]
     proposals = {**state.proposals, "nutrition": result.text}
+    if looks_like_nutrition_plan_change(result.text):
+        proposals["nutrition_plan_change"] = True
     if result.tools_called:
         proposals["nutrition_tools"] = result.tools_called
     cites = merge_citations(

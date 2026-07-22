@@ -1,5 +1,6 @@
 """Adherence agent: agentic stats tool calling; RISK → simplify plan."""
 from app.graph.citations import citations_from_texts, merge_citations
+from app.graph.critique import revision_block
 from app.graph.state import CoachingTeamState
 from app.graph.tool_agent import run_tool_agent
 from app.rag.memory_store import retrieve_memories
@@ -28,6 +29,7 @@ def adherence_node(state: CoachingTeamState) -> dict:
         f"{wrap_untrusted(user_msg or 'Check adherence and report.', source='user')}\n\n"
         f"{memory_block}\n\n"
         "Call adherence_stats, then give your assessment."
+        f"{revision_block(state)}"
     )
     result = run_tool_agent(
         system=with_security(SYSTEM),

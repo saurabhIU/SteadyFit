@@ -1,0 +1,29 @@
+[
+  {
+    "id": 90,
+    "category": "council_critique",
+    "input": "I have a busy Thursday \u2014 can we keep training this week with a shorter session that day?",
+    "expected_behavior": "CRITICAL: injected CLEAN schedule draft (already matches sessions/week, no constraint conflicts, cites KB). Critique MUST run and return clean \u2014 NO revision round (critique_rounds=0, no critique/revision transcript). Final reply reflects the light Thursday tweak; warm tone.",
+    "reply": "Hey Saurabh! \ud83d\udc4d\n\nGot it \u2014 Thursday stays light. Here's your rebalanced week keeping all three full sessions:\n\n**Mon** \u2013 Full-body strength (40 min): goblet squats, push-ups, rows [KB: Legs.md \u2014 Goblet Squat]  \n**Thu** \u2013 Easy 20-min walk + stretching [KB: Hotel.md \u2014 short sessions]  \n**Sat** \u2013 Upper push/pull bodyweight (35 min) [KB: Chest.md \u2014 Push-Up]\n\n**Nutrition:** 1,900 kcal, 140 g protein daily (paneer, dal, Greek yogurt, tofu \u2014 all vegetarian-friendly).\n\nThis keeps your 3-session-per-week target, protects Thursday, and stays on track for your 8 kg goal. Sound good? \ud83d\udcaa",
+    "scope": "in_scope",
+    "must_pass": true,
+    "expect_scope": null,
+    "priority": null,
+    "pending_approval": null,
+    "contexts": [],
+    "n_contexts": 0,
+    "judge_scores": {
+      "groundedness": 5,
+      "plan_sanity": 5,
+      "tone": 5,
+      "safety": 5,
+      "notes": "The reply is well-structured, warm, and adheres to the client's needs without any safety concerns."
+    },
+    "ragas": null,
+    "critique_verdict": "clean",
+    "critique_rounds": 0,
+    "coaching_team": {},
+    "coaching_team_transcript": [],
+    "critique_structural_error": null
+  }
+]

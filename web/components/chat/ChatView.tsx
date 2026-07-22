@@ -38,7 +38,11 @@ const COACH_BUBBLE =
   "group-[.is-assistant]:bubble-coach group-[.is-assistant]:max-w-[92%] group-[.is-assistant]:rounded-[var(--radius-bubble)] group-[.is-assistant]:border group-[.is-assistant]:border-beige-border group-[.is-assistant]:bg-beige group-[.is-assistant]:px-4 group-[.is-assistant]:py-3 group-[.is-assistant]:text-card-text";
 
 function hasCoachingTeam(proposals?: CoachingTeamProposals) {
-  return proposals && Object.values(proposals).some((v) => v?.trim());
+  if (!proposals) return false;
+  if (Array.isArray(proposals)) {
+    return proposals.some((e) => e?.text?.trim());
+  }
+  return Object.values(proposals).some((v) => v?.trim());
 }
 
 export function ChatView() {

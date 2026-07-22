@@ -1,5 +1,6 @@
 """Scheduler agent: life-aware weekly re-planning with KB + coaching memory."""
 from app.graph.citations import citations_from_texts, merge_citations
+from app.graph.critique import revision_block
 from app.graph.plan_utils import parse_week_plan
 from app.graph.state import CoachingTeamState
 from app.graph.tool_agent import run_tool_agent
@@ -96,6 +97,7 @@ def scheduler_node(state: CoachingTeamState) -> dict:
         f"{wrap_untrusted(user_msg, source='user')}\n\n"
         f"{memory_block}\n\n"
         f"{hint}"
+        f"{revision_block(state)}"
     )
     result = run_tool_agent(
         system=with_security(SYSTEM),

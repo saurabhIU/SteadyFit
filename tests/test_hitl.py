@@ -179,6 +179,32 @@ def test_build_thread_history_skips_system_trigger():
 
 def test_proposals_from_state_strips_internal_keys():
     proposals = proposals_from_state(
-        {"proposals": {"scheduler": "ok", "plan_changed": True, "proposed_week_plan": {}}}
+        {
+            "proposals": {
+                "scheduler": "ok",
+                "plan_changed": True,
+                "proposed_week_plan": {},
+                "revision_instructions": "fix knee",
+                "nutrition_plan_change": True,
+            }
+        }
     )
     assert proposals == {"scheduler": "ok"}
+
+
+def test_coaching_team_from_state_prefers_transcript():
+    from app.graph.response import coaching_team_from_state
+
+    team = coaching_team_from_state(
+        {
+            "proposals": {"scheduler": "ignored once transcript exists"},
+            "coaching_team_transcript": [
+                {"type": "proposal", "agent": "scheduler", "text": "deep squat day"},
+                {"type": "critique", "agent": "coach", "text": "Conflicts with knee constraint."},
+                {"type": "revision", "agent": "scheduler", "text": "knee-safe swaps"},
+            ],
+        }
+    )
+    assert isinstance(team, list)
+    assert len(team) == 3
+    assert team[1]["type"] == "critique"

@@ -1,4 +1,11 @@
-export type CoachingTeamProposals = Record<string, string>;
+export type CoachingTeamChip = {
+  type: "proposal" | "critique" | "revision" | string;
+  agent: string;
+  text: string;
+};
+
+/** Legacy agent→text map, or ordered critique/revision transcript chips. */
+export type CoachingTeamProposals = Record<string, string> | CoachingTeamChip[];
 
 export type WorkoutDay = {
   day: string;

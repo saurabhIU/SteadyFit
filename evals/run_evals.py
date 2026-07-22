@@ -38,6 +38,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 from app.config import get_llm, settings
 from helpers import (
     compare_labeled_summaries,
+    critique_structural_failure,
     format_summary_table,
     invoke_case,
     judge_reply,
@@ -150,6 +151,7 @@ def run_local(
         try:
             out = invoke_case(graph, row)
             scores = judge_reply(judge, row, out["reply"])
+            struct_err = critique_structural_failure(row, out)
             try:
                 ragas = ragas_scores(row, out["reply"], out.get("contexts") or [])
             except Exception as exc:
@@ -169,7 +171,14 @@ def run_local(
                 "n_contexts": len(out.get("contexts") or []),
                 "judge_scores": scores,
                 "ragas": ragas,
+                "critique_verdict": out.get("critique_verdict"),
+                "critique_rounds": out.get("critique_rounds"),
+                "coaching_team": out.get("coaching_team"),
+                "coaching_team_transcript": out.get("coaching_team_transcript"),
+                "critique_structural_error": struct_err,
             })
+            if struct_err:
+                print(f"    ! structural: {struct_err}", flush=True)
         except Exception as exc:
             print(f"    ! case {row['id']} failed: {exc}", flush=True)
             results.append({
@@ -224,6 +233,12 @@ def run():
         help="Comma-separated case ids to run (smoke), e.g. 33,39,50",
     )
     parser.add_argument(
+        "--category",
+        type=str,
+        default="",
+        help="Only run cases in this category (e.g. council_critique)",
+    )
+    parser.add_argument(
         "--label",
         type=str,
         default="",
@@ -258,6 +273,11 @@ def run():
         rows = [r for r in rows if r["id"] in want]
         if not rows:
             raise SystemExit(f"No cases matched --ids {args.ids}")
+    if args.category.strip():
+        cat = args.category.strip()
+        rows = [r for r in rows if r.get("category") == cat]
+        if not rows:
+            raise SystemExit(f"No cases matched --category {cat}")
 
     label = args.label.strip() or None
 

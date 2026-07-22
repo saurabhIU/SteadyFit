@@ -1,0 +1,781 @@
+{
+  "total": 92,
+  "by_category": {
+    "schedule": {
+      "count": 3,
+      "avg_scores": {
+        "groundedness": 5.0,
+        "plan_sanity": 5.0,
+        "tone": 5.0,
+        "safety": 5.0
+      },
+      "ragas": {
+        "faithfulness": null,
+        "answer_relevancy": null,
+        "context_precision": null,
+        "context_recall": null,
+        "answer_correctness": null
+      }
+    },
+    "nutrition": {
+      "count": 4,
+      "avg_scores": {
+        "groundedness": 4.0,
+        "plan_sanity": 4.25,
+        "tone": 4.0,
+        "safety": 4.5
+      },
+      "ragas": {
+        "faithfulness": null,
+        "answer_relevancy": null,
+        "context_precision": null,
+        "context_recall": null,
+        "answer_correctness": null
+      }
+    },
+    "rag_personal": {
+      "count": 14,
+      "avg_scores": {
+        "groundedness": 4.86,
+        "plan_sanity": 4.93,
+        "tone": 5.0,
+        "safety": 5.0
+      },
+      "ragas": {
+        "faithfulness": 0.6917,
+        "answer_relevancy": 0.4608,
+        "context_precision": 0.9155,
+        "context_recall": 0.5357,
+        "answer_correctness": 0.5239
+      }
+    },
+    "rag_web": {
+      "count": 3,
+      "avg_scores": {
+        "groundedness": 5.0,
+        "plan_sanity": 5.0,
+        "tone": 5.0,
+        "safety": 5.0
+      },
+      "ragas": {
+        "faithfulness": 0.7481,
+        "answer_relevancy": 0.8759,
+        "context_precision": 0.2778,
+        "context_recall": 0.0,
+        "answer_correctness": 0.076
+      }
+    },
+    "adherence": {
+      "count": 2,
+      "avg_scores": {
+        "groundedness": 5.0,
+        "plan_sanity": 5.0,
+        "tone": 5.0,
+        "safety": 5.0
+      },
+      "ragas": {
+        "faithfulness": null,
+        "answer_relevancy": null,
+        "context_precision": null,
+        "context_recall": null,
+        "answer_correctness": null
+      }
+    },
+    "kb_retrieval": {
+      "count": 30,
+      "avg_scores": {
+        "groundedness": 4.53,
+        "plan_sanity": 4.8,
+        "tone": 4.9,
+        "safety": 4.93
+      },
+      "ragas": {
+        "faithfulness": 0.5054,
+        "answer_relevancy": 0.7003,
+        "context_precision": 0.1359,
+        "context_recall": 0.0714,
+        "answer_correctness": 0.2128
+      }
+    },
+    "knowledge": {
+      "count": 1,
+      "avg_scores": {
+        "groundedness": 5.0,
+        "plan_sanity": 5.0,
+        "tone": 5.0,
+        "safety": 5.0
+      },
+      "ragas": {
+        "faithfulness": null,
+        "answer_relevancy": null,
+        "context_precision": null,
+        "context_recall": null,
+        "answer_correctness": null
+      }
+    },
+    "safety": {
+      "count": 3,
+      "avg_scores": {
+        "groundedness": 5.0,
+        "plan_sanity": 5.0,
+        "tone": 5.0,
+        "safety": 5.0
+      },
+      "ragas": {
+        "faithfulness": null,
+        "answer_relevancy": null,
+        "context_precision": null,
+        "context_recall": null,
+        "answer_correctness": null
+      }
+    },
+    "autonomous": {
+      "count": 1,
+      "avg_scores": {
+        "groundedness": 5.0,
+        "plan_sanity": 5.0,
+        "tone": 5.0,
+        "safety": 5.0
+      },
+      "ragas": {
+        "faithfulness": null,
+        "answer_relevancy": null,
+        "context_precision": null,
+        "context_recall": null,
+        "answer_correctness": null
+      }
+    },
+    "adversarial": {
+      "count": 6,
+      "avg_scores": {
+        "groundedness": 5.0,
+        "plan_sanity": 5.0,
+        "tone": 4.83,
+        "safety": 5.0
+      },
+      "ragas": {
+        "faithfulness": null,
+        "answer_relevancy": null,
+        "context_precision": null,
+        "context_recall": null,
+        "answer_correctness": null
+      }
+    },
+    "onboarding": {
+      "count": 4,
+      "avg_scores": {
+        "groundedness": 4.75,
+        "plan_sanity": 5.0,
+        "tone": 5.0,
+        "safety": 5.0
+      },
+      "ragas": {
+        "faithfulness": null,
+        "answer_relevancy": null,
+        "context_precision": null,
+        "context_recall": null,
+        "answer_correctness": null
+      }
+    },
+    "memory": {
+      "count": 3,
+      "avg_scores": {
+        "groundedness": 4.67,
+        "plan_sanity": 4.67,
+        "tone": 5.0,
+        "safety": 5.0
+      },
+      "ragas": {
+        "faithfulness": 0.4214,
+        "answer_relevancy": 0.1804,
+        "context_precision": 0.6292,
+        "context_recall": 0.6667,
+        "answer_correctness": 0.1354
+      }
+    },
+    "gate_context": {
+      "count": 5,
+      "avg_scores": {
+        "groundedness": 4.6,
+        "plan_sanity": 5.0,
+        "tone": 4.8,
+        "safety": 5.0
+      },
+      "ragas": {
+        "faithfulness": null,
+        "answer_relevancy": null,
+        "context_precision": null,
+        "context_recall": null,
+        "answer_correctness": null
+      }
+    },
+    "topic_interrupt": {
+      "count": 3,
+      "avg_scores": {
+        "groundedness": 5.0,
+        "plan_sanity": 5.0,
+        "tone": 5.0,
+        "safety": 5.0
+      },
+      "ragas": {
+        "faithfulness": null,
+        "answer_relevancy": null,
+        "context_precision": null,
+        "context_recall": null,
+        "answer_correctness": null
+      }
+    },
+    "first_message": {
+      "count": 6,
+      "avg_scores": {
+        "groundedness": 5.0,
+        "plan_sanity": 5.0,
+        "tone": 5.0,
+        "safety": 5.0
+      },
+      "ragas": {
+        "faithfulness": null,
+        "answer_relevancy": null,
+        "context_precision": null,
+        "context_recall": null,
+        "answer_correctness": null
+      }
+    },
+    "council_critique": {
+      "count": 4,
+      "avg_scores": {
+        "groundedness": 5.0,
+        "plan_sanity": 5.0,
+        "tone": 5.0,
+        "safety": 5.0
+      },
+      "ragas": {
+        "faithfulness": null,
+        "answer_relevancy": null,
+        "context_precision": null,
+        "context_recall": null,
+        "answer_correctness": null
+      }
+    }
+  },
+  "empty_context_ids": [
+    69
+  ],
+  "per_case_ragas": [
+    {
+      "id": 7,
+      "category": "rag_personal",
+      "n_contexts": 1,
+      "faithfulness": 0.6875,
+      "answer_relevancy": 0.752705,
+      "context_precision": 1.0,
+      "context_recall": 0.5,
+      "answer_correctness": 0.558072
+    },
+    {
+      "id": 8,
+      "category": "rag_personal",
+      "n_contexts": 1,
+      "faithfulness": 0.92,
+      "answer_relevancy": 0.0,
+      "context_precision": 1.0,
+      "context_recall": 0.5,
+      "answer_correctness": 0.307421
+    },
+    {
+      "id": 9,
+      "category": "rag_personal",
+      "n_contexts": 1,
+      "faithfulness": 1.0,
+      "answer_relevancy": 0.828228,
+      "context_precision": 1.0,
+      "context_recall": 1.0,
+      "answer_correctness": 0.698231
+    },
+    {
+      "id": 10,
+      "category": "rag_web",
+      "n_contexts": 2,
+      "faithfulness": 0.466667,
+      "answer_relevancy": 0.953669,
+      "context_precision": 0.5,
+      "context_recall": 0.0,
+      "answer_correctness": 0.053354
+    },
+    {
+      "id": 11,
+      "category": "rag_web",
+      "n_contexts": 2,
+      "faithfulness": 1.0,
+      "answer_relevancy": 0.767576,
+      "context_precision": 0.0,
+      "context_recall": 0.0,
+      "answer_correctness": 0.098738
+    },
+    {
+      "id": 12,
+      "category": "rag_web",
+      "n_contexts": 3,
+      "faithfulness": 0.777778,
+      "answer_relevancy": 0.90656,
+      "context_precision": 0.333333,
+      "context_recall": 0.0,
+      "answer_correctness": 0.075839
+    },
+    {
+      "id": 15,
+      "category": "kb_retrieval",
+      "n_contexts": 2,
+      "faithfulness": 0.722222,
+      "answer_relevancy": 0.699772,
+      "context_precision": 0.0,
+      "context_recall": 0.0,
+      "answer_correctness": 0.875234
+    },
+    {
+      "id": 27,
+      "category": "kb_retrieval",
+      "n_contexts": 3,
+      "faithfulness": 0.791667,
+      "answer_relevancy": 1.0,
+      "context_precision": 0.0,
+      "context_recall": 0.0,
+      "answer_correctness": 0.045131
+    },
+    {
+      "id": 33,
+      "category": "kb_retrieval",
+      "n_contexts": 2,
+      "faithfulness": 0.84,
+      "answer_relevancy": 0.883318,
+      "context_precision": 0.0,
+      "context_recall": 0.0,
+      "answer_correctness": 0.132229
+    },
+    {
+      "id": 34,
+      "category": "kb_retrieval",
+      "n_contexts": 7,
+      "faithfulness": 0.363636,
+      "answer_relevancy": 0.727788,
+      "context_precision": 0.8875,
+      "context_recall": 0.5,
+      "answer_correctness": 0.215165
+    },
+    {
+      "id": 35,
+      "category": "kb_retrieval",
+      "n_contexts": 1,
+      "faithfulness": 0.0,
+      "answer_relevancy": 0.629049,
+      "context_precision": 0.0,
+      "context_recall": 0.0,
+      "answer_correctness": 0.202676
+    },
+    {
+      "id": 36,
+      "category": "kb_retrieval",
+      "n_contexts": 8,
+      "faithfulness": 0.16,
+      "answer_relevancy": 0.613028,
+      "context_precision": 0.0,
+      "context_recall": 0.0,
+      "answer_correctness": 0.060227
+    },
+    {
+      "id": 37,
+      "category": "kb_retrieval",
+      "n_contexts": 4,
+      "faithfulness": 0.92,
+      "answer_relevancy": 0.722852,
+      "context_precision": 1.0,
+      "context_recall": 0.5,
+      "answer_correctness": 0.125737
+    },
+    {
+      "id": 38,
+      "category": "kb_retrieval",
+      "n_contexts": 0,
+      "faithfulness": null,
+      "answer_relevancy": null,
+      "context_precision": null,
+      "context_recall": null,
+      "answer_correctness": null,
+      "skipped": "oos_negative_case"
+    },
+    {
+      "id": 39,
+      "category": "kb_retrieval",
+      "n_contexts": 2,
+      "faithfulness": 0.894737,
+      "answer_relevancy": 0.913114,
+      "context_precision": 0.0,
+      "context_recall": 0.0,
+      "answer_correctness": 0.328685
+    },
+    {
+      "id": 40,
+      "category": "kb_retrieval",
+      "n_contexts": 2,
+      "faithfulness": 0.631579,
+      "answer_relevancy": 0.841636,
+      "context_precision": 0.0,
+      "context_recall": 0.0,
+      "answer_correctness": 0.141541
+    },
+    {
+      "id": 41,
+      "category": "kb_retrieval",
+      "n_contexts": 8,
+      "faithfulness": 0.086957,
+      "answer_relevancy": 0.692243,
+      "context_precision": 0.0,
+      "context_recall": 0.0,
+      "answer_correctness": 0.106404
+    },
+    {
+      "id": 42,
+      "category": "kb_retrieval",
+      "n_contexts": 8,
+      "faithfulness": 0.636364,
+      "answer_relevancy": 0.780826,
+      "context_precision": 0.416667,
+      "context_recall": 0.5,
+      "answer_correctness": 0.132926
+    },
+    {
+      "id": 43,
+      "category": "kb_retrieval",
+      "n_contexts": 3,
+      "faithfulness": 0.52,
+      "answer_relevancy": 0.745343,
+      "context_precision": 0.0,
+      "context_recall": 0.0,
+      "answer_correctness": 0.111613
+    },
+    {
+      "id": 44,
+      "category": "kb_retrieval",
+      "n_contexts": 2,
+      "faithfulness": 0.857143,
+      "answer_relevancy": 0.832158,
+      "context_precision": 0.0,
+      "context_recall": 0.0,
+      "answer_correctness": 0.511023
+    },
+    {
+      "id": 45,
+      "category": "kb_retrieval",
+      "n_contexts": 2,
+      "faithfulness": 0.695652,
+      "answer_relevancy": 0.700968,
+      "context_precision": 0.5,
+      "context_recall": 0.0,
+      "answer_correctness": 0.133348
+    },
+    {
+      "id": 46,
+      "category": "kb_retrieval",
+      "n_contexts": 2,
+      "faithfulness": 0.923077,
+      "answer_relevancy": 0.763968,
+      "context_precision": 0.0,
+      "context_recall": 0.0,
+      "answer_correctness": 0.445197
+    },
+    {
+      "id": 47,
+      "category": "kb_retrieval",
+      "n_contexts": 3,
+      "faithfulness": 0.0,
+      "answer_relevancy": 0.0,
+      "context_precision": 0.0,
+      "context_recall": 0.0,
+      "answer_correctness": 0.116394
+    },
+    {
+      "id": 48,
+      "category": "kb_retrieval",
+      "n_contexts": 8,
+      "faithfulness": 0.133333,
+      "answer_relevancy": 0.541911,
+      "context_precision": 0.0,
+      "context_recall": 0.0,
+      "answer_correctness": 0.096712
+    },
+    {
+      "id": 49,
+      "category": "kb_retrieval",
+      "n_contexts": 2,
+      "faithfulness": 0.96,
+      "answer_relevancy": 0.847859,
+      "context_precision": 0.0,
+      "context_recall": 0.0,
+      "answer_correctness": 0.172381
+    },
+    {
+      "id": 50,
+      "category": "kb_retrieval",
+      "n_contexts": 2,
+      "faithfulness": 0.0,
+      "answer_relevancy": 0.0,
+      "context_precision": 0.0,
+      "context_recall": 0.0,
+      "answer_correctness": 0.136113
+    },
+    {
+      "id": 51,
+      "category": "memory",
+      "n_contexts": 7,
+      "faithfulness": 0.2,
+      "answer_relevancy": 0.0,
+      "context_precision": 0.8875,
+      "context_recall": 1.0,
+      "answer_correctness": 0.207234
+    },
+    {
+      "id": 52,
+      "category": "memory",
+      "n_contexts": 3,
+      "faithfulness": 0.368421,
+      "answer_relevancy": 0.0,
+      "context_precision": 1.0,
+      "context_recall": 1.0,
+      "answer_correctness": 0.12325
+    },
+    {
+      "id": 53,
+      "category": "memory",
+      "n_contexts": 3,
+      "faithfulness": 0.695652,
+      "answer_relevancy": 0.541317,
+      "context_precision": 0.0,
+      "context_recall": 0.0,
+      "answer_correctness": 0.075661
+    },
+    {
+      "id": 54,
+      "category": "rag_personal",
+      "n_contexts": 1,
+      "faithfulness": 0.9,
+      "answer_relevancy": 0.557871,
+      "context_precision": 1.0,
+      "context_recall": 0.5,
+      "answer_correctness": 0.801252
+    },
+    {
+      "id": 55,
+      "category": "rag_personal",
+      "n_contexts": 1,
+      "faithfulness": 1.0,
+      "answer_relevancy": 0.80595,
+      "context_precision": 1.0,
+      "context_recall": 0.5,
+      "answer_correctness": 0.655455
+    },
+    {
+      "id": 56,
+      "category": "rag_personal",
+      "n_contexts": 7,
+      "faithfulness": 0.0,
+      "answer_relevancy": 0.617215,
+      "context_precision": 0.816667,
+      "context_recall": 0.5,
+      "answer_correctness": 0.773881
+    },
+    {
+      "id": 57,
+      "category": "rag_personal",
+      "n_contexts": 1,
+      "faithfulness": 0.625,
+      "answer_relevancy": 0.0,
+      "context_precision": 1.0,
+      "context_recall": 0.5,
+      "answer_correctness": 0.437762
+    },
+    {
+      "id": 58,
+      "category": "rag_personal",
+      "n_contexts": 1,
+      "faithfulness": 0.444444,
+      "answer_relevancy": 0.606803,
+      "context_precision": 1.0,
+      "context_recall": 0.5,
+      "answer_correctness": 0.397621
+    },
+    {
+      "id": 59,
+      "category": "rag_personal",
+      "n_contexts": 1,
+      "faithfulness": 0.923077,
+      "answer_relevancy": 0.0,
+      "context_precision": 1.0,
+      "context_recall": 0.5,
+      "answer_correctness": 0.36023
+    },
+    {
+      "id": 60,
+      "category": "rag_personal",
+      "n_contexts": 4,
+      "faithfulness": 0.461538,
+      "answer_relevancy": 0.582402,
+      "context_precision": 1.0,
+      "context_recall": 0.0,
+      "answer_correctness": 0.234327
+    },
+    {
+      "id": 61,
+      "category": "rag_personal",
+      "n_contexts": 1,
+      "faithfulness": 0.625,
+      "answer_relevancy": 0.0,
+      "context_precision": 1.0,
+      "context_recall": 0.5,
+      "answer_correctness": 0.831815
+    },
+    {
+      "id": 62,
+      "category": "rag_personal",
+      "n_contexts": 1,
+      "faithfulness": 0.947368,
+      "answer_relevancy": 1.0,
+      "context_precision": 0.0,
+      "context_recall": 1.0,
+      "answer_correctness": 0.272721
+    },
+    {
+      "id": 63,
+      "category": "kb_retrieval",
+      "n_contexts": 3,
+      "faithfulness": 0.590909,
+      "answer_relevancy": 0.900197,
+      "context_precision": 0.0,
+      "context_recall": 0.0,
+      "answer_correctness": 0.27446
+    },
+    {
+      "id": 64,
+      "category": "kb_retrieval",
+      "n_contexts": 2,
+      "faithfulness": 1.0,
+      "answer_relevancy": 0.960194,
+      "context_precision": 0.5,
+      "context_recall": 0.0,
+      "answer_correctness": 0.253691
+    },
+    {
+      "id": 65,
+      "category": "kb_retrieval",
+      "n_contexts": 2,
+      "faithfulness": 0.583333,
+      "answer_relevancy": 0.794027,
+      "context_precision": 0.0,
+      "context_recall": 0.0,
+      "answer_correctness": 0.28383
+    },
+    {
+      "id": 66,
+      "category": "kb_retrieval",
+      "n_contexts": 2,
+      "faithfulness": 0.538462,
+      "answer_relevancy": 0.80784,
+      "context_precision": 0.5,
+      "context_recall": 0.5,
+      "answer_correctness": 0.240071
+    },
+    {
+      "id": 67,
+      "category": "kb_retrieval",
+      "n_contexts": 1,
+      "faithfulness": 0.0,
+      "answer_relevancy": 0.811959,
+      "context_precision": 0.0,
+      "context_recall": 0.0,
+      "answer_correctness": 0.238011
+    },
+    {
+      "id": 68,
+      "category": "kb_retrieval",
+      "n_contexts": 2,
+      "faithfulness": 0.615385,
+      "answer_relevancy": 0.770008,
+      "context_precision": 0.0,
+      "context_recall": 0.0,
+      "answer_correctness": 0.156984
+    },
+    {
+      "id": 69,
+      "category": "kb_retrieval",
+      "n_contexts": 0,
+      "faithfulness": null,
+      "answer_relevancy": null,
+      "context_precision": null,
+      "context_recall": null,
+      "answer_correctness": null,
+      "skipped": "no retrieved context"
+    },
+    {
+      "id": 70,
+      "category": "kb_retrieval",
+      "n_contexts": 2,
+      "faithfulness": 0.6875,
+      "answer_relevancy": 0.836035,
+      "context_precision": 0.0,
+      "context_recall": 0.0,
+      "answer_correctness": 0.157764
+    },
+    {
+      "id": 71,
+      "category": "rag_personal",
+      "n_contexts": 1,
+      "faithfulness": 0.4,
+      "answer_relevancy": 0.700391,
+      "context_precision": 1.0,
+      "context_recall": 0.5,
+      "answer_correctness": 0.254202
+    },
+    {
+      "id": 72,
+      "category": "rag_personal",
+      "n_contexts": 1,
+      "faithfulness": 0.75,
+      "answer_relevancy": 0.0,
+      "context_precision": 1.0,
+      "context_recall": 0.5,
+      "answer_correctness": 0.751712
+    },
+    {
+      "id": 73,
+      "category": "kb_retrieval",
+      "n_contexts": 2,
+      "faithfulness": 0.0,
+      "answer_relevancy": 0.792711,
+      "context_precision": 0.0,
+      "context_recall": 0.0,
+      "answer_correctness": 0.155485
+    },
+    {
+      "id": 74,
+      "category": "kb_retrieval",
+      "n_contexts": 2,
+      "faithfulness": 0.0,
+      "answer_relevancy": 0.0,
+      "context_precision": 0.0,
+      "context_recall": 0.0,
+      "answer_correctness": 0.108476
+    }
+  ],
+  "must_pass_failures": [],
+  "groundedness": 4.74,
+  "plan_sanity": 4.88,
+  "tone": 4.9,
+  "safety": 4.96,
+  "ragas": {
+    "faithfulness": 0.5697,
+    "answer_relevancy": 0.6089,
+    "context_precision": 0.403,
+    "context_recall": 0.2396,
+    "answer_correctness": 0.2901
+  },
+  "label": "critique_interrupt_fix"
+}

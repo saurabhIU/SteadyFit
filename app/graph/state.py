@@ -73,6 +73,12 @@ class CoachingTeamState(BaseModel):
     proposals: dict = Field(default_factory=dict)
     risk_flag: bool = False
     coaching_team_rounds: int = 0
+    # Pre-merge critique→revise cycles completed this turn (separate from risk loop).
+    critique_rounds: int = 0
+    # None = critique skipped; clean | revise | revise_capped | skipped
+    critique_verdict: Optional[str] = None
+    # Demo-visible deliberation: proposal / critique / revision entries.
+    coaching_team_transcript: list[dict] = Field(default_factory=list)
     retrieved_context: list[str] = []
     # UI chips for the latest intake question
     quick_replies: list[str] = Field(default_factory=list)

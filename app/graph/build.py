@@ -2,11 +2,14 @@
 
 Topology:
     coach (supervisor) -> {scheduler | nutrition | adherence | rag | intake}
-    specialists -> coaching_team -> memory_write
+    specialists -> critique (plan-changing turns only) -> same specialist (≤1 revise)
+                -> coaching_team -> memory_write
     memory_write -> coach   (if conflict, e.g. risk_flag while plan got denser)
     memory_write -> approve (human-in-the-loop interrupt, if plan changed)
     memory_write -> END     (informational answer)
     memory_write persists doc_type=memory summaries on weekly-review turns only.
+
+Critique→revise is separate from the risk_flag renegotiation loop.
 """
 from typing import cast
 
@@ -23,6 +26,7 @@ from app.graph.agents.knowledge import knowledge_node
 from app.graph.agents.memory_write import memory_write_node
 from app.graph.agents.nutrition import nutrition_node
 from app.graph.agents.scheduler import scheduler_node
+from app.graph.critique import critique_node, route_after_specialist, route_from_critique
 from app.graph.state import CoachingTeamState
 from app.graph.supervisor import approve_node, coach_node, coaching_team_node
 
@@ -96,6 +100,7 @@ def build_graph():
     g.add_node("nutrition", nutrition_node)
     g.add_node("adherence", adherence_node)
     g.add_node("knowledge", knowledge_node)   # agentic RAG: personal docs vs Tavily
+    g.add_node("critique", critique_node)     # pre-merge quality check (plan-changing only)
     g.add_node("coaching_team", coaching_team_node)
     g.add_node("memory_write", memory_write_node)  # coaching memory after weekly review
     g.add_node("approve", approve_node)       # uses langgraph interrupt()
@@ -113,8 +118,19 @@ def build_graph():
         "scheduler": "scheduler",
         "end": END,
     })
-    for node in ("scheduler", "nutrition", "adherence", "knowledge"):
-        g.add_edge(node, "coaching_team")
+    specialist_nodes = ("scheduler", "nutrition", "adherence", "knowledge")
+    for node in specialist_nodes:
+        g.add_conditional_edges(node, route_after_specialist, {
+            "critique": "critique",
+            "coaching_team": "coaching_team",
+        })
+    g.add_conditional_edges("critique", route_from_critique, {
+        "scheduler": "scheduler",
+        "nutrition": "nutrition",
+        "adherence": "adherence",
+        "knowledge": "knowledge",
+        "coaching_team": "coaching_team",
+    })
     # Summarize the completed week before HITL pause / END so cron still persists memory.
     g.add_edge("coaching_team", "memory_write")
     g.add_conditional_edges("memory_write", route_from_coaching_team, {

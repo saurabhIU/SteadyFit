@@ -64,7 +64,36 @@ def proposals_from_state(state: Any) -> dict:
     proposals = dict(data.get("proposals") or {})
     proposals.pop("plan_changed", None)
     proposals.pop("proposed_week_plan", None)
-    return proposals
+    proposals.pop("revision_instructions", None)
+    proposals.pop("nutrition_plan_change", None)
+    proposals.pop("intake_handoff", None)
+    for key in list(proposals):
+        if key.endswith("_tools"):
+            proposals.pop(key, None)
+    # Keep only string specialist drafts for legacy callers.
+    return {k: v for k, v in proposals.items() if isinstance(v, str)}
+
+
+def coaching_team_from_state(state: Any) -> list | dict:
+    """Prefer critique transcript when present; else legacy proposal map."""
+    data = _as_dict(state)
+    transcript = data.get("coaching_team_transcript") or []
+    if isinstance(transcript, list) and transcript:
+        cleaned = []
+        for entry in transcript:
+            if not isinstance(entry, dict):
+                continue
+            text = str(entry.get("text") or "").strip()
+            if not text:
+                continue
+            cleaned.append({
+                "type": str(entry.get("type") or "proposal"),
+                "agent": str(entry.get("agent") or "coach"),
+                "text": text,
+            })
+        if cleaned:
+            return cleaned
+    return proposals_from_state(state)
 
 
 def _message_role_content(message: Any) -> dict | None:
@@ -145,8 +174,11 @@ def build_chat_payload(
         state = snapshot.values
 
     reply = last_message_content(state)
-    # Specialist drafts are merged into the coach reply — don't echo them again.
-    coaching_team = {} if reply else proposals_from_state(state)
+    # Prefer critique→revision transcript for the deliberation panel; otherwise
+    # keep specialist drafts empty once the coach reply exists (legacy).
+    coaching_team = coaching_team_from_state(state)
+    if reply and isinstance(coaching_team, dict) and not coaching_team:
+        coaching_team = {}
     data = _as_dict(state)
     quick_replies = list(data.get("quick_replies") or [])
     citations = list(data.get("citations") or [])
@@ -161,4 +193,6 @@ def build_chat_payload(
         "pending_approval": pending,
         "quick_replies": quick_replies,
         "citations": citations,
+        "critique_verdict": data.get("critique_verdict"),
+        "critique_rounds": data.get("critique_rounds", 0),
     }

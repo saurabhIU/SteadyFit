@@ -48,3 +48,23 @@ services:
           type: web
           name: steadyfit-api
           property: host
+
+  # Delete expired try-* guest profiles (48h TTL)
+  - type: cron
+    name: steadyfit-cleanup-ephemeral
+    runtime: python
+    plan: starter
+    schedule: "0 6 * * *"   # Daily 06:00 UTC
+    buildCommand: "echo nothing to build"
+    startCommand: >-
+      curl -fsS -X POST
+      -H "X-Internal-Secret: $INTERNAL_CRON_SECRET"
+      "https://$API_HOST/internal/cleanup-expired-profiles"
+    envVars:
+      - key: INTERNAL_CRON_SECRET
+        sync: false
+      - key: API_HOST
+        fromService:
+          type: web
+          name: steadyfit-api
+          property: host

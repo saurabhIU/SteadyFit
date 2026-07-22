@@ -102,8 +102,27 @@ STATEMENTS = [
         constraints_asked BOOLEAN NOT NULL DEFAULT FALSE,
         onboarding_complete BOOLEAN NOT NULL DEFAULT FALSE,
         awaiting_onboarding_confirm BOOLEAN NOT NULL DEFAULT FALSE,
+        is_ephemeral BOOLEAN NOT NULL DEFAULT FALSE,
+        expires_at TIMESTAMPTZ,
         updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
     )
+    """,
+    """
+    ALTER TABLE user_profiles
+      ADD COLUMN IF NOT EXISTS is_ephemeral BOOLEAN NOT NULL DEFAULT false
+    """,
+    """
+    ALTER TABLE user_profiles
+      ADD COLUMN IF NOT EXISTS expires_at TIMESTAMPTZ NULL
+    """,
+    """
+    ALTER TABLE user_profiles
+      ADD COLUMN IF NOT EXISTS weight_kg DOUBLE PRECISION NULL
+    """,
+    """
+    CREATE INDEX IF NOT EXISTS user_profiles_ephemeral_expires_idx
+      ON user_profiles (expires_at)
+      WHERE is_ephemeral = true
     """,
     """
     CREATE TABLE IF NOT EXISTS week_plans (

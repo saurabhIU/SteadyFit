@@ -1,6 +1,1 @@
-{
-  "demo-user": [
-    {"day": "thu", "busy": "08:00-20:00", "reason": "work travel"},
-    {"day": "fri", "busy": "08:00-20:00", "reason": "work travel"}
-  ]
-}
+{}

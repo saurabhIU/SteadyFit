@@ -35,7 +35,7 @@ def intake_node(state: CoachingTeamState) -> dict:
                     "role": "assistant",
                     "content": (
                         "Awesome — I'll draft your first week from that profile. "
-                        "You'll get a quick approve step before anything sticks."
+                        "You'll see an approval card below before anything sticks."
                     ),
                 }],
                 "proposals": {
@@ -63,6 +63,7 @@ def intake_node(state: CoachingTeamState) -> dict:
     if ext.off_topic_question or (
         not any([
             ext.goal, ext.age is not None, ext.age_declined, ext.sex, ext.sex_declined,
+            ext.weight_kg is not None,
             ext.preferred_workout_modes, ext.food_preference,
             ext.sessions_per_week is not None, ext.constraints is not None,
             ext.constraints_none, ext.name,

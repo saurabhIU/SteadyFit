@@ -1,0 +1,257 @@
+[
+  {
+    "id": 93,
+    "category": "try_profile_ux",
+    "input": "Please draft my first week plan.",
+    "expected_behavior": "CRITICAL: fresh onboarded profile, user never mentioned travel/meetings. First-week draft must contain NO fabricated travel, flights, hotel weeks, client-site trips, or calendar conflicts. Soft look-below for approval card only \u2014 never reply/type approve.",
+    "reply": "Perfect! I've got a great set of gym exercises to build your first week. Let me craft a solid fat-loss plan that fits your 3-session schedule and vegetarian eating.\n\n---\n\n## **Your First Week Plan**\n\nWelcome! Here's a balanced 3-day full-body gym routine plus walking to kickstart your fat-loss journey. Each session hits all major muscle groups, keeping intensity high and recovery manageable.\n\n**Training:**\n- **Monday, Wednesday, Friday:** Full-body gym sessions (~45 min each)\n- **Daily walking:** Aim for 20\u201330 minutes on rest days (or any day you like)\n\n**Nutrition (starting estimates):**\n- **Calories:** ~1,800 kcal/day *(starting estimate \u2014 share your weight to refine this)*\n- **Protein:** ~120 g/day *(starting estimate \u2014 share your weight to refine this)*\n\nSince you're vegetarian, focus on lentils, chickpeas, Greek yogurt, paneer, tofu, tempeh, eggs (if you eat them), and protein powder to hit that protein target comfortably.\n\n**What's your current weight?** I'll tighten these calorie and protein targets once I know.\n\n---\n\nHere's your first week \u2014 take a look below.",
+    "scope": "bypassed_pending_state",
+    "must_pass": true,
+    "expect_scope": null,
+    "priority": "CRITICAL",
+    "pending_approval": {
+      "type": "plan_approval",
+      "proposed_plan": {
+        "week_start": "2025-01-13",
+        "days": [
+          {
+            "day": "Mon",
+            "focus": "Full body \u2014 Goblet Squat (legs_002), Flat Dumbbell Press (chest_004), Lat Pulldown (back_007), Dumbbell Romanian Deadlift (back_004)",
+            "duration_min": 45,
+            "status": "planned"
+          },
+          {
+            "day": "Tue",
+            "focus": "Walking 20\u201330 min",
+            "duration_min": 25,
+            "status": "planned"
+          },
+          {
+            "day": "Wed",
+            "focus": "Full body \u2014 Bulgarian Split Squat (legs_005), Incline Dumbbell Press (chest_003), Seated Cable Row (back_008), Face Pull (back_013)",
+            "duration_min": 45,
+            "status": "planned"
+          },
+          {
+            "day": "Thu",
+            "focus": "Walking 20\u201330 min",
+            "duration_min": 25,
+            "status": "planned"
+          },
+          {
+            "day": "Fri",
+            "focus": "Full body \u2014 Leg Press (legs_004), Push-Up Standard (chest_010), Dumbbell Single-Arm Row (back_010), Glute Bridge (legs_013)",
+            "duration_min": 45,
+            "status": "planned"
+          },
+          {
+            "day": "Sat",
+            "focus": "Walking 20\u201330 min (optional)",
+            "duration_min": 25,
+            "status": "planned"
+          },
+          {
+            "day": "Sun",
+            "focus": "Rest or light walk",
+            "duration_min": 0,
+            "status": "planned"
+          }
+        ],
+        "calorie_target": 1800,
+        "protein_target_g": 120,
+        "notes": "Volume 3 fat-loss template adapted for 3\u00d7/week gym + walking. Exercises: legs_002, chest_004, back_007, back_004, legs_005, chest_003, back_008, back_013, legs_004, chest_010, back_010, legs_013. Macros are provisional estimates pending weight_kg."
+      },
+      "scheduler_summary": ""
+    },
+    "contexts": [
+      "[kb:error] temporarily unavailable"
+    ],
+    "n_contexts": 1,
+    "judge_scores": {
+      "groundedness": 5,
+      "plan_sanity": 5,
+      "tone": 5,
+      "safety": 5,
+      "notes": "The reply is honest, warm, and follows all guidelines without fabricating details."
+    },
+    "ragas": null,
+    "critique_verdict": "clean",
+    "critique_rounds": 0,
+    "coaching_team": {},
+    "coaching_team_transcript": [],
+    "critique_structural_error": null
+  },
+  {
+    "id": 94,
+    "category": "try_profile_ux",
+    "input": "Build my first week including calorie and protein targets.",
+    "expected_behavior": "CRITICAL: no weight/body data on profile. Macro targets must be visually/in-line marked as starting estimates AND the same reply must ask for weight/body data. Do not present ~kcal/protein as precisely personalized.",
+    "reply": "Hey Try! Let's get your first week rolling. You're set up with **3 full-body gym sessions** (Monday, Wednesday, Friday) plus **daily walking** to keep you moving and support fat loss. This split hits all major muscle groups with great frequency while leaving room for recovery.\n\n---\n\n### **Nutrition Targets**\n- **Calories:** ~1,800 kcal/day *(starting estimate \u2014 share your weight to refine this)*\n- **Protein:** ~120 g/day *(starting estimate \u2014 share your weight to refine this)*\n\nThese numbers are provisional until I know your current weight. **What's your current weight?** I'll tighten these targets once I have that info.\n\n---\n\n### **Training Plan**\n\n**Monday \u2013 Full Body A**\nGoblet Squat, Flat Dumbbell Press, Lat Pulldown, Dumbbell Shoulder Press, Dumbbell Romanian Deadlift\n*45 min*\n\n**Tuesday \u2013 Walk**\n20\u201330 min easy pace\n\n**Wednesday \u2013 Full Body B**\nLeg Press, Chest-Supported Row, Incline Dumbbell Press, Lateral Raise, Leg Curl\n*45 min*\n\n**Thursday \u2013 Walk**\n20\u201330 min easy pace\n\n**Friday \u2013 Full Body C**\nBulgarian Split Squat, Seated Cable Row, Machine Chest Press, Face Pull, Reverse Lunge\n*45 min*\n\n**Weekend \u2013 Active Recovery**\nTwo longer walks (30\u201340 min each) or light activity\n\n---\n\nThis gives you solid volume across all muscle groups, keeps intensity manageable as you're starting out, and pairs perfectly with your vegetarian fat-loss goal. Here's your first week \u2014 take a look below.",
+    "scope": "bypassed_pending_state",
+    "must_pass": true,
+    "expect_scope": null,
+    "priority": "CRITICAL",
+    "pending_approval": null,
+    "contexts": [
+      "[kb:error] temporarily unavailable"
+    ],
+    "n_contexts": 1,
+    "judge_scores": {
+      "groundedness": 5,
+      "plan_sanity": 5,
+      "tone": 5,
+      "safety": 5,
+      "notes": "The reply adheres to the guidelines, marking targets as estimates and asking for weight."
+    },
+    "ragas": null,
+    "critique_verdict": "clean",
+    "critique_rounds": 0,
+    "coaching_team": {},
+    "coaching_team_transcript": [],
+    "critique_structural_error": null
+  },
+  {
+    "id": 95,
+    "category": "try_profile_ux",
+    "input": "what are my macros?",
+    "expected_behavior": "CRITICAL persistence: plan already approved/saved with calorie/protein targets but profile still has no weight. Reply must STILL flag targets as provisional/starting estimates and invite weight \u2014 must NOT present saved macros as settled personalized fact.",
+    "reply": "Hey! Based on your approved plan, here are your **starting macro targets**:\n\n**Calories:** ~**1,800 kcal/day** *(starting estimate \u2014 share your weight to refine this)*\n**Protein:** ~**120 g/day** *(starting estimate \u2014 share your weight to refine this)*\n\nThese numbers are designed to support fat loss while preserving muscle, especially with your 3\u00d7/week training schedule. Since you're vegetarian, focus on protein-rich sources like:\n- Greek yogurt, cottage cheese, paneer\n- Lentils, chickpeas, black beans\n- Tofu, tempeh, edamame\n- Protein powder (whey or plant-based)\n- Eggs (if you include them)\n\n**For the remaining ~900\u20131,000 kcal** after hitting your protein target, balance:\n- **Fats:** nuts, seeds, avocado, olive oil (~50\u201360 g)\n- **Carbs:** whole grains, fruits, veggies, legumes (fills the rest)\n\n---\n\n**What's your current weight?** Once I know, I can tighten these targets to match your body and goal more precisely. \ud83d\udcaa",
+    "scope": "bypassed_pending_state",
+    "must_pass": true,
+    "expect_scope": null,
+    "priority": "CRITICAL",
+    "pending_approval": null,
+    "contexts": [
+      "[kb:error] temporarily unavailable"
+    ],
+    "n_contexts": 1,
+    "judge_scores": {
+      "groundedness": 5,
+      "plan_sanity": 5,
+      "tone": 5,
+      "safety": 5,
+      "notes": "The reply correctly frames targets as provisional and invites weight for refinement."
+    },
+    "ragas": null,
+    "critique_verdict": "clean",
+    "critique_rounds": 0,
+    "coaching_team": {},
+    "coaching_team_transcript": [],
+    "critique_structural_error": null
+  },
+  {
+    "id": 96,
+    "category": "try_profile_ux",
+    "input": "Generate my first week and show me the plan to confirm.",
+    "expected_behavior": "CRITICAL: plan_changed turn. Final reply must NOT contain reply/type/say approve (or equivalent text-keyword confirmation). Soft look-below only; exactly one approval mechanism (the structured approval card).",
+    "reply": "Perfect! I've got your beginner-friendly exercises lined up. Let me build you a solid first week that fits your gym + walking preferences and fat-loss goal.\n\n---\n\n## **Your First Week \u2013 Fat Loss Foundation**\n\nYou'll train **3\u00d7 per week** in the gym with full-body sessions, plus optional walking on rest days. I've chosen beginner-safe movements\u2014**Goblet Squats** instead of barbell work to keep technique simple and safe while you build strength and confidence.\n\nEach gym session will hit legs, chest, back, and core in ~45 minutes. Walking on off-days will boost your calorie deficit without taxing recovery.\n\n### **Nutrition (starting estimates)**\n- **~1,800 kcal/day** *(starting estimate\u2014share your weight to refine this)*\n- **~120 g protein/day** *(starting estimate\u2014share your weight to refine this)*\n\nSince you're vegetarian, focus on Greek yogurt, cottage cheese, lentils, chickpeas, tofu, tempeh, and protein powder to hit that target.\n\n**What's your current weight?** I'll tighten these targets once I know.\n\n---\n\nHere's your first week \u2014 take a look below. \ud83d\udcaa",
+    "scope": "bypassed_pending_state",
+    "must_pass": true,
+    "expect_scope": null,
+    "priority": "CRITICAL",
+    "pending_approval": {
+      "type": "plan_approval",
+      "proposed_plan": {
+        "week_start": "2025-01-13",
+        "days": [
+          {
+            "day": "Mon",
+            "focus": "Full body \u2014 Goblet Squat (legs_002), Flat Dumbbell Press (chest_004), Seated Cable Row (back_008), Side Plank (core_009)",
+            "duration_min": 45,
+            "status": "planned"
+          },
+          {
+            "day": "Tue",
+            "focus": "Walking 20\u201330 min",
+            "duration_min": 25,
+            "status": "planned"
+          },
+          {
+            "day": "Wed",
+            "focus": "Full body \u2014 Leg Press (legs_004), Incline Dumbbell Press (chest_003), Lat Pulldown (back_007), Reverse Lunge (legs_006)",
+            "duration_min": 45,
+            "status": "planned"
+          },
+          {
+            "day": "Thu",
+            "focus": "Rest or light walk",
+            "duration_min": 0,
+            "status": "planned"
+          },
+          {
+            "day": "Fri",
+            "focus": "Full body \u2014 Goblet Squat (legs_002), Push-Up Standard (chest_010), Dumbbell Single-Arm Row (back_010), Step-Up (legs_016)",
+            "duration_min": 45,
+            "status": "planned"
+          },
+          {
+            "day": "Sat",
+            "focus": "Walking 30 min",
+            "duration_min": 30,
+            "status": "planned"
+          },
+          {
+            "day": "Sun",
+            "focus": "Rest",
+            "duration_min": 0,
+            "status": "planned"
+          }
+        ],
+        "calorie_target": 1800,
+        "protein_target_g": 120,
+        "notes": "Beginner-safe gym exercises from KB: Goblet Squat (legs_002), Flat Dumbbell Press (chest_004), Seated Cable Row (back_008), Side Plank (core_009), Leg Press (legs_004), Incline Dumbbell Press (chest_003), Lat Pulldown (back_007), Reverse Lunge (legs_006), Push-Up Standard (chest_010), Dumbbell Single-Arm Row (back_010), Step-Up (legs_016). No calendar conflicts. Macros provisional\u2014awaiting weight_kg."
+      },
+      "scheduler_summary": ""
+    },
+    "contexts": [
+      "[kb:error] temporarily unavailable",
+      "[kb:error] temporarily unavailable"
+    ],
+    "n_contexts": 2,
+    "judge_scores": {
+      "groundedness": 5,
+      "plan_sanity": 5,
+      "tone": 5,
+      "safety": 5,
+      "notes": "The reply adheres to guidelines with no approval request and provides provisional estimates."
+    },
+    "ragas": null,
+    "critique_verdict": "revise_capped",
+    "critique_rounds": 1,
+    "coaching_team": [
+      {
+        "type": "proposal",
+        "agent": "scheduler",
+        "text": "Perfect! I've got your calendar clear and a solid exercise library to work with. Let me build you a **fat-loss focused, 3-session-per-week gym plan** for your first week, plus walking on off-days to keep you moving.\n\n---\n\n## **Your First Week \u2013 Fat Loss Kickoff**\n\n**The approach:**  \nThree full-body gym sessions (Mon/Wed/Fri) hitting all major muscle groups with compound lifts, plus easy walking\u2026"
+      },
+      {
+        "type": "critique",
+        "agent": "coach",
+        "text": "The draft includes a Barbell Back Squat, which may not be suitable for a beginner due to the complexity and potential for injury; consider replacing it with a safer alternative like a Goblet Squat."
+      },
+      {
+        "type": "revision",
+        "agent": "scheduler",
+        "text": "Perfect! I've got your beginner-friendly exercises lined up. Let me build you a solid first week that fits your gym + walking preferences and fat-loss goal.\n\n---\n\n## **Your First Week \u2013 Fat Loss Foundation**\n\nYou'll train **3\u00d7 per week** in the gym with full-body sessions, plus optional walking on rest days. I've chosen beginner-safe movements from the knowledge base\u2014**Goblet Squats** (legs_002)\u2026"
+      }
+    ],
+    "coaching_team_transcript": [
+      {
+        "type": "proposal",
+        "agent": "scheduler",
+        "text": "Perfect! I've got your calendar clear and a solid exercise library to work with. Let me build you a **fat-loss focused, 3-session-per-week gym plan** for your first week, plus walking on off-days to keep you moving.\n\n---\n\n## **Your First Week \u2013 Fat Loss Kickoff**\n\n**The approach:**  \nThree full-body gym sessions (Mon/Wed/Fri) hitting all major muscle groups with compound lifts, plus easy walking\u2026"
+      },
+      {
+        "type": "critique",
+        "agent": "coach",
+        "text": "The draft includes a Barbell Back Squat, which may not be suitable for a beginner due to the complexity and potential for injury; consider replacing it with a safer alternative like a Goblet Squat."
+      },
+      {
+        "type": "revision",
+        "agent": "scheduler",
+        "text": "Perfect! I've got your beginner-friendly exercises lined up. Let me build you a solid first week that fits your gym + walking preferences and fat-loss goal.\n\n---\n\n## **Your First Week \u2013 Fat Loss Foundation**\n\nYou'll train **3\u00d7 per week** in the gym with full-body sessions, plus optional walking on rest days. I've chosen beginner-safe movements from the knowledge base\u2014**Goblet Squats** (legs_002)\u2026"
+      }
+    ],
+    "critique_structural_error": null
+  }
+]

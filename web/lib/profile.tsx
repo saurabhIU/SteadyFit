@@ -18,6 +18,10 @@ import {
 
 const DEFAULT_PROFILE = "demo-veteran";
 
+function isTryProfile(id: string | null | undefined): boolean {
+  return Boolean(id && id.startsWith("try-"));
+}
+
 type ProfileContextValue = {
   userId: string;
   profiles: ProfileSummary[];
@@ -48,10 +52,14 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
       .then((list) => {
         if (cancelled) return;
         setProfiles(list);
+        const stable = list.filter((p) => !p.is_ephemeral);
         const ids = new Set(list.map((p) => p.user_id));
         const preferred =
-          (urlProfile && ids.has(urlProfile) && urlProfile) ||
+          (urlProfile &&
+            (ids.has(urlProfile) || isTryProfile(urlProfile)) &&
+            urlProfile) ||
           (ids.has(DEFAULT_PROFILE) && DEFAULT_PROFILE) ||
+          stable[0]?.user_id ||
           list[0]?.user_id ||
           DEFAULT_PROFILE;
         setUserIdState(preferred);
@@ -77,7 +85,13 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     if (!urlProfile || urlProfile === userId) return;
-    if (profiles.length && !profiles.some((p) => p.user_id === urlProfile)) return;
+    if (
+      profiles.length &&
+      !profiles.some((p) => p.user_id === urlProfile) &&
+      !isTryProfile(urlProfile)
+    ) {
+      return;
+    }
     setUserIdState(urlProfile);
     setApiUserId(urlProfile);
   }, [urlProfile, userId, profiles]);

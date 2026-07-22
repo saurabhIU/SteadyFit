@@ -4,7 +4,7 @@ from __future__ import annotations
 import json
 import re
 import uuid
-from datetime import date, timedelta
+from datetime import date, datetime, timedelta, timezone
 from typing import Any, cast
 
 import psycopg
@@ -15,6 +15,8 @@ from app.config import settings
 from app.graph.state import UserProfile, WeekPlan
 
 _SLUG_RE = re.compile(r"[^a-z0-9]+")
+TRY_TTL_HOURS = 48
+KB_DOC_TYPES = ["kb_exercise", "kb_guide", "kb_template", "kb_science"]
 
 
 def _conn() -> Connection[DictRow]:
@@ -50,10 +52,33 @@ def create_user(name: str, user_id: str | None = None) -> str:
         c.execute(
             """
             INSERT INTO user_profiles(
-                user_id, name, goal, onboarding_complete, awaiting_onboarding_confirm
-            ) VALUES (%s, %s, '', FALSE, FALSE)
+                user_id, name, goal, onboarding_complete, awaiting_onboarding_confirm,
+                is_ephemeral, expires_at
+            ) VALUES (%s, %s, '', FALSE, FALSE, FALSE, NULL)
             """,
             (uid, name.strip() or "athlete"),
+        )
+        c.commit()
+    return uid
+
+
+def create_try_user() -> str:
+    """Public no-login session: try-<8hex>, ephemeral, expires in 48h."""
+    uid = f"try-{uuid.uuid4().hex[:8]}"
+    expires = datetime.now(timezone.utc) + timedelta(hours=TRY_TTL_HOURS)
+    with _conn() as c:
+        c.execute(
+            "INSERT INTO app_users(user_id, name) VALUES (%s, %s)",
+            (uid, "Guest"),
+        )
+        c.execute(
+            """
+            INSERT INTO user_profiles(
+                user_id, name, goal, onboarding_complete, awaiting_onboarding_confirm,
+                is_ephemeral, expires_at
+            ) VALUES (%s, %s, '', FALSE, FALSE, TRUE, %s)
+            """,
+            (uid, "Guest", expires),
         )
         c.commit()
     return uid
@@ -67,16 +92,20 @@ def user_exists(user_id: str) -> bool:
     return row is not None
 
 
-def list_users() -> list[dict[str, Any]]:
+def list_users(*, include_ephemeral: bool = True) -> list[dict[str, Any]]:
     with _conn() as c:
         rows = c.execute(
             """
             SELECT u.user_id, u.name, u.created_at,
-                   p.goal, p.onboarding_complete
+                   p.goal, p.onboarding_complete,
+                   COALESCE(p.is_ephemeral, FALSE) AS is_ephemeral,
+                   p.expires_at
             FROM app_users u
             LEFT JOIN user_profiles p ON p.user_id = u.user_id
+            WHERE (%s OR COALESCE(p.is_ephemeral, FALSE) = FALSE)
             ORDER BY u.created_at ASC
-            """
+            """,
+            (include_ephemeral,),
         ).fetchall()
     out = []
     for r in rows:
@@ -85,11 +114,20 @@ def list_users() -> list[dict[str, Any]]:
             "name": r["name"],
             "goal": r.get("goal") or "",
             "onboarding_complete": bool(r.get("onboarding_complete")),
+            "is_ephemeral": bool(r.get("is_ephemeral")),
+            "expires_at": (
+                r["expires_at"].isoformat() if r.get("expires_at") else None
+            ),
             "created_at": (
                 r["created_at"].isoformat() if r.get("created_at") else None
             ),
         })
     return out
+
+
+def list_users_for_weekly_review() -> list[dict[str, Any]]:
+    """Stable profiles only — never run Sunday cron on try-* guests."""
+    return list_users(include_ephemeral=False)
 
 
 def ensure_user(user_id: str, name: str | None = None) -> str:
@@ -243,6 +281,7 @@ def get_profile(user_id: str) -> UserProfile:
         age_declined=bool(row.get("age_declined")),
         sex=row.get("sex"),
         sex_declined=bool(row.get("sex_declined")),
+        weight_kg=float(row["weight_kg"]) if row.get("weight_kg") is not None else None,
         preferred_workout_modes=list(modes),
         food_preference=row.get("food_preference"),
         sessions_per_week=row.get("sessions_per_week"),
@@ -260,11 +299,11 @@ def save_profile(user_id: str, profile: UserProfile):
             """
             INSERT INTO user_profiles (
                 user_id, name, goal, age, age_declined, sex, sex_declined,
-                preferred_workout_modes, food_preference, sessions_per_week,
+                weight_kg, preferred_workout_modes, food_preference, sessions_per_week,
                 constraints, constraints_asked, onboarding_complete,
                 awaiting_onboarding_confirm, updated_at
             ) VALUES (
-                %s,%s,%s,%s,%s,%s,%s,%s::jsonb,%s,%s,%s::jsonb,%s,%s,%s, now()
+                %s,%s,%s,%s,%s,%s,%s,%s,%s::jsonb,%s,%s,%s::jsonb,%s,%s,%s, now()
             )
             ON CONFLICT (user_id) DO UPDATE SET
                 name = EXCLUDED.name,
@@ -273,6 +312,7 @@ def save_profile(user_id: str, profile: UserProfile):
                 age_declined = EXCLUDED.age_declined,
                 sex = EXCLUDED.sex,
                 sex_declined = EXCLUDED.sex_declined,
+                weight_kg = EXCLUDED.weight_kg,
                 preferred_workout_modes = EXCLUDED.preferred_workout_modes,
                 food_preference = EXCLUDED.food_preference,
                 sessions_per_week = EXCLUDED.sessions_per_week,
@@ -290,6 +330,7 @@ def save_profile(user_id: str, profile: UserProfile):
                 profile.age_declined,
                 profile.sex,
                 profile.sex_declined,
+                profile.weight_kg,
                 json.dumps(profile.preferred_workout_modes),
                 profile.food_preference,
                 profile.sessions_per_week,
@@ -347,6 +388,16 @@ def save_week_plan(user_id: str, plan: WeekPlan | dict):
         c.commit()
 
 
+def clear_current_week_plan(user_id: str) -> None:
+    """Mark any current week plan as not current (first-plan evals)."""
+    with _conn() as c:
+        c.execute(
+            "UPDATE week_plans SET is_current = FALSE WHERE user_id = %s",
+            (user_id,),
+        )
+        c.commit()
+
+
 def clear_profile_slots(user_id: str):
     """Reset profile fields for re-onboarding; keep logs/plans unless reset_user."""
     save_profile(
@@ -359,35 +410,91 @@ def clear_profile_slots(user_id: str):
     )
 
 
+def is_ephemeral_user(user_id: str) -> bool:
+    with _conn() as c:
+        row = c.execute(
+            """
+            SELECT COALESCE(is_ephemeral, FALSE) AS is_ephemeral
+            FROM user_profiles WHERE user_id = %s
+            """,
+            (user_id,),
+        ).fetchone()
+    return bool(row and row.get("is_ephemeral"))
+
+
+def _delete_user_data(c: Connection[DictRow], user_id: str) -> None:
+    """Wipe logs/plans/non-kb docs/checkpointer threads for one user."""
+    c.execute("DELETE FROM workout_log WHERE user_id = %s", (user_id,))
+    c.execute("DELETE FROM weight_log WHERE user_id = %s", (user_id,))
+    c.execute("DELETE FROM week_plans WHERE user_id = %s", (user_id,))
+    c.execute(
+        "DELETE FROM documents WHERE user_id = %s AND doc_type <> ALL(%s)",
+        (user_id, KB_DOC_TYPES),
+    )
+    for table in ("checkpoint_writes", "checkpoint_blobs", "checkpoints"):
+        try:
+            c.execute(
+                f"DELETE FROM {table} WHERE thread_id LIKE %s",  # noqa: S608
+                (f"{user_id}:%",),
+            )
+        except Exception:
+            pass
+
+
+def delete_user(user_id: str) -> None:
+    """Hard-delete one user and all non-kb data (CASCADE clears user_profiles)."""
+    if not user_exists(user_id):
+        raise KeyError(user_id)
+    with _conn() as c:
+        _delete_user_data(c, user_id)
+        c.execute("DELETE FROM user_profiles WHERE user_id = %s", (user_id,))
+        c.execute("DELETE FROM app_users WHERE user_id = %s", (user_id,))
+        c.commit()
+
+
+def delete_expired_ephemeral_users() -> list[str]:
+    """Delete try-profiles past expires_at. Never touches is_ephemeral=false."""
+    with _conn() as c:
+        rows = c.execute(
+            """
+            SELECT user_id FROM user_profiles
+            WHERE is_ephemeral = TRUE
+              AND expires_at IS NOT NULL
+              AND expires_at < now()
+            """
+        ).fetchall()
+    deleted: list[str] = []
+    for r in rows:
+        uid = r["user_id"]
+        delete_user(uid)
+        deleted.append(uid)
+    return deleted
+
+
 def reset_user(user_id: str) -> None:
     """Wipe one profile's rows (not kb_*). Leaves app_users + blank profile."""
     if not user_exists(user_id):
         raise KeyError(user_id)
     name = get_profile(user_id).name or user_id
+    ephemeral = is_ephemeral_user(user_id)
+    expires_at = None
+    if ephemeral:
+        with _conn() as c:
+            row = c.execute(
+                "SELECT expires_at FROM user_profiles WHERE user_id = %s",
+                (user_id,),
+            ).fetchone()
+        expires_at = row["expires_at"] if row else None
     with _conn() as c:
-        c.execute("DELETE FROM workout_log WHERE user_id = %s", (user_id,))
-        c.execute("DELETE FROM weight_log WHERE user_id = %s", (user_id,))
-        c.execute("DELETE FROM week_plans WHERE user_id = %s", (user_id,))
-        c.execute(
-            "DELETE FROM documents WHERE user_id = %s AND doc_type <> ALL(%s)",
-            (user_id, ["kb_exercise", "kb_guide", "kb_template", "kb_science"]),
-        )
-        # LangGraph checkpointer threads namespaced as user_id:*
-        for table in ("checkpoint_writes", "checkpoint_blobs", "checkpoints"):
-            try:
-                c.execute(
-                    f"DELETE FROM {table} WHERE thread_id LIKE %s",  # noqa: S608
-                    (f"{user_id}:%",),
-                )
-            except Exception:
-                pass
+        _delete_user_data(c, user_id)
         c.execute("DELETE FROM user_profiles WHERE user_id = %s", (user_id,))
         c.execute(
             """
             INSERT INTO user_profiles(
-                user_id, name, goal, onboarding_complete, awaiting_onboarding_confirm
-            ) VALUES (%s, %s, '', FALSE, FALSE)
+                user_id, name, goal, onboarding_complete, awaiting_onboarding_confirm,
+                is_ephemeral, expires_at
+            ) VALUES (%s, %s, '', FALSE, FALSE, %s, %s)
             """,
-            (user_id, name),
+            (user_id, name, ephemeral, expires_at),
         )
         c.commit()

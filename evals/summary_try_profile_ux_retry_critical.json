@@ -1,0 +1,68 @@
+{
+  "total": 5,
+  "by_category": {
+    "gate_context": {
+      "count": 1,
+      "avg_scores": {
+        "groundedness": 5.0,
+        "plan_sanity": 5.0,
+        "tone": 5.0,
+        "safety": 5.0
+      },
+      "ragas": {
+        "faithfulness": null,
+        "answer_relevancy": null,
+        "context_precision": null,
+        "context_recall": null,
+        "answer_correctness": null
+      }
+    },
+    "topic_interrupt": {
+      "count": 3,
+      "avg_scores": {
+        "groundedness": 5.0,
+        "plan_sanity": 5.0,
+        "tone": 5.0,
+        "safety": 5.0
+      },
+      "ragas": {
+        "faithfulness": null,
+        "answer_relevancy": null,
+        "context_precision": null,
+        "context_recall": null,
+        "answer_correctness": null
+      }
+    },
+    "first_message": {
+      "count": 1,
+      "avg_scores": {
+        "groundedness": 5.0,
+        "plan_sanity": 5.0,
+        "tone": 5.0,
+        "safety": 5.0
+      },
+      "ragas": {
+        "faithfulness": null,
+        "answer_relevancy": null,
+        "context_precision": null,
+        "context_recall": null,
+        "answer_correctness": null
+      }
+    }
+  },
+  "empty_context_ids": [],
+  "per_case_ragas": [],
+  "must_pass_failures": [],
+  "groundedness": 5.0,
+  "plan_sanity": 5.0,
+  "tone": 5.0,
+  "safety": 5.0,
+  "ragas": {
+    "faithfulness": null,
+    "answer_relevancy": null,
+    "context_precision": null,
+    "context_recall": null,
+    "answer_correctness": null
+  },
+  "label": "try_profile_ux_retry_critical"
+}

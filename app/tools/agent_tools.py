@@ -15,8 +15,12 @@ from app.tools.tavily_search import web_search
 
 @tool
 def calendar_conflicts() -> str:
-    """Read the user's calendar busy blocks / conflicts for this week.
-    Call this before proposing any schedule changes."""
+    """Return this user's real calendar busy blocks for the week, if any.
+
+    Currently returns an empty list until Google Calendar (or similar) is
+    connected per user. An empty result means NO known conflicts — do not
+    invent travel, meetings, or flights.
+    """
     return json.dumps(get_calendar_conflicts())
 
 

@@ -72,10 +72,14 @@ def test_week_plan_round_trip(uid):
 
 
 def test_adherence_stats_detects_drop_off(uid):
-    store.log_workout(uid, "2026-07-01", "Legs", "skipped")
-    store.log_workout(uid, "2026-07-02", "Push", "skipped")
-    store.log_workout(uid, "2026-07-03", "Pull", "skipped")
-    store.log_workout(uid, "2026-07-04", "Legs", "done")
+    today = date.today()
+    for i, status in enumerate(("skipped", "skipped", "skipped", "done")):
+        store.log_workout(
+            uid,
+            (today - timedelta(days=3 - i)).isoformat(),
+            "Workout",
+            status,
+        )
     stats = store.get_adherence_stats(uid)
     assert stats["drop_off_signal"] is True
     assert stats["last14d"]["skipped"] == 3

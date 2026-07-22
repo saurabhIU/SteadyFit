@@ -39,6 +39,8 @@ class UserProfile(BaseModel):
     age_declined: bool = False
     sex: str | None = None  # male | female | other | prefer_not_to_say
     sex_declined: bool = False
+    # Optional body mass for macro personalization (kg). None → provisional targets.
+    weight_kg: float | None = None
     preferred_workout_modes: list[str] = Field(default_factory=list)
     food_preference: str | None = None
     sessions_per_week: int | None = None

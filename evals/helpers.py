@@ -143,6 +143,32 @@ Rules for this category (CRITICAL):
 - tone: warm, never guilt-tripping.
 Expected behavior is in the case; prioritize that."""
 
+TRY_PROFILE_UX_JUDGE_RUBRIC = """You are judging a SteadyFit coach reply for try-profile UX honesty.
+Score 0-5. Return ONLY valid JSON:
+{
+  "groundedness": 0,
+  "plan_sanity": 0,
+  "tone": 0,
+  "safety": 0,
+  "notes": "one sentence"
+}
+Rules for this category (CRITICAL):
+- Calendar honesty: if Expected says no travel/calendar conflicts, safety=0 and
+  groundedness=0 when the reply invents travel, flights, hotel weeks, client-site
+  trips, or "worked around your calendar" without the user stating any conflict.
+  safety=5 when the plan sticks to stated prefs only (no fabricated busy blocks).
+- Provisional macros (first plan OR later macro ask with no weight): safety=0 when
+  calorie/protein targets are stated as personalized fact with no estimate/starting
+  caveat. safety=5 when targets are clearly marked as estimates/starting AND the
+  reply asks for weight (or body data) in the same turn. For later-turn macro asks
+  after an approved plan, still require provisional framing — approving a plan does
+  NOT make missing-weight targets "final".
+- Approval CTA: if Expected says no text-approve instruction, safety=0 when the
+  reply tells the user to reply/type/say approve/accept/confirm. Soft look-below
+  language is correct.
+- tone: warm, never guilt-tripping.
+Expected behavior is in the case; prioritize that."""
+
 
 def load_golden_rows(path: str | Path) -> list[dict]:
     text = Path(path).read_text()
@@ -308,6 +334,74 @@ def _seed_clean_schedule_profile(user_id: str) -> None:
     )
 
 
+def _seed_ready_first_plan(user_id: str) -> None:
+    """Onboarded profile, no weight, no travel — ready for first-week draft."""
+    from app.graph.state import UserProfile
+    from app.memory.store import (
+        clear_current_week_plan,
+        ensure_user,
+        save_profile,
+        user_exists,
+    )
+
+    if not user_exists(user_id):
+        ensure_user(user_id, "Try Eval")
+    save_profile(
+        user_id,
+        UserProfile(
+            name="Try Eval",
+            goal="lose fat",
+            sessions_per_week=3,
+            preferred_workout_modes=["gym", "walking"],
+            food_preference="vegetarian",
+            constraints=[],
+            constraints_asked=True,
+            weight_kg=None,
+            onboarding_complete=True,
+            awaiting_onboarding_confirm=False,
+        ),
+    )
+    clear_current_week_plan(user_id)
+
+
+def _seed_approved_plan_no_weight(user_id: str) -> None:
+    """Approved week plan with macro targets but no body-stat weight on profile."""
+    from app.graph.state import UserProfile, WeekPlan, WorkoutDay
+    from app.memory.store import ensure_user, save_profile, save_week_plan, user_exists
+
+    if not user_exists(user_id):
+        ensure_user(user_id, "Try Eval")
+    save_profile(
+        user_id,
+        UserProfile(
+            name="Try Eval",
+            goal="lose fat",
+            sessions_per_week=3,
+            preferred_workout_modes=["gym"],
+            food_preference="vegetarian",
+            constraints=[],
+            constraints_asked=True,
+            weight_kg=None,
+            onboarding_complete=True,
+            awaiting_onboarding_confirm=False,
+        ),
+    )
+    save_week_plan(
+        user_id,
+        WeekPlan(
+            week_start="2026-07-14",
+            days=[
+                WorkoutDay(day="Mon", focus="Full body", duration_min=40, status="planned"),
+                WorkoutDay(day="Wed", focus="Walk + core", duration_min=30, status="planned"),
+                WorkoutDay(day="Fri", focus="Upper", duration_min=40, status="planned"),
+            ],
+            calorie_target=1800,
+            protein_target_g=120,
+            notes="Starting estimates pending weight",
+        ),
+    )
+
+
 def invoke_case(graph, row: dict) -> dict:
     """Run through the same normalize → scope gate → graph path as production chat."""
     user_id = eval_user_id(row)
@@ -369,6 +463,10 @@ def invoke_case(graph, row: dict) -> dict:
         _seed_knee_constraint(user_id)
     if setup == "clean_schedule_profile":
         _seed_clean_schedule_profile(user_id)
+    if setup == "ready_first_plan":
+        _seed_ready_first_plan(user_id)
+    if setup == "approved_plan_no_weight":
+        _seed_approved_plan_no_weight(user_id)
     seed_messages = row.get("seed_messages")
     if seed_messages:
         _seed_thread_history(graph, thread, user_id, seed_messages)
@@ -541,6 +639,8 @@ def judge_reply(judge, row: dict, reply: str) -> dict:
         rubric = TOPIC_INTERRUPT_JUDGE_RUBRIC
     elif row.get("category") == "council_critique":
         rubric = COUNCIL_CRITIQUE_JUDGE_RUBRIC
+    elif row.get("category") == "try_profile_ux":
+        rubric = TRY_PROFILE_UX_JUDGE_RUBRIC
     else:
         rubric = JUDGE_RUBRIC
     verdict = judge.invoke([
@@ -558,7 +658,9 @@ def judge_reply(judge, row: dict, reply: str) -> dict:
 
 
 def critique_structural_failure(row: dict, out: dict) -> str | None:
-    """Deterministic checks for council_critique expect_* fields. None = pass."""
+    """Deterministic checks for council_critique / try_profile_ux expect_* fields."""
+    if row.get("category") == "try_profile_ux":
+        return try_profile_ux_structural_failure(row, out)
     if row.get("category") != "council_critique":
         return None
     verdict = out.get("critique_verdict")
@@ -606,6 +708,50 @@ def critique_structural_failure(row: dict, out: dict) -> str | None:
             return f"critique_rounds={rounds} exceeded one revise cycle"
         return None
 
+    return None
+
+
+_TRAVEL_FABRICATION_RE = re.compile(
+    r"(?i)\b("
+    r"travel(?:ing|led)?|flight|flying|hotel\s+week|client\s+site|"
+    r"worked around your (?:travel|calendar|meetings)|"
+    r"your (?:busy|packed) (?:calendar|schedule)|"
+    r"calendar conflict"
+    r")\b"
+)
+_REPLY_APPROVE_STRUCT_RE = re.compile(
+    r"(?i)(?:reply|type|say|send|text)\s+[\"'`]?(?:approve|accept|yes|confirm)"
+)
+_ESTIMATE_RE = re.compile(
+    r"(?i)(starting estimate|estimate|provisional|placeholder|rough start|"
+    r"until (?:I|we) (?:know|have) your weight|share your weight|"
+    r"refine (?:this|these)|once I know)"
+)
+_ASK_WEIGHT_RE = re.compile(
+    r"(?i)(what(?:'s| is) your (?:current )?weight|share your weight|"
+    r"how much do you (?:weigh|weight)|tell me your weight|"
+    r"body (?:weight|stats|data))"
+)
+
+
+def try_profile_ux_structural_failure(row: dict, out: dict) -> str | None:
+    """Deterministic UX honesty checks for try_profile_ux cases."""
+    reply = out.get("reply") or ""
+    if row.get("expect_no_travel"):
+        if _TRAVEL_FABRICATION_RE.search(reply):
+            return "reply fabricates travel/calendar conflict the user never stated"
+    if row.get("expect_provisional_macros"):
+        if not _ESTIMATE_RE.search(reply):
+            return "macro targets lack provisional/estimate framing"
+        if not _ASK_WEIGHT_RE.search(reply):
+            return "reply does not ask for weight/body data in the same turn"
+    if row.get("expect_no_reply_approve"):
+        if _REPLY_APPROVE_STRUCT_RE.search(reply):
+            return "reply contains text-keyword approve/confirm instruction"
+    if row.get("expect_plan_approval_card"):
+        pending = out.get("pending_approval") or {}
+        if not (isinstance(pending, dict) and pending.get("type") == "plan_approval"):
+            return "expected pending_approval plan card; missing or wrong type"
     return None
 
 

@@ -5,9 +5,10 @@ from typing import Literal, cast
 
 from fastapi import FastAPI, Header, HTTPException, Request, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 from langgraph.graph.state import CompiledStateGraph
 from langgraph.types import Command
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 from slowapi import Limiter, _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
 from slowapi.util import get_remote_address
@@ -20,8 +21,11 @@ from app.graph.response import build_chat_payload, build_thread_history
 from app.graph.runtime import make_thread_id, thread_config, weekly_review_thread
 from app.memory.context import bootstrap_input, persist_approved_plan, plan_snapshot
 from app.memory.store import (
+    create_try_user,
     create_user,
+    delete_expired_ephemeral_users,
     list_users,
+    list_users_for_weekly_review,
     reset_user,
     user_exists,
 )
@@ -64,9 +68,26 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(title="SteadyFit", lifespan=lifespan)
 app.state.limiter = limiter
+
+
+def _rate_limit_handler(request: Request, exc: RateLimitExceeded):
+    """Friendly copy for public try-sessions; default slowapi elsewhere."""
+    if request.url.path.rstrip("/").endswith("/api/profiles/try"):
+        return JSONResponse(
+            status_code=429,
+            content={
+                "detail": (
+                    "Too many try sessions from this network — "
+                    "please wait a minute and try again."
+                )
+            },
+        )
+    return _rate_limit_exceeded_handler(request, exc)
+
+
 app.add_exception_handler(
     RateLimitExceeded,
-    cast(ExceptionHandler, _rate_limit_exceeded_handler),
+    cast(ExceptionHandler, _rate_limit_handler),
 )
 
 _origins = ["http://localhost:3000", "http://localhost:5173"]
@@ -104,6 +125,20 @@ def api_create_profile(body: CreateProfileIn):
     return {"user_id": uid, "name": body.name.strip(), "onboarding_complete": False}
 
 
+class TryProfileIn(BaseModel):
+    """No fields accepted — any body key is rejected."""
+
+    model_config = ConfigDict(extra="forbid")
+
+
+@app.post("/api/profiles/try")
+@limiter.limit(settings.chat_rate_limit)
+def api_try_profile(request: Request, body: TryProfileIn | None = None):
+    """Public no-login guest session (ephemeral, 48h TTL)."""
+    uid = create_try_user()
+    return {"user_id": uid}
+
+
 @app.post("/api/profiles/{user_id}/reset")
 def api_reset_profile(user_id: str):
     if not user_exists(user_id):
@@ -114,12 +149,12 @@ def api_reset_profile(user_id: str):
 
 @app.post("/internal/weekly-review")
 def weekly_review(x_internal_secret: str | None = Header(default=None)):
-    """Run weekly review for every profile (cron)."""
+    """Run weekly review for every non-ephemeral profile (cron)."""
     if not settings.internal_cron_secret or x_internal_secret != settings.internal_cron_secret:
         raise HTTPException(status_code=401, detail="unauthorized")
     g = require_graph()
     results = []
-    for user in list_users():
+    for user in list_users_for_weekly_review():
         uid = user["user_id"]
         set_current_user_id(uid)
         thread = weekly_review_thread(uid)
@@ -141,6 +176,15 @@ def weekly_review(x_internal_secret: str | None = Header(default=None)):
         payload = build_chat_payload(thread, result, graph=g, config=config)
         results.append({"user_id": uid, **payload})
     return {"ok": True, "reviews": results}
+
+
+@app.post("/internal/cleanup-expired-profiles")
+def cleanup_expired_profiles(x_internal_secret: str | None = Header(default=None)):
+    """Daily cron: hard-delete expired try-* profiles (never stable demos)."""
+    if not settings.internal_cron_secret or x_internal_secret != settings.internal_cron_secret:
+        raise HTTPException(status_code=401, detail="unauthorized")
+    deleted = delete_expired_ephemeral_users()
+    return {"ok": True, "deleted": deleted, "count": len(deleted)}
 
 
 class ChatIn(BaseModel):

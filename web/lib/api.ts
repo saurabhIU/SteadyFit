@@ -21,6 +21,8 @@ export type ProfileSummary = {
   name: string;
   goal: string;
   onboarding_complete: boolean;
+  is_ephemeral?: boolean;
+  expires_at?: string | null;
   created_at?: string | null;
 };
 
@@ -52,6 +54,16 @@ export async function fetchProfiles(): Promise<ProfileSummary[]> {
   const res = await fetch(`${API_URL}/api/profiles`, { cache: "no-store" });
   const data = await parseJson<{ profiles: ProfileSummary[] }>(res);
   return data.profiles ?? [];
+}
+
+/** Public no-login guest session — no X-User-Id header. */
+export async function createTryProfile(): Promise<{ user_id: string }> {
+  const res = await fetch(`${API_URL}/api/profiles/try`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: "{}",
+  });
+  return parseJson<{ user_id: string }>(res);
 }
 
 export async function sendChat(

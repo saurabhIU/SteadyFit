@@ -115,13 +115,19 @@ function BottomNav({
 
 function ProfileSwitcher() {
   const { userId, profiles, setUserId, ready } = useProfile();
-  if (!ready || profiles.length === 0) return null;
+  // Keep the demo switcher for stable profiles only — try-* guests stay on ?profile=.
+  const demoProfiles = profiles.filter((p) => !p.is_ephemeral);
+  if (!ready || demoProfiles.length === 0) return null;
+
+  const selectValue = demoProfiles.some((p) => p.user_id === userId)
+    ? userId
+    : demoProfiles[0].user_id;
 
   return (
     <label className="flex items-center gap-2 text-xs text-navy-muted">
       <span className="hidden sm:inline">Profile</span>
       <select
-        value={userId}
+        value={selectValue}
         onChange={(e) => setUserId(e.target.value)}
         aria-label="Demo profile"
         className={cn(
@@ -130,7 +136,7 @@ function ProfileSwitcher() {
           "focus-visible:border-sage/50",
         )}
       >
-        {profiles.map((p) => (
+        {demoProfiles.map((p) => (
           <option key={p.user_id} value={p.user_id}>
             {p.name}
           </option>

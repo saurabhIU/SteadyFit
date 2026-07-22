@@ -37,6 +37,7 @@ class ProfileExtraction(BaseModel):
     age_declined: bool = False
     sex: str | None = None
     sex_declined: bool = False
+    weight_kg: float | None = None
     preferred_workout_modes: list[
         Literal["gym", "swimming", "walking", "running", "home", "cycling", "yoga"]
     ] | None = None
@@ -66,6 +67,7 @@ Return structured fields only. Rules:
 - sessions_per_week: integer 1-7 if stated.
 - age_declined / sex_declined: true if they prefer not to say / decline.
 - sex: normalize to male, female, other, or prefer_not_to_say.
+- weight_kg: body weight in kilograms if stated (convert lb/lbs to kg ≈ ×0.4536).
 - constraints: injuries or equipment limits they named; constraints_none if they said none.
 - confirmation: yes/no only if they are confirming a profile summary; else unset.
 - off_topic_question: if they asked a fitness FAQ instead of answering (e.g. creatine),
@@ -124,6 +126,8 @@ def apply_extraction(profile: UserProfile, ext: ProfileExtraction) -> UserProfil
     if ext.sex_declined:
         data["sex_declined"] = True
         data["sex"] = "prefer_not_to_say"
+    if ext.weight_kg is not None:
+        data["weight_kg"] = max(30.0, min(300.0, float(ext.weight_kg)))
     if ext.preferred_workout_modes:
         modes = [m for m in ext.preferred_workout_modes if m in WORKOUT_MODE_OPTIONS]
         if modes:

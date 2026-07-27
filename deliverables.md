@@ -95,7 +95,8 @@ invisible; drop-off is only discovered after it has already happened.
 
 SteadyFit is a proactive multi-agent fitness copilot — LangGraph Coach + specialists with
 **agentic tool calling**, a curated metadata-rich **knowledge base**, personal-doc RAG,
-**coaching memory**, live web search, multi-profile Postgres state, profile intake, and
+**coaching memory**, live web search, **photo meal logging**, **diet-plan + TDEE**,
+**council critique**, multi-profile / try-yourself Postgres state, profile intake, and
 HITL plan approval — that re-plans training and nutrition around real life.
 
 ### Infrastructure diagram
@@ -136,7 +137,7 @@ flowchart TD
 
     subgraph OBS["📊  Observability"]
         LS["🔭 LangSmith"]
-        EV["🧪 Eval harness<br/>RAGAS + judge · 80 cases"]
+        EV["🧪 Eval harness<br/>RAGAS + judge · 115 cases"]
     end
 
     U --> FE --> API
@@ -187,8 +188,8 @@ flowchart TD
 | App memory | Postgres **`app_users` / profiles / week_plans / workout_log / weight_log`** | Multi-profile demo via `X-User-Id`; no SQLite. |
 | Coaching memory | `documents` `doc_type=memory` + recency-weighted retrieve | Scheduler/Adherence recall past travel / overload weeks with `[Memory: …]` citations. |
 | Monitoring | **LangSmith** | Traces of tool_calls and agent hops; optional `--experiment` runs. |
-| Evaluation | RAGAS + LLM-as-judge; **80** cases incl. adversarial / onboarding / **kb_retrieval** / **rag_personal** / **memory** | RAGAS chosen for RAG-specific metrics (faithfulness, context precision/recall) that directly measure retrieval quality — the primary gap identified in the kb_retrieval baseline; LLM-as-judge covers coaching behavior (tone, safety, plan sanity) that RAGAS cannot assess. |
-| UI | **Next.js** — chat chips, citation pills, plan approve, **profile dropdown** | Shareable `?profile=` links; header sends `X-User-Id` on every call. |
+| Evaluation | RAGAS + LLM-as-judge; **115** golden cases (Task 5/6 labeled runs were **80**; latest near-full suite **96**) | RAGAS for retrieval quality; LLM-as-judge for tone/safety/plan sanity; category suites for photo_meal, council_critique, diet_plan, try_profile_ux. |
+| UI | **Next.js** — chat chips, citations, photo log, try-yourself, plan approve (workouts + diet), **profile dropdown** | Shareable `?profile=` links; header sends `X-User-Id` on every call. |
 | Deploy | Render API + Vercel `web/` | Cron weekly review loops **all** profiles. Next.js frontend is responsive and accessible at a public HTTPS URL on both mobile and desktop browsers — satisfying the phone + laptop browser requirement. |
 
 ### Agent workflow diagram (end to end)
@@ -217,23 +218,24 @@ flowchart TD
         WEB[Tavily web]
     end
 
+    CRIT[Critique-and-revise max 1 cycle]
     TEAM[Coaching team merge citations risk]
     MWRITE[memory_write weekly summary to pgvector]
-    HITL[Approve interrupt human-in-the-loop]
-    SAVE[Persist week plan Postgres]
-    OUT[Reply citation chips quick replies]
+    HITL[Approve interrupt — workouts + diet + macros]
+    SAVE[Persist week_plan + diet_plan_days]
+    OUT[Reply citation chips quick replies approval card]
 
     IN --> UID
     UID --> SG
     SG -->|Out of scope| REJ
     SG -->|OK| COACH
-    COACH -->|profile incomplete| INT
+    COACH -->|profile incomplete or diet gate| INT
     INT -->|still filling| OUT
     INT -->|confirmed| FIRST
     FIRST --> SCH
     COACH -->|profile update| INT
     COACH -->|schedule| SCH
-    COACH -->|nutrition| NUT
+    COACH -->|nutrition / photo| NUT
     COACH -->|adherence| ADH
     COACH -->|knowledge| KNOW
     SCH --> KB
@@ -245,10 +247,11 @@ flowchart TD
     KNOW --> KB
     KNOW --> PERS
     KNOW --> WEB
-    SCH --> TEAM
-    NUT --> TEAM
-    ADH --> TEAM
-    KNOW --> TEAM
+    SCH --> CRIT
+    NUT --> CRIT
+    ADH --> CRIT
+    KNOW --> CRIT
+    CRIT --> TEAM
     TEAM --> MWRITE
     MWRITE -->|risk + dense plan| COACH
     MWRITE -->|plan changed| HITL
@@ -263,6 +266,7 @@ flowchart TD
     style INT fill:#7c3aed,stroke:#6d28d9,color:#fff
     style FIRST fill:#7c3aed,stroke:#6d28d9,color:#fff
     style TEAM fill:#b45309,stroke:#92400e,color:#fff
+    style CRIT fill:#b45309,stroke:#92400e,color:#fff
     style MWRITE fill:#0f172a,stroke:#334155,color:#fff
     style HITL fill:#dc2626,stroke:#b91c1c,color:#fff
     style SAVE fill:#0f172a,stroke:#334155,color:#fff
@@ -278,20 +282,18 @@ flowchart TD
     style WEB fill:#dbeafe,stroke:#93c5fd,color:#1e3a8a
 ```
 
-**How it works:** Each request carries **`X-User-Id`**. Threads are namespaced
-`{user_id}:{conversation_id}` so checkpointer state never crosses personas. Chat enters a
-**scope gate** (with fitness-hint fast path during intake). The Coach loads that user's
-Postgres profile; if onboarding is incomplete it routes to **intake**. After confirmation,
-**first_plan** runs the Scheduler with KB templates + exercise IDs. Otherwise specialists
-call tools via `bind_tools`. Knowledge is three-way: personal uploads \| curated KB \|
-Tavily. Scheduler and Adherence also retrieve **user-scoped coaching memories**. The
-coaching team merges proposals and preserves `[KB: …]` / `[Memory: …]` / `[doc:…]` /
-`[web:…]` citations. On weekly-review turns, **memory_write** upserts a structured weekly
-summary into pgvector. Plan changes hit HITL approve.
+**How it works:** Each request carries **`X-User-Id`** (or a `try-*` guest from
+Try it yourself). Threads are namespaced `{user_id}:{conversation_id}`. Chat enters a
+**scope gate**. The Coach loads that user's Postgres profile; incomplete onboarding or
+an open **diet-metrics gate** routes to **intake**. After confirmation and diet slots,
+**first_plan** runs the Scheduler with KB templates, **code TDEE macros**, and a
+**KB meal week**. Otherwise specialists call tools via `bind_tools` (including meal
+vision). Plan-changing drafts pass **critique** (≤1 revise) before the coaching team
+merges. Citations: `[KB: …]` / `[Memory: …]` / `[doc:…]` / `[web:…]`. Weekly-review
+turns upsert coaching memory. Plan changes hit HITL approve (workouts + diet + macros).
 
-**Demo personas:** `demo-new` (empty onboarding) and `demo-veteran` (~12 weeks of logs +
-travel/overload memories). Frontend profile switcher uses `?profile=` (not localStorage for
-the active identity).
+**Demo personas:** `demo-new`, `demo-veteran`, plus **Try it yourself** ephemeral
+profiles. Frontend uses `?profile=` / try flow (not localStorage for active identity).
 
 ---
 
@@ -348,22 +350,30 @@ behaviour and the non-judgmental copy tone throughout the app.
 7. **Multi-profile:** `X-User-Id`, thread namespacing, profile switcher, isolation tests.
 8. **Coaching memory:** weekly summarizer + recency-weighted retrieve + memory evals.
 9. **Personal eval fixtures:** `data/eval_uploads/` ingested for `demo-veteran` (rag_personal).
+10. **Council critique-and-revise**, **photo meal logging**, **try-it-yourself** profiles,
+    **diet-metrics gate + TDEE + KB diet week** (see Task 7 shipped + `IMPROVEMENTS_LOG.md`).
 
 ---
 
 ## Task 5: Evals
 
-- Golden set: **~80 cases** across schedule / nutrition / knowledge / safety / adversarial /
-  autonomous / onboarding / **kb_retrieval** / **rag_personal** / **rag_web** / **memory** /
-  **gate_context**.
+- Golden set (**current HEAD**): **115 cases** across **22 categories**, including the
+  original Task 5 set plus `council_critique`, `photo_meal`, `try_profile_ux`,
+  `topic_interrupt`, `first_message`, `weight_gate`, `diet_plan`, `intake_chips`,
+  `approval_card`, and the RAG / gate categories.
+- **Task 5 labeled baseline** was run on the then-current **80-case** set
+  (`baseline_fixed`). That historical number is kept below for before/after Task 6.
+- **Latest near-full suite:** `try_profile_ux_full` — **96 cases**, **0** critical
+  must-pass failures; judge averages groundedness **4.87**, plan_sanity **4.89**,
+  tone **4.91**, safety **4.96** (`evals/summary_try_profile_ux_full.md`).
 - Harness: LLM-as-judge (groundedness, plan sanity, tone, safety) + RAGAS
   (faithfulness, answer_relevancy; + context_precision / context_recall /
   answer_correctness when `expected_behavior` / `gold_sources` provide a reference)
   for `rag_*` / `kb_retrieval` / `memory`. Contexts come from
   `state.retrieved_context` (full chunks; API responses still return citation metadata only).
-- Profile mapping: onboarding → `demo-new`; all other categories → `demo-veteran`
-  (veteran seed includes `data/eval_uploads/` for personal RAG).
-- Run: `uv run python evals/run_evals.py` → `evals/summary.md`.
+- Profile mapping: onboarding / try_profile → fresh/`try-*`; other categories →
+  `demo-veteran` (veteran seed includes `data/eval_uploads/` for personal RAG).
+- Run: `uv run python evals/run_evals.py --label <name>` → `evals/summary_<name>.*`.
 - Labeled baseline / after-hybrid: `--label baseline_fixed` then `--label hybrid_retrieval`,
   then `uv run python evals/compare.py --a baseline_fixed --b hybrid_retrieval`
   (or `uv run python evals/run_evals.py --compare baseline_fixed hybrid_retrieval`).
@@ -372,7 +382,7 @@ behaviour and the non-judgmental copy tone throughout the app.
 
 ### Baseline Evaluation Results
 
-**Dataset:** 80 cases across 13 categories. Two runs performed:
+**Dataset (Task 5 snapshot):** 80 cases across 13 categories. Two runs performed:
 `baseline_original` (initial run, harness bug present) and `baseline_fixed`
 (harness bug corrected — unique thread_id per eval case). The original run
 revealed a critical harness bug: deterministic thread IDs caused 8 cases to
@@ -547,37 +557,36 @@ Artifacts: `evals/summary_hybrid_retrieval.md`,
 
 ## Task 7: Next Steps
 
+### Shipped since Task 6 (with eval evidence)
+
+These were previously listed as future work; they are **in production code**
+and covered by golden-set categories. Full changelog: **IMPROVEMENTS_LOG.md**.
+
+| Capability | What shipped | Eval evidence |
+|---|---|---|
+| **Council critique-and-revise** | Pre-merge critique node (≤1 revise) for plan-changing specialists; hard fails on knee / preference / volume mismatches; Coaching Team panel shows critique → revision chips | `council_critique` (4): all judge dims 5.0 · `critique_interrupt_fix` (**92** cases, **0** critical must-pass) · `summary_council_critique*.md` |
+| **Vision / photo meal logging** | Chat photo → vision food ID → USDA macros → `food_log` (image not retained); critique skipped on meal-log-only turns; non-food + adversarial-in-notes handled | `photo_meal` (**5**): groundedness/plan_sanity/tone/safety all **5.0**, **0** critical · `summary_photo_meal.md` |
+| **Try-it-yourself profiles** | `POST /api/profiles/try` ephemeral `try-*` users (48h TTL + cleanup cron); full onboarding without demo personas | `try_profile_ux_full` (**96** cases, **0** critical): groundedness 4.87 · plan_sanity 4.89 · tone 4.91 · safety 4.96 · `summary_try_profile_ux_full.md` |
+| **Diet gate + TDEE + KB diet week** | Hard-stop weight → target → height → activity; code Mifflin–St Jeor; KB Indian meals → `diet_plan_days`; approval + Plan page planned vs logged | `diet_plan` (4) + `weight_gate` (5): structural hard-stop / TDEE / veg-safe · `summary_diet_plan.md` |
+| **Live deploy** | Vercel app + Render API with CORS wired | https://steady-fit.vercel.app · https://steadyfit-api.onrender.com/health |
+
 **Keep for Demo Day:**
-- **Multi-agent council with visible deliberation transcript** — this is
-  the core differentiator; no competing app shows its reasoning, and the
-  council transcript is the single strongest "this is genuinely agentic"
-  demo artifact.
-- **Coaching memory with citations** (`[Memory: week of …]`) — the
-  compounding-memory story is the product's switching cost and the most
-  emotionally resonant demo moment ("it remembered your last travel week").
-- **Conversational onboarding** (`demo-new`) — demonstrates the intake
-  flow and multi-slot extraction in a single clean demo switch.
-- **KB citations and quick-reply chips** — makes RAG visible to a
-  non-technical audience; "it showed its sources" lands immediately.
-- **LangSmith trace of one "traveling next week, knee sore" request** —
-  shows tool_call hops, retrieval spans, and council negotiation; the
-  strongest technical credibility artifact.
-- **Eval table (baseline_fixed → hybrid_retrieval)** — hard numbers on
-  a real improvement; answers "how do you know it works?"
+- **Multi-agent council with visible deliberation transcript** (including
+  critique → revision chips) — strongest “genuinely agentic” artifact.
+- **Photo meal log** — upload a plate, see USDA-grounded macros + Plan totals.
+- **Try it yourself** → diet gate → first week workouts **and** meals on the
+  approval card — end-to-end product story in one path.
+- **Coaching memory with citations** (`[Memory: week of …]`) on `demo-veteran`.
+- **KB citations and quick-reply chips** — RAG visible to non-technical viewers.
+- **LangSmith trace** of “traveling next week, knee sore” (tools + critique).
+- **Eval table** — Task 5/6 hybrid delta **plus** 96-case suite / 115-case golden set.
 
 **Change or improve post-cohort:**
-- **Real auth (Clerk/Auth0)** instead of `X-User-Id` header switcher —
-  deprioritised because it adds infrastructure complexity without changing
-  the product thesis; the switcher proves the multi-tenancy architecture.
-- **Google Calendar OAuth** — the mock calendar proves the scheduler
-  design; real OAuth is a Phase 1 beta feature.
-- **Vision meal logging** — high value but out of scope for a solo
-  capstone; photo-to-macro is a Phase 2 differentiator.
-- **Streaming UI responses** — polish, not product; the council reply
-  is the value, not the typing animation.
-- **Council critique-and-revise loop** — currently single-pass merge;
-  a second critique step would improve plan quality but adds latency and
-  complexity better addressed after retention is proven.
+- **Real auth (Clerk/Auth0)** instead of `X-User-Id` / try-profile switcher —
+  deprioritised; switcher + try-profiles already prove multi-tenancy.
+- **Google Calendar OAuth** — mock calendar proves the scheduler design.
+- **Streaming UI responses** — polish, not product.
+- **Meal swap / diet adherence tracking** — explicitly out of Phase 1 diet scope.
 - **Faithfulness improvement** — explicit citation instructions in agent
   prompts to close the −15% faithfulness gap from the hybrid retrieval run.
 
@@ -585,13 +594,14 @@ Artifacts: `evals/summary_hybrid_retrieval.md`,
 
 ## Final submission checklist
 
-- [ ] Public GitHub repo — https://github.com/saurabhIU/SteadyFit
-- [ ] ≤10-min Loom video (script: demo-new intake → demo-veteran hotel
-      re-plan with Memory citation → KB push-up cues → Tavily creatine →
-      Sunday review trigger → LangSmith trace → eval comparison table)
-- [x] deliverables.md updated with actual eval numbers (baseline_fixed +
-      hybrid_retrieval, 80 cases, RAGAS + judge)
-- [x] Architecture docs (README + deliverables) aligned with current code
-- [x] All code (graph, KB, tools, onboarding, multi-profile, memory, UI)
-- [x] Eval artifacts committed (results_baseline_fixed.json,
-      results_hybrid_retrieval.json, comparison table)
+- [x] Public GitHub repo — https://github.com/saurabhIU/SteadyFit
+- [ ] ≤10-min Loom video (script: Try it yourself → diet gate → photo log →
+      demo-veteran hotel re-plan with Memory → KB cues → critique chip →
+      LangSmith → eval table)
+- [x] deliverables.md updated with eval numbers (baseline_fixed +
+      hybrid_retrieval on 80; current golden **115**; latest suite **96**)
+- [x] Architecture docs (README + deliverables + IMPROVEMENTS_LOG) aligned
+- [x] Live URLs verified — https://steady-fit.vercel.app ·
+      https://steadyfit-api.onrender.com
+- [x] All code (graph, KB, tools, onboarding, photo, diet plan, critique, UI)
+- [x] Eval artifacts committed (baseline/hybrid pair + category summaries)

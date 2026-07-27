@@ -5,87 +5,104 @@ Coach (supervisor) + Intake, Scheduler, Nutrition, Adherence, Knowledge — grou
 **curated knowledge base** (Volumes 1–7 in pgvector with **hybrid dense + FTS RRF**
 retrieval), the user's own uploads, **coaching memory** (past weeks), and live web
 search (Tavily). Specialists use **LLM tool calling** (`bind_tools`) for calendar,
-USDA, exercise lookup, and RAG. A **context-aware scope gate** (prior-turn + pending
-HITL/intake bypass) keeps chat on fitness. Conversational onboarding fills the profile
-before coaching; plan changes pause for human approval.
+USDA, exercise lookup, meal vision, TDEE, and RAG.
 
-**Multi-profile demo** (no real auth): switch personas with `X-User-Id` /
-`?profile=demo-new|demo-veteran`. Profiles, plans, adherence, personal uploads, and
-memories are scoped per user in Postgres.
+**Shipped product surface:** conversational onboarding → diet-metrics gate → first
+week of **workouts + KB meal plan** (HITL approve) · **photo meal logging** ·
+**try-it-yourself** guest profiles · **council critique-and-revise** before merge ·
+context-aware scope gate · multi-profile demo (`demo-new` / `demo-veteran`).
 
-See **deliverables.md** for the full capstone plan (Tasks 1–7).
+See **deliverables.md** (Tasks 1–7) and **IMPROVEMENTS_LOG.md** (post-baseline changelog
+with eval evidence).
+
+## Live demo
+
+| | URL |
+|---|---|
+| **App (Vercel)** | https://steady-fit.vercel.app |
+| **API (Render)** | https://steadyfit-api.onrender.com |
+| **Health** | https://steadyfit-api.onrender.com/health → `{"ok":true}` |
+
+Verified working (CORS allows the Vercel origin). GitHub: https://github.com/saurabhIU/SteadyFit
 
 ## Architecture
 
 ```
 Next.js UI (Vercel) ──► FastAPI API (Render)
-  ?profile=…                     X-User-Id header
+  ?profile=… / Try it yourself     X-User-Id header
          │                     │
          │            normalize + scope gate
          │                     │
          │            LangGraph (Postgres checkpointer)
          │            thread = {user_id}:{conversation}
          │                     │
-         │              coach (completeness gate)
-         │               ├─ intake ──► END | first_plan → scheduler
+         │              coach (completeness + diet gate)
+         │               ├─ intake ──► diet slots ──► first_plan → scheduler
          │               ├─ scheduler  ┐
-         │               ├─ nutrition  ┼─► coaching_team → memory_write
+         │               ├─ nutrition  ┼─► critique ─► coaching_team → memory_write
          │               ├─ adherence  │         │
          │               └─ knowledge ─┘         ├─ approve (HITL) | coach loop | END
          │
-         └── citations / quick_replies / plan approval cards
+         └── citations / quick_replies / plan+diet approval / photo log
 
-External cron ──► POST /internal/weekly-review  (loops every profile)
+External cron ──► POST /internal/weekly-review
+               └── POST /internal/cleanup-expired-profiles  (try-* TTL)
 
-Tools (agentic): calendar · USDA · Tavily · find_exercises / substitutions · retrieve_*
-RAG / memory (all in Postgres + pgvector `documents`):
-  personal uploads  ──► ingest.py       ──► doc_type=personal   (user_id required; dense)
-  curated KB Volumes──► ingest_kb.py    ──► doc_type=kb_*       (shared; **hybrid dense+FTS RRF**)
-  weekly summaries  ──► memory_store.py ──► doc_type=memory     (user_id required; dense+recency)
-App state: app_users · user_profiles · week_plans · workout_log · weight_log
+Tools: calendar · USDA · Tavily · exercise_lookup · meal_vision · compute_tdee · retrieve_*
+RAG / memory (Postgres + pgvector `documents`):
+  personal uploads  ──► doc_type=personal   (user_id; dense)
+  curated KB Volumes──► doc_type=kb_*       (shared; hybrid dense+FTS RRF)
+  weekly summaries  ──► doc_type=memory     (user_id; dense+recency)
+App state: profiles · week_plans · diet_plan_days · food_log · workout_log · weight_log
 Gateway: Vercel AI Gateway · Traces: LangSmith
+Evals: 115 golden cases · RAGAS + LLM-judge
 ```
 
 ```mermaid
 flowchart TD
     subgraph CLIENT[Client]
-        UI[Next.js on Vercel<br/>chat / plan / profile switcher]
+        UI[Next.js on Vercel<br/>chat / plan / try-yourself / photo]
     end
 
     subgraph BACKEND[Render FastAPI]
         GATE[Scope gate<br/>normalize + rate-limit]
         LG[LangGraph<br/>thread = user_id:conv]
-        GW[Vercel AI Gateway<br/>Claude Sonnet / GPT-4o-mini]
-        CRON[Sunday cron<br/>POST /internal/weekly-review]
+        GW[Vercel AI Gateway]
+        CRON[Sunday weekly-review<br/>+ ephemeral cleanup]
     end
 
     subgraph AGENTS[Coaching Team]
         COACH[Coach supervisor]
-        INT[Intake]
-        SCH[Scheduler]
-        NUT[Nutrition]
+        INT[Intake + diet gate]
+        SCH[Scheduler + diet week]
+        NUT[Nutrition + vision + TDEE]
         ADH[Adherence]
         KNOW[Knowledge]
+        CRIT[Critique revise ≤1]
+        TEAM[Coaching team merge]
+        HITL[Approve HITL]
     end
 
     subgraph TOOLS[Agentic Tools]
         T1[Calendar mock]
         T2[USDA FoodData]
         T3[Tavily web]
-        T4[exercise_lookup.json]
-        T5[Hybrid retriever<br/>dense + BM25 + RRF]
+        T4[exercise_lookup]
+        T5[Hybrid retriever]
+        T6[Meal vision]
+        T7[compute_tdee_targets]
     end
 
     subgraph STORAGE[Neon Postgres + pgvector]
-        KB[doc_type kb shared Volumes]
-        PERS[doc_type personal per user]
-        MEM[doc_type memory weekly]
-        APP[App state profiles plans logs]
+        KB[KB Volumes shared]
+        PERS[Personal per user]
+        MEM[Memory weekly]
+        APP[Profiles plans diet food_log]
     end
 
     subgraph OBS[Observability]
-        LS[LangSmith traces]
-        EV[RAGAS + LLM-judge 80 cases]
+        LS[LangSmith]
+        EV[RAGAS + judge · 115 cases]
     end
 
     UI -->|X-User-Id| GATE
@@ -98,12 +115,20 @@ flowchart TD
     COACH --> NUT
     COACH --> ADH
     COACH --> KNOW
+    SCH --> CRIT
+    NUT --> CRIT
+    ADH --> CRIT
+    KNOW --> CRIT
+    CRIT --> TEAM
+    TEAM --> HITL
     SCH --> T1
     SCH --> T4
     SCH --> T5
+    SCH --> T7
     NUT --> T2
     NUT --> T5
-    ADH --> T5
+    NUT --> T6
+    NUT --> T7
     KNOW --> T3
     KNOW --> T5
     T5 --> KB
@@ -119,120 +144,58 @@ flowchart TD
     style TOOLS fill:#16a34a,stroke:#14532d,color:#fff
     style STORAGE fill:#d97706,stroke:#78350f,color:#fff
     style OBS fill:#e11d48,stroke:#881337,color:#fff
-
-    style UI fill:#06b6d4,stroke:#164e63,color:#fff
-    style GATE fill:#8b5cf6,stroke:#4c1d95,color:#fff
-    style LG fill:#8b5cf6,stroke:#4c1d95,color:#fff
-    style GW fill:#8b5cf6,stroke:#4c1d95,color:#fff
-    style CRON fill:#8b5cf6,stroke:#4c1d95,color:#fff
-    style COACH fill:#ec4899,stroke:#831843,color:#fff
-    style INT fill:#ec4899,stroke:#831843,color:#fff
-    style SCH fill:#ec4899,stroke:#831843,color:#fff
-    style NUT fill:#ec4899,stroke:#831843,color:#fff
-    style ADH fill:#ec4899,stroke:#831843,color:#fff
-    style KNOW fill:#ec4899,stroke:#831843,color:#fff
-    style T1 fill:#22c55e,stroke:#14532d,color:#fff
-    style T2 fill:#22c55e,stroke:#14532d,color:#fff
-    style T3 fill:#22c55e,stroke:#14532d,color:#fff
-    style T4 fill:#22c55e,stroke:#14532d,color:#fff
-    style T5 fill:#22c55e,stroke:#14532d,color:#fff
-    style KB fill:#f59e0b,stroke:#78350f,color:#fff
-    style PERS fill:#f59e0b,stroke:#78350f,color:#fff
-    style MEM fill:#f59e0b,stroke:#78350f,color:#fff
-    style APP fill:#f59e0b,stroke:#78350f,color:#fff
-    style LS fill:#f43f5e,stroke:#881337,color:#fff
-    style EV fill:#f43f5e,stroke:#881337,color:#fff
 ```
 
-### Turn flow (mermaid)
+### Turn flow
 
 ```mermaid
 flowchart TD
-    MSG[User message or Sunday cron]
+    MSG[User message / photo / Sunday cron]
     HDR[Resolve X-User-Id]
-    GATE{Scope gate normalize + classify}
-    REFUSE[Fixed fitness redirect]
+    GATE{Scope gate}
+    REFUSE[Fitness redirect]
     BOOT[Bootstrap profile + week plan]
     COACH[Coach supervisor]
+    INT[Intake + diet metrics gate]
+    SCH[Scheduler workouts + KB meals + TDEE]
+    NUT[Nutrition USDA / vision / totals]
+    ADH[Adherence]
+    KNOW[Knowledge RAG / web]
+    CRIT[Critique ≤1 revise]
+    TEAM[Coaching team merge]
+    HITL[Approve interrupt]
+    OUT[Reply · citations · chips · approval card]
 
-    subgraph INTAKE[Onboarding]
-        INT[Intake extract save ask]
-        SCH1[Scheduler first WeekPlan]
-    end
-
-    subgraph SPECIALISTS[Specialists and Tools]
-        SCH[Scheduler calendar exercises KB memories]
-        NUT[Nutrition USDA recipes science KB]
-        ADH[Adherence stats memories]
-        KNOW[Knowledge personal KB web]
-    end
-
-    subgraph RETRIEVAL[Four Corpora]
-        R1[Curated KB hybrid BM25 RRF]
-        R2[Coaching memory recency-weighted]
-        R3[Personal uploads]
-        R4[Tavily web]
-    end
-
-    TEAM[Coaching team merge citations risk]
-    MWRITE[memory_write weekly summary]
-    HITL[Approve interrupt HITL]
-    OUT[Reply citation chips quick replies]
-
-    MSG --> HDR
-    HDR --> GATE
+    MSG --> HDR --> GATE
     GATE -->|out of scope| REFUSE
-    GATE -->|in scope| BOOT
-    BOOT --> COACH
-    COACH -->|incomplete profile| INT
-    INT -->|still filling| OUT
-    INT -->|confirmed| SCH1
-    SCH1 --> TEAM
-    COACH -->|profile change| INT
-    COACH -->|schedule| SCH
-    COACH -->|nutrition| NUT
+    GATE -->|in scope| BOOT --> COACH
+    COACH -->|incomplete / diet gate| INT
+    INT -->|still asking| OUT
+    INT -->|confirmed| SCH
+    COACH -->|schedule / first_plan| SCH
+    COACH -->|nutrition / photo| NUT
     COACH -->|adherence| ADH
     COACH -->|knowledge| KNOW
-    SCH --> R1
-    SCH --> R2
-    NUT --> R1
-    NUT --> R2
-    NUT --> R4
-    ADH --> R2
-    KNOW --> R1
-    KNOW --> R3
-    KNOW --> R4
-    SCH --> TEAM
-    NUT --> TEAM
-    ADH --> TEAM
-    KNOW --> TEAM
-    TEAM --> MWRITE
-    MWRITE -->|risk renegotiate| COACH
-    MWRITE -->|plan changed| HITL
-    HITL --> OUT
-    MWRITE -->|informational| OUT
-
-    style MSG fill:#4f46e5,stroke:#4338ca,color:#fff
-    style OUT fill:#059669,stroke:#047857,color:#fff
-    style REFUSE fill:#dc2626,stroke:#b91c1c,color:#fff
-    style BOOT fill:#1e293b,stroke:#334155,color:#fff
-    style COACH fill:#0f172a,stroke:#334155,color:#fff
-    style TEAM fill:#b45309,stroke:#92400e,color:#fff
-    style MWRITE fill:#0f172a,stroke:#334155,color:#fff
-    style HITL fill:#dc2626,stroke:#b91c1c,color:#fff
-    style HDR fill:#f1f5f9,stroke:#cbd5e1,color:#0f172a
-    style GATE fill:#fef9c3,stroke:#ca8a04,color:#92400e
-    style INT fill:#ede9fe,stroke:#c4b5fd,color:#1e1b4b
-    style SCH1 fill:#ede9fe,stroke:#c4b5fd,color:#1e1b4b
-    style SCH fill:#ccfbf1,stroke:#5eead4,color:#0f4c3a
-    style NUT fill:#ccfbf1,stroke:#5eead4,color:#0f4c3a
-    style ADH fill:#ccfbf1,stroke:#5eead4,color:#0f4c3a
-    style KNOW fill:#ccfbf1,stroke:#5eead4,color:#0f4c3a
-    style R1 fill:#dbeafe,stroke:#93c5fd,color:#1e3a8a
-    style R2 fill:#dbeafe,stroke:#93c5fd,color:#1e3a8a
-    style R3 fill:#dbeafe,stroke:#93c5fd,color:#1e3a8a
-    style R4 fill:#dbeafe,stroke:#93c5fd,color:#1e3a8a
+    SCH --> CRIT
+    NUT --> CRIT
+    ADH --> CRIT
+    KNOW --> CRIT
+    CRIT --> TEAM
+    TEAM -->|plan changed| HITL --> OUT
+    TEAM -->|informational| OUT
 ```
+
+## What’s in the product (high signal)
+
+| Feature | What it does |
+|---|---|
+| **Try it yourself** | Guest `try-*` profile (48h TTL) — full onboarding without picking a demo persona |
+| **Diet gate + TDEE** | Weight → target → height → activity before first plan; Mifflin–St Jeor in code |
+| **Diet week** | KB Indian meal templates → `diet_plan_days`; HITL shows workouts + meals + macros |
+| **Photo meal log** | Vision ID → USDA → `food_log`; Plan page splits **planned** vs **logged** |
+| **Council critique** | Pre-merge quality check (knee / preference / volume); one revise cycle max |
+| **Hybrid RAG** | Dense + FTS RRF over Volumes 1–7; personal docs + coaching memory separate |
+| **HITL approve** | Plan changes pause until Accept / Not yet |
 
 ## Quick start
 
@@ -240,19 +203,16 @@ flowchart TD
 
 ```bash
 uv sync
-cp .env.example .env        # fill in API keys and DATABASE_URL
+cp .env.example .env        # AI_GATEWAY_API_KEY, DATABASE_URL, OPENAI_API_KEY, …
 uv run python scripts/init_db.py
-uv run python scripts/migrate_documents_kb.py   # KB metadata columns (idempotent)
-uv run python scripts/migrate_documents_memory.py  # multi-user memory upsert index
-uv run python scripts/migrate_add_fts.py        # content_tsv + GIN for hybrid retrieval
-uv run python -m app.rag.ingest_kb data/knowledge_base/   # curated KB → pgvector
-uv run python scripts/seed_memory.py --profile fresh    # demo-new (onboarding)
-uv run python scripts/seed_memory.py --profile veteran --no-llm   # demo-veteran (history)
-# Add --yes if DATABASE_URL is not localhost (e.g. Neon)
+uv run python scripts/migrate_documents_kb.py
+uv run python scripts/migrate_documents_memory.py
+uv run python scripts/migrate_add_fts.py
+uv run python -m app.rag.ingest_kb data/knowledge_base/
+uv run python scripts/seed_memory.py --profile fresh
+uv run python scripts/seed_memory.py --profile veteran --no-llm
 uv run uvicorn app.main:app --reload --port 8000
 ```
-
-Demo profiles switch in the UI (`?profile=demo-new` / `demo-veteran`); every API call sends `X-User-Id`.
 
 ### Frontend (Next.js)
 
@@ -261,61 +221,45 @@ cd web
 cp .env.local.example .env.local   # NEXT_PUBLIC_API_URL=http://localhost:8000
 npm install
 npm run dev
-# open http://localhost:3000  (or /chat?profile=demo-veteran)
+# http://localhost:3000  ·  /chat?profile=demo-veteran  ·  Try it yourself
 ```
 
-Personal upload (scoped to the active profile):
-```bash
-# Or rely on seed_memory --profile veteran, which ingests data/eval_uploads/*
-curl -H "X-User-Id: demo-veteran" -F "file=@data/eval_uploads/my_program.md" http://localhost:8000/api/upload
-```
+### Tests and evals
 
-Tests and evals:
 ```bash
 uv run pytest tests/
-uv run python evals/run_evals.py --label hybrid_retrieval   # 80 cases → summary_hybrid_retrieval.*
-uv run python evals/compare.py --a baseline_fixed --b hybrid_retrieval
-# Categories (13): schedule, nutrition, adherence, knowledge, safety, autonomous,
-#   adversarial, onboarding, kb_retrieval, rag_personal, rag_web, memory, gate_context
-# RAGAS (faithfulness, answer_relevancy, context_precision/recall, answer_correctness)
-# on rag_* / kb_retrieval / memory. Local harness forces LangSmith tracing off.
-# Artifacts: evals/summary_baseline_fixed.md, summary_hybrid_retrieval.md,
-#   comparison_baseline_fixed_vs_hybrid_retrieval.md
+uv run python evals/run_evals.py --label try_profile_ux_full   # large suite
+# Golden set: 115 cases · categories include schedule, nutrition, photo_meal,
+#   council_critique, diet_plan, weight_gate, try_profile_ux, kb_retrieval, …
+# Task 5/6 labeled pair still available:
+uv run python evals/run_evals.py --compare baseline_fixed hybrid_retrieval
 ```
 
-**LangSmith (optional):**
-```bash
-LANGSMITH_TRACING=true
-LANGSMITH_API_KEY=your-key
-LANGSMITH_PROJECT=steadyfit-dev
-# Full experiment: uv run python evals/run_evals.py --experiment
-# Chat/API tracing: see TRACING.md
-```
+**LangSmith (optional):** see `TRACING.md`.
 
 ## Deploy
 
-**API (Render):** `render.yaml` — web service + Sunday cron. Set secrets from `.env.example`.
+| Service | Host | Notes |
+|---|---|---|
+| API | **Render** (`render.yaml` → `steadyfit-api`) | https://steadyfit-api.onrender.com |
+| Web | **Vercel** (Root Directory = `web`) | https://steady-fit.vercel.app |
+| Cron | Render | Sunday weekly-review + daily try-profile cleanup |
 
-**Frontend (Vercel):** Root Directory = `web`, set
-`NEXT_PUBLIC_API_URL=https://<your-render-api>.onrender.com`.
-
-CORS: `FRONTEND_URL` on Render to your Vercel origin.
+Set `NEXT_PUBLIC_API_URL=https://steadyfit-api.onrender.com` on Vercel and
+`FRONTEND_URL=https://steady-fit.vercel.app` on Render (CORS).
 
 ## Repo map
 
 ```
 app/
-  main.py / chat_pipeline.py / security.py   # scope gate, chat/approve/profiles APIs
-  graph/          coach, intake, specialists, coaching_team, memory_write, approve, tool_agent
-  rag/            ingest.py · ingest_kb.py · memory_store.py · retriever.py (dense + hybrid RRF)
-  tools/          calendar, food_api, tavily, exercise_lookup, agent_tools (@tool)
-  memory/         Postgres profiles + adherence + weekly_summary + user_context
-web/              Next.js — chat (chips + citations), plan, update/upload, profile switcher
-data/knowledge_base/   Volume1–7 markdown + exercise_library.json
-evals/            golden_dataset.jsonl (80) + harness + compare.py + labeled results
-data/eval_uploads/ personal fixtures for rag_personal (seeded onto demo-veteran)
-scripts/          init_db, migrate_documents_*, migrate_add_fts, seed_memory, backfill_memories
-tests/            routing, HITL, gate_context, hybrid RRF, KB, memory isolation, security
-deliverables.md   Capstone Tasks 1–7 (incl. hybrid before/after)
-TRACING.md        LangSmith setup
+  main.py / chat_pipeline.py / security.py
+  graph/     coach, intake, diet_gate, tdee, diet_plan, weight_gate,
+             specialists, critique, coaching_team, approve, tool_agent
+  rag/       ingest · ingest_kb · memory_store · retriever (hybrid RRF)
+  tools/     calendar, food_api, tavily, exercise_lookup, meal_vision, agent_tools
+  memory/    Postgres profiles · week_plans · diet_plan_days · food_log
+web/         chat (photo + chips + approval) · plan (planned vs logged) · upload
+evals/       golden_dataset.jsonl (115) · harness · labeled summaries
+IMPROVEMENTS_LOG.md   Post-baseline changelog + eval pointers
+deliverables.md       Capstone Tasks 1–7
 ```

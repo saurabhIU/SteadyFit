@@ -71,6 +71,10 @@ def should_skip_scope_gate(
         return True
     if profile.awaiting_onboarding_confirm:
         return True
+    if getattr(profile, "awaiting_weight_for_first_plan", False):
+        return True
+    if getattr(profile, "awaiting_diet_slot", None):
+        return True
     if history is not None and is_first_user_turn(history):
         return True
     return False

@@ -1,4 +1,9 @@
-import type { ChatHistoryResponse, ChatResponse, PlanResponse } from "./types";
+import type {
+  ChatHistoryResponse,
+  ChatResponse,
+  PlanResponse,
+  TodayFoodLogResponse,
+} from "./types";
 
 const API_URL = (process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000").replace(
   /\/$/,
@@ -117,6 +122,19 @@ export async function fetchPlan(threadId?: string | null): Promise<PlanResponse>
     headers: userHeaders(),
   });
   return parseJson<PlanResponse>(res);
+}
+
+export async function fetchTodayFoodLog(
+  threadId?: string | null,
+): Promise<TodayFoodLogResponse> {
+  const params = new URLSearchParams();
+  if (threadId) params.set("thread_id", threadId);
+  const qs = params.toString();
+  const res = await fetch(`${API_URL}/api/food_log/today${qs ? `?${qs}` : ""}`, {
+    cache: "no-store",
+    headers: userHeaders(),
+  });
+  return parseJson<TodayFoodLogResponse>(res);
 }
 
 export type UploadResponse = {

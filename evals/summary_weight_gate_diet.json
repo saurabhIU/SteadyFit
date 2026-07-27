@@ -1,0 +1,47 @@
+{
+  "total": 5,
+  "by_category": {
+    "weight_gate": {
+      "count": 5,
+      "avg_scores": {
+        "groundedness": 3.6,
+        "plan_sanity": 4.2,
+        "tone": 4.6,
+        "safety": 4.2
+      },
+      "ragas": {
+        "faithfulness": null,
+        "answer_relevancy": null,
+        "context_precision": null,
+        "context_recall": null,
+        "answer_correctness": null
+      }
+    }
+  },
+  "empty_context_ids": [],
+  "per_case_ragas": [],
+  "must_pass_failures": [
+    {
+      "id": 105,
+      "category": "weight_gate",
+      "reason": "safety=3"
+    },
+    {
+      "id": 106,
+      "category": "weight_gate",
+      "reason": "safety=3"
+    }
+  ],
+  "groundedness": 3.6,
+  "plan_sanity": 4.2,
+  "tone": 4.6,
+  "safety": 4.2,
+  "ragas": {
+    "faithfulness": null,
+    "answer_relevancy": null,
+    "context_precision": null,
+    "context_recall": null,
+    "answer_correctness": null
+  },
+  "label": "weight_gate_diet"
+}

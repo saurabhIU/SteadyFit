@@ -234,6 +234,53 @@ def critique_node(state: CoachingTeamState) -> dict:
     transcript = list(state.coaching_team_transcript or [])
     proposals = dict(state.proposals)
 
+    # Deterministic food-preference hard fail (same rigor as knee contraindications).
+    from app.graph.diet_plan import diet_plan_violates_preference
+
+    diet_meals = proposals.get("proposed_diet_plan") or []
+    if isinstance(diet_meals, list) and diet_meals:
+        pref_fail = diet_plan_violates_preference(
+            diet_meals, state.profile.food_preference
+        )
+        if pref_fail and state.critique_rounds < MAX_CRITIQUE_ROUNDS:
+            transcript.append({
+                "type": "critique",
+                "agent": "coach",
+                "text": pref_fail,
+            })
+            proposals["revision_instructions"] = pref_fail
+            # Rebuild a safe week before merge (do not rely on LLM rewrite alone).
+            from app.graph.diet_plan import build_diet_week, diet_summary_lines
+
+            week_start = ""
+            plan = proposals.get("proposed_week_plan") or {}
+            if isinstance(plan, dict):
+                week_start = str(plan.get("week_start") or "")
+            pref = (state.profile.food_preference or "vegetarian").lower()
+            safe_pref = "vegan" if pref == "vegan" else "vegetarian"
+            safe = build_diet_week(
+                state.profile.model_copy(update={"food_preference": safe_pref}),
+                week_start=week_start or "1970-01-01",
+            )
+            proposals["proposed_diet_plan"] = safe
+            proposals["diet_plan_summary"] = diet_summary_lines(safe)
+            proposals["scheduler"] = (
+                f"{draft}\n\n--- DIET WEEK (preference-safe rebuild) ---\n"
+                + "\n".join(diet_summary_lines(safe, max_days=7))
+            )
+            transcript.append({
+                "type": "revision",
+                "agent": specialist,
+                "text": _excerpt(proposals["scheduler"]),
+            })
+            proposals.pop("revision_instructions", None)
+            return {
+                "proposals": proposals,
+                "coaching_team_transcript": transcript,
+                "critique_verdict": "revise",
+                "critique_rounds": state.critique_rounds + 1,
+            }
+
     # Already used the one allowed revise cycle — record revised draft and merge
     # without another LLM call (bounded latency/cost).
     if state.critique_rounds >= MAX_CRITIQUE_ROUNDS:

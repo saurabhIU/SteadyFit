@@ -1,17 +1,25 @@
 """Onboarding intake: completeness checks, extraction schema, question selection."""
 from __future__ import annotations
 
+import re
 from typing import Literal
 
 from pydantic import BaseModel, Field
 
 from app.config import get_llm, settings
 from app.graph.state import (
+    ACTIVITY_LEVEL_OPTIONS,
     FOOD_PREFERENCE_OPTIONS,
     WORKOUT_MODE_OPTIONS,
     UserProfile,
 )
 from app.security import as_text, wrap_untrusted
+
+_DECLINE_RE = re.compile(
+    r"(?i)^(prefer not to say|rather not say|skip(?: it)?|no thanks|pass)$"
+)
+_SESSIONS_BARE_RE = re.compile(r"^(?P<n>[1-7])(?:\s*x)?$")
+_AGE_BARE_RE = re.compile(r"^(?P<n>\d{1,3})$")
 
 REQUIRED_SLOTS = (
     "goal",
@@ -38,6 +46,7 @@ class ProfileExtraction(BaseModel):
     sex: str | None = None
     sex_declined: bool = False
     weight_kg: float | None = None
+    weight_declined: bool = False
     preferred_workout_modes: list[
         Literal["gym", "swimming", "walking", "running", "home", "cycling", "yoga"]
     ] | None = None
@@ -62,17 +71,127 @@ class IntakePrompt(BaseModel):
 EXTRACT_SYSTEM = """Extract profile facts the USER explicitly stated for a fitness onboarding form.
 Return structured fields only. Rules:
 - Never guess or invent facts that were not stated.
+- Quick-reply chips send BARE short values with no sentence (e.g. "4", "gym", "vegetarian",
+  "Prefer not to say"). Treat those as direct answers to the PENDING slot when one is named.
+- If PENDING SLOT is sessions_per_week and the message is a lone integer 1-7, set sessions_per_week
+  (NOT age). A bare "4" during the sessions question means 4 sessions/week.
+- If PENDING SLOT is age and the message is a lone integer, set age (or age_declined for decline).
 - preferred_workout_modes must be from: gym, swimming, walking, running, home, cycling, yoga.
 - food_preference must be one of: vegetarian, non-vegetarian, vegan, eggetarian, no-preference.
 - sessions_per_week: integer 1-7 if stated.
 - age_declined / sex_declined: true if they prefer not to say / decline.
 - sex: normalize to male, female, other, or prefer_not_to_say.
 - weight_kg: body weight in kilograms if stated (convert lb/lbs to kg ≈ ×0.4536).
+- weight_declined: true if they prefer not to say / skip / decline sharing weight.
 - constraints: injuries or equipment limits they named; constraints_none if they said none.
 - confirmation: yes/no only if they are confirming a profile summary; else unset.
 - off_topic_question: if they asked a fitness FAQ instead of answering (e.g. creatine),
   copy that question briefly; else null.
 - Leave fields null when not mentioned."""
+
+
+def pending_intake_slot(profile: UserProfile) -> str | None:
+    """First unfilled priority slot (the question we would ask next / just asked)."""
+    prompt = next_intake_question(profile)
+    return prompt.slot if prompt else None
+
+
+def parse_chip_answer(message: str, pending_slot: str | None) -> ProfileExtraction | None:
+    """Deterministic parse for quick-reply chip taps (bare values WE offered).
+
+    Returns None when the message is not an unambiguous chip-style answer for
+    the pending slot — caller should fall through to the LLM extractor.
+    """
+    if not pending_slot:
+        return None
+    raw = (message or "").strip()
+    if not raw:
+        return None
+    lower = raw.lower()
+
+    if pending_slot == "sessions_per_week":
+        m = _SESSIONS_BARE_RE.match(lower)
+        if m:
+            return ProfileExtraction(sessions_per_week=int(m.group("n")))
+        return None
+
+    if pending_slot == "age":
+        if _DECLINE_RE.match(raw):
+            return ProfileExtraction(age_declined=True)
+        m = _AGE_BARE_RE.match(raw)
+        if m:
+            return ProfileExtraction(age=int(m.group("n")))
+        return None
+
+    if pending_slot == "sex":
+        if _DECLINE_RE.match(raw):
+            return ProfileExtraction(sex_declined=True)
+        sex_map = {
+            "male": "male",
+            "m": "male",
+            "female": "female",
+            "f": "female",
+            "other": "other",
+            "prefer_not_to_say": "prefer_not_to_say",
+            "prefer not to say": "prefer_not_to_say",
+        }
+        if lower in sex_map:
+            return ProfileExtraction(sex=sex_map[lower])
+        return None
+
+    if pending_slot == "food_preference":
+        for opt in FOOD_PREFERENCE_OPTIONS:
+            if lower == opt.lower():
+                return ProfileExtraction(food_preference=opt)  # type: ignore[arg-type]
+        return None
+
+    if pending_slot == "preferred_workout_modes":
+        # Single chip tap, or a short comma/and list of chip labels.
+        aliases = {
+            "home workouts": "home",
+            "home workout": "home",
+        }
+        parts = [
+            p.strip().lower()
+            for p in re.split(r"\s*(?:,|/|&| and )\s*", lower)
+            if p.strip()
+        ]
+        if not parts:
+            parts = [lower]
+        modes: list[str] = []
+        for part in parts:
+            part = aliases.get(part, part)
+            if part in WORKOUT_MODE_OPTIONS and part not in modes:
+                modes.append(part)
+        if modes and len(modes) == len(parts):
+            return ProfileExtraction(preferred_workout_modes=modes)  # type: ignore[arg-type]
+        return None
+
+    if pending_slot == "constraints":
+        if lower in {"none", "no", "n/a", "na", "nothing", "all clear"}:
+            return ProfileExtraction(constraints_none=True)
+        return None
+
+    if pending_slot == "activity":
+        if _DECLINE_RE.match(raw):
+            return ProfileExtraction()  # decline handled by diet_gate
+        act = lower.replace(" ", "_").replace("-", "_")
+        aliases = {
+            "sedentary": "sedentary",
+            "light": "light",
+            "lightly_active": "light",
+            "moderate": "moderate",
+            "moderately_active": "moderate",
+            "active": "active",
+            "very_active": "active",
+        }
+        mapped = aliases.get(act)
+        if mapped and mapped in ACTIVITY_LEVEL_OPTIONS:
+            # Stored via diet_gate apply path; extraction stays empty for LLM fallback.
+            return ProfileExtraction()
+        return None
+
+    return None
 
 
 def slot_filled(profile: UserProfile, slot: str) -> bool:
@@ -98,6 +217,8 @@ def required_slots_filled(profile: UserProfile) -> bool:
 
 
 def needs_intake(profile: UserProfile) -> bool:
+    if profile.awaiting_weight_for_first_plan or profile.awaiting_diet_slot:
+        return True
     if profile.onboarding_complete:
         return False
     return not required_slots_filled(profile) or profile.awaiting_onboarding_confirm
@@ -128,6 +249,9 @@ def apply_extraction(profile: UserProfile, ext: ProfileExtraction) -> UserProfil
         data["sex"] = "prefer_not_to_say"
     if ext.weight_kg is not None:
         data["weight_kg"] = max(30.0, min(300.0, float(ext.weight_kg)))
+        data["weight_declined"] = False
+    if ext.weight_declined:
+        data["weight_declined"] = True
     if ext.preferred_workout_modes:
         modes = [m for m in ext.preferred_workout_modes if m in WORKOUT_MODE_OPTIONS]
         if modes:
@@ -150,12 +274,27 @@ def apply_extraction(profile: UserProfile, ext: ProfileExtraction) -> UserProfil
     return UserProfile(**data)
 
 
-def extract_profile_facts(message: str) -> ProfileExtraction:
+def extract_profile_facts(
+    message: str,
+    *,
+    pending_slot: str | None = None,
+) -> ProfileExtraction:
+    """Extract facts; chip taps for the pending slot are deterministic (no LLM)."""
+    chip = parse_chip_answer(message, pending_slot)
+    if chip is not None:
+        return chip
+
     llm = get_llm(settings.judge_model, temperature=0, max_tokens=400)
     structured = llm.with_structured_output(ProfileExtraction)
+    slot_hint = (
+        f"\nPENDING SLOT for this turn: {pending_slot}\n"
+        "If the user sent a bare chip value, fill that slot."
+        if pending_slot
+        else "\nPENDING SLOT: unknown — do not map a lone digit to age unless they said age.\n"
+    )
     try:
         result = structured.invoke([
-            {"role": "system", "content": EXTRACT_SYSTEM},
+            {"role": "system", "content": EXTRACT_SYSTEM + slot_hint},
             {"role": "user", "content": wrap_untrusted(message, source="user")},
         ])
         if isinstance(result, ProfileExtraction):

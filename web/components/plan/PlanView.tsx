@@ -3,10 +3,10 @@
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { ChevronDown, ChevronRight } from "lucide-react";
-import { ApiError, fetchPlan } from "@/lib/api";
+import { ApiError, fetchPlan, fetchTodayFoodLog } from "@/lib/api";
 import { PLAN_UPDATED } from "@/lib/plan-events";
 import { threadStorageKey, useProfile } from "@/lib/profile";
-import type { PlanResponse, WorkoutDay } from "@/lib/types";
+import type { FoodLogMeal, PlanResponse, TodayFoodLogResponse, WorkoutDay } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
 const DAY_ABBR: Record<string, string> = {
@@ -76,6 +76,107 @@ function ProgressDots({ done, total }: { done: number; total: number }) {
   );
 }
 
+function formatInt(n: number | null | undefined) {
+  if (n == null || Number.isNaN(n)) return "—";
+  return Math.round(n).toLocaleString("en-US");
+}
+
+function mealSummary(meal: FoodLogMeal): string {
+  const label = (meal.meal_label || "").trim();
+  if (label) return label;
+  const names = (meal.foods || [])
+    .map((f) => (typeof f === "string" ? f : f?.name || ""))
+    .map((s) => s.trim())
+    .filter(Boolean);
+  if (names.length === 0) return "Logged meal";
+  if (names.length === 1) return names[0];
+  if (names.length === 2) return `${names[0]} + ${names[1]}`;
+  return `${names[0]} + ${names.length - 1} more`;
+}
+
+function TodaysMealsSection({ food }: { food: TodayFoodLogResponse | null }) {
+  const meals = food?.meals ?? [];
+  const planned = food?.planned_meals ?? [];
+  const totals = food?.totals;
+  const targets = food?.targets;
+  const kcalTarget = targets?.calorie_target ?? null;
+  const proteinTarget = targets?.protein_target_g ?? null;
+
+  return (
+    <section className="space-y-4" aria-labelledby="todays-meals-heading">
+      <h3 id="todays-meals-heading" className="text-lg font-semibold text-navy-text">
+        Today&apos;s meals
+      </h3>
+
+      {planned.length > 0 ? (
+        <div className="space-y-2">
+          <p className="text-xs font-medium uppercase tracking-wide text-navy-muted">
+            Planned
+          </p>
+          {planned.map((meal) => (
+            <div
+              key={`${meal.day}-${meal.meal_slot}-${meal.id ?? meal.food_description}`}
+              className="overflow-hidden rounded-2xl border border-beige-border/60 bg-transparent px-4 py-3"
+            >
+              <div className="flex items-start justify-between gap-3">
+                <p className="min-w-0 flex-1 text-sm text-navy-text">
+                  <span className="font-medium capitalize">{meal.meal_slot}</span>
+                  {" — "}
+                  {meal.food_description}
+                </p>
+                <p className="shrink-0 font-mono text-xs text-navy-muted">
+                  {formatInt(meal.kcal)} kcal · {formatInt(meal.protein_g)}g
+                </p>
+              </div>
+            </div>
+          ))}
+        </div>
+      ) : null}
+
+      <div className="space-y-2">
+        <p className="text-xs font-medium uppercase tracking-wide text-navy-muted">
+          Logged
+        </p>
+        {meals.length === 0 ? (
+          <div className="rounded-2xl border border-dashed border-beige-border/40 px-4 py-6 text-center">
+            <p className="text-sm text-navy-muted">
+              Nothing logged yet today — snap a photo or tell me what you ate
+            </p>
+            <Link
+              href="/chat"
+              className="mt-3 inline-block text-sm font-medium text-sage hover:text-sage-hover"
+            >
+              Log in chat →
+            </Link>
+          </div>
+        ) : (
+          <>
+            {meals.map((meal) => (
+              <div
+                key={meal.id}
+                className="overflow-hidden rounded-2xl border border-beige-border bg-beige px-4 py-3.5"
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <p className="min-w-0 flex-1 truncate text-sm font-medium text-card-text">
+                    {mealSummary(meal)}
+                  </p>
+                  <p className="shrink-0 font-mono text-xs text-card-text/60">
+                    {formatInt(meal.kcal)} kcal · {formatInt(meal.protein_g)}g protein
+                  </p>
+                </div>
+              </div>
+            ))}
+          </>
+        )}
+        <p className="px-1 pt-1 font-mono text-sm text-navy-text">
+          {formatInt(totals?.kcal_consumed)} / {formatInt(kcalTarget)} kcal ·{" "}
+          {formatInt(totals?.protein_g_consumed)} / {formatInt(proteinTarget)}g protein
+        </p>
+      </div>
+    </section>
+  );
+}
+
 function DayRow({ day, index }: { day: WorkoutDay; index: number }) {
   const [open, setOpen] = useState(false);
   const abbr = DAY_ABBR[day.day] ?? day.day.slice(0, 3);
@@ -136,14 +237,19 @@ function DayRow({ day, index }: { day: WorkoutDay; index: number }) {
 export function PlanView() {
   const { userId, ready } = useProfile();
   const [data, setData] = useState<PlanResponse | null>(null);
+  const [foodLog, setFoodLog] = useState<TodayFoodLogResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   const loadPlan = useCallback(async () => {
     if (!ready) return;
     const threadId = sessionStorage.getItem(threadStorageKey(userId));
-    const plan = await fetchPlan(threadId);
+    const [plan, todayFood] = await Promise.all([
+      fetchPlan(threadId),
+      fetchTodayFoodLog(threadId).catch(() => null),
+    ]);
     setData(plan);
+    setFoodLog(todayFood);
     setError(null);
   }, [userId, ready]);
 
@@ -253,6 +359,8 @@ export function PlanView() {
           </Link>
         </div>
       )}
+
+      <TodaysMealsSection food={foodLog} />
 
       <div className="rounded-2xl border border-beige-border bg-beige p-5 text-card-text">
         <p className="text-sm leading-relaxed text-card-text/85">

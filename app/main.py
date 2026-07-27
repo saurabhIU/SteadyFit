@@ -19,14 +19,21 @@ from app.config import settings
 from app.graph.build import build_graph, close_checkpointer_pool
 from app.graph.response import build_chat_payload, build_thread_history
 from app.graph.runtime import make_thread_id, thread_config, weekly_review_thread
-from app.memory.context import bootstrap_input, persist_approved_plan, plan_snapshot
+from app.memory.context import (
+    bootstrap_input,
+    persist_approved_plan,
+    plan_snapshot,
+    week_plan_from_graph,
+)
 from app.memory.store import (
     create_try_user,
     create_user,
     delete_expired_ephemeral_users,
+    get_saved_week_plan,
     list_users,
     list_users_for_weekly_review,
     reset_user,
+    today_food_log_snapshot,
     user_exists,
 )
 from app.memory.user_context import set_current_user_id
@@ -261,6 +268,24 @@ def get_plan(
     uid = require_user_id(x_user_id)
     thread = make_thread_id(uid, thread_id or "default")
     return plan_snapshot(require_graph(), thread, uid)
+
+
+@app.get("/api/food_log/today")
+def get_food_log_today(
+    thread_id: str | None = None,
+    tz: str = "UTC",
+    x_user_id: str | None = Header(default=None),
+):
+    """Today's logged meals + SUM totals + week-plan targets (Plan page display)."""
+    uid = require_user_id(x_user_id)
+    thread = make_thread_id(uid, thread_id or "default")
+    plan = week_plan_from_graph(require_graph(), thread) or get_saved_week_plan(uid)
+    return today_food_log_snapshot(
+        uid,
+        calorie_target=plan.calorie_target if plan else None,
+        protein_target_g=plan.protein_target_g if plan else None,
+        tz=(tz or "UTC").strip() or "UTC",
+    )
 
 
 @app.post("/api/upload")

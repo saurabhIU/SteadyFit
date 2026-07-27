@@ -302,6 +302,48 @@ def _seed_intake_food(user_id: str) -> None:
     )
 
 
+def _seed_intake_sessions(user_id: str) -> None:
+    """Goal filled; next question is sessions_per_week chips."""
+    from app.graph.state import UserProfile
+    from app.memory.store import ensure_user, save_profile, user_exists
+
+    if not user_exists(user_id):
+        ensure_user(user_id, "Chip Eval")
+    save_profile(
+        user_id,
+        UserProfile(
+            name="Chip Eval",
+            goal="lose fat",
+            sessions_per_week=None,
+            preferred_workout_modes=[],
+            food_preference=None,
+            onboarding_complete=False,
+            awaiting_onboarding_confirm=False,
+        ),
+    )
+
+
+def _seed_intake_modes(user_id: str) -> None:
+    """Sessions filled; next question is preferred_workout_modes chips."""
+    from app.graph.state import UserProfile
+    from app.memory.store import ensure_user, save_profile, user_exists
+
+    if not user_exists(user_id):
+        ensure_user(user_id, "Chip Eval")
+    save_profile(
+        user_id,
+        UserProfile(
+            name="Chip Eval",
+            goal="lose fat",
+            sessions_per_week=3,
+            preferred_workout_modes=[],
+            food_preference=None,
+            onboarding_complete=False,
+            awaiting_onboarding_confirm=False,
+        ),
+    )
+
+
 def _seed_knee_constraint(user_id: str) -> None:
     """Profile with an explicit knee contraindication for critique evals."""
     from app.graph.state import UserProfile
@@ -356,7 +398,48 @@ def _seed_clean_schedule_profile(user_id: str) -> None:
 
 
 def _seed_ready_first_plan(user_id: str) -> None:
-    """Onboarded profile, no weight, no travel — ready for first-week draft."""
+    """Onboarded profile, no diet metrics — diet gate starts at weight before first plan."""
+    from app.graph.state import UserProfile
+    from app.memory.store import (
+        clear_current_week_plan,
+        ensure_user,
+        save_profile,
+        user_exists,
+    )
+
+    if not user_exists(user_id):
+        ensure_user(user_id, "Try Eval")
+    save_profile(
+        user_id,
+        UserProfile(
+            name="Try Eval",
+            goal="lose fat",
+            sessions_per_week=3,
+            preferred_workout_modes=["gym", "walking"],
+            food_preference="vegetarian",
+            constraints=[],
+            constraints_asked=True,
+            age=32,
+            sex="female",
+            weight_kg=None,
+            weight_declined=False,
+            target_weight_kg=None,
+            target_weight_declined=False,
+            height_cm=None,
+            height_declined=False,
+            activity_level=None,
+            activity_declined=False,
+            awaiting_weight_for_first_plan=False,
+            awaiting_diet_slot=None,
+            onboarding_complete=True,
+            awaiting_onboarding_confirm=False,
+        ),
+    )
+    clear_current_week_plan(user_id)
+
+
+def _seed_ready_first_plan_weight_declined(user_id: str) -> None:
+    """Onboarded; diet metrics declined — first plan may use provisional macros."""
     from app.graph.state import UserProfile
     from app.memory.store import (
         clear_current_week_plan,
@@ -378,6 +461,91 @@ def _seed_ready_first_plan(user_id: str) -> None:
             constraints=[],
             constraints_asked=True,
             weight_kg=None,
+            weight_declined=True,
+            target_weight_kg=None,
+            target_weight_declined=True,
+            height_cm=None,
+            height_declined=True,
+            activity_level=None,
+            activity_declined=True,
+            awaiting_weight_for_first_plan=False,
+            awaiting_diet_slot=None,
+            onboarding_complete=True,
+            awaiting_onboarding_confirm=False,
+        ),
+    )
+    clear_current_week_plan(user_id)
+
+
+def _seed_ready_first_plan_with_weight(user_id: str) -> None:
+    """Onboarded with full TDEE inputs — first plan generates without diet questions."""
+    from app.graph.state import UserProfile
+    from app.memory.store import (
+        clear_current_week_plan,
+        ensure_user,
+        save_profile,
+        user_exists,
+    )
+
+    if not user_exists(user_id):
+        ensure_user(user_id, "Try Eval")
+    save_profile(
+        user_id,
+        UserProfile(
+            name="Try Eval",
+            goal="lose fat",
+            sessions_per_week=3,
+            preferred_workout_modes=["gym", "walking"],
+            food_preference="vegetarian",
+            constraints=[],
+            constraints_asked=True,
+            age=32,
+            sex="male",
+            weight_kg=75.0,
+            weight_declined=False,
+            target_weight_kg=70.0,
+            target_weight_declined=False,
+            height_cm=175.0,
+            height_declined=False,
+            activity_level="moderate",
+            activity_declined=False,
+            awaiting_weight_for_first_plan=False,
+            awaiting_diet_slot=None,
+            onboarding_complete=True,
+            awaiting_onboarding_confirm=False,
+        ),
+    )
+    clear_current_week_plan(user_id)
+
+
+def _seed_ready_diet_gate_after_weight(user_id: str) -> None:
+    """Weight answered; still needs target → height → activity before first plan."""
+    from app.graph.state import UserProfile
+    from app.memory.store import (
+        clear_current_week_plan,
+        ensure_user,
+        save_profile,
+        user_exists,
+    )
+
+    if not user_exists(user_id):
+        ensure_user(user_id, "Diet Gate Eval")
+    save_profile(
+        user_id,
+        UserProfile(
+            name="Diet Gate Eval",
+            goal="lose fat",
+            sessions_per_week=3,
+            preferred_workout_modes=["gym"],
+            food_preference="vegetarian",
+            constraints=[],
+            constraints_asked=True,
+            age=30,
+            sex="female",
+            weight_kg=68.0,
+            weight_declined=False,
+            awaiting_weight_for_first_plan=False,
+            awaiting_diet_slot="target_weight",
             onboarding_complete=True,
             awaiting_onboarding_confirm=False,
         ),
@@ -526,6 +694,16 @@ def invoke_case(graph, row: dict) -> dict:
         _seed_clean_schedule_profile(user_id)
     if setup == "ready_first_plan":
         _seed_ready_first_plan(user_id)
+    if setup == "ready_first_plan_weight_declined":
+        _seed_ready_first_plan_weight_declined(user_id)
+    if setup == "ready_first_plan_with_weight":
+        _seed_ready_first_plan_with_weight(user_id)
+    if setup == "ready_diet_gate_after_weight":
+        _seed_ready_diet_gate_after_weight(user_id)
+    if setup == "intake_sessions":
+        _seed_intake_sessions(user_id)
+    if setup == "intake_modes":
+        _seed_intake_modes(user_id)
     if setup == "approved_plan_no_weight":
         _seed_approved_plan_no_weight(user_id)
     if setup == "existing_week_for_tweak":
@@ -572,17 +750,32 @@ def invoke_case(graph, row: dict) -> dict:
     if row.get("category") == "photo_meal" and row.get("mock_vision") is not None:
         return _invoke_photo_meal_case(graph, row, user_id=user_id, conversation=conversation)
 
-    payload = process_user_chat(
-        graph, row["input"], user_id=user_id, thread_id=conversation
-    )
-    thread = payload.get("thread_id") or thread
-    config = thread_config(thread)
+    turns: list[dict] = []
+    messages = [row["input"], *(row.get("follow_ups") or [])]
+    payload: dict = {}
+    for msg in messages:
+        payload = process_user_chat(
+            graph, msg, user_id=user_id, thread_id=conversation
+        )
+        thread = payload.get("thread_id") or thread
+        config = thread_config(thread)
+        turn_meta = _turn_plan_fields_from_graph(graph, config, payload)
+        turns.append(turn_meta)
+
     contexts: list[str] = []
     proposals: dict = {}
     critique_meta = {
         "critique_verdict": None,
         "critique_rounds": 0,
         "coaching_team_transcript": [],
+    }
+    plan_fields = {
+        "plan_changed": False,
+        "proposed_week_plan": None,
+        "week_plan": None,
+        "awaiting_weight_for_first_plan": False,
+        "weight_kg": None,
+        "weight_declined": False,
     }
     if payload.get("scope") in {
         "in_scope",
@@ -591,14 +784,87 @@ def invoke_case(graph, row: dict) -> dict:
         "gentle_clarify",
     }:
         try:
-            snapshot = graph.get_state(config)
+            snapshot = graph.get_state(thread_config(thread))
             state = snapshot.values if snapshot else None
             contexts = _contexts_from_state(state)
             proposals = proposals_from_state(state)
             critique_meta = _critique_fields_from_state(state)
+            plan_fields = _plan_gate_fields_from_state(state)
         except Exception:
             pass
-    return {**payload, "contexts": contexts, "proposals": proposals, **critique_meta}
+    return {
+        **payload,
+        "contexts": contexts,
+        "proposals": proposals,
+        "turns": turns,
+        **plan_fields,
+        **critique_meta,
+    }
+
+
+def _plan_gate_fields_from_state(state: Any) -> dict:
+    if state is None:
+        return {
+            "plan_changed": False,
+            "proposed_week_plan": None,
+            "week_plan": None,
+            "awaiting_weight_for_first_plan": False,
+            "weight_kg": None,
+            "weight_declined": False,
+        }
+    if hasattr(state, "model_dump"):
+        data = state.model_dump()
+    elif isinstance(state, dict):
+        data = state
+    else:
+        data = {}
+    proposals = dict(data.get("proposals") or {})
+    profile = data.get("profile") or {}
+    if hasattr(profile, "model_dump"):
+        profile = profile.model_dump()
+    week_plan = data.get("week_plan")
+    if hasattr(week_plan, "model_dump"):
+        week_plan = week_plan.model_dump()
+    return {
+        "plan_changed": bool(proposals.get("plan_changed")),
+        "proposed_week_plan": proposals.get("proposed_week_plan"),
+        "week_plan": week_plan,
+        "awaiting_weight_for_first_plan": bool(
+            (profile or {}).get("awaiting_weight_for_first_plan")
+        ),
+        "weight_kg": (profile or {}).get("weight_kg"),
+        "weight_declined": bool((profile or {}).get("weight_declined")),
+        "sessions_per_week": (profile or {}).get("sessions_per_week"),
+        "preferred_workout_modes": list(
+            (profile or {}).get("preferred_workout_modes") or []
+        ),
+        "food_preference": (profile or {}).get("food_preference"),
+        "age": (profile or {}).get("age"),
+        "age_declined": bool((profile or {}).get("age_declined")),
+    }
+
+
+def _turn_plan_fields_from_graph(graph, config, payload: dict) -> dict:
+    """Snapshot plan-gate fields after one chat turn (for multi-turn evals)."""
+    base = {
+        "reply": payload.get("reply"),
+        "pending_approval": payload.get("pending_approval"),
+        "quick_replies": payload.get("quick_replies") or [],
+        "scope": payload.get("scope"),
+        "plan_changed": False,
+        "proposed_week_plan": None,
+        "week_plan": None,
+        "awaiting_weight_for_first_plan": False,
+        "weight_kg": None,
+        "weight_declined": False,
+    }
+    try:
+        snapshot = graph.get_state(config)
+        state = snapshot.values if snapshot else None
+        base.update(_plan_gate_fields_from_state(state))
+    except Exception:
+        pass
+    return base
 
 
 def _critique_fields_from_state(state: Any) -> dict:
@@ -821,6 +1087,16 @@ def critique_structural_failure(row: dict, out: dict) -> str | None:
     """Deterministic checks for council_critique / try_profile_ux / photo_meal / approval_card."""
     if row.get("category") == "try_profile_ux":
         return try_profile_ux_structural_failure(row, out)
+    if row.get("category") == "weight_gate":
+        return weight_gate_structural_failure(row, out)
+    if row.get("category") == "diet_plan":
+        # Diet cases reuse weight-gate first-turn checks when flagged.
+        wg = weight_gate_structural_failure(row, out)
+        if wg:
+            return wg
+        return diet_plan_structural_failure(row, out)
+    if row.get("category") == "intake_chips":
+        return intake_chips_structural_failure(row, out)
     if row.get("category") == "photo_meal":
         return photo_meal_structural_failure(row, out)
     if row.get("category") == "approval_card":
@@ -907,7 +1183,8 @@ def try_profile_ux_structural_failure(row: dict, out: dict) -> str | None:
     if row.get("expect_provisional_macros"):
         if not _ESTIMATE_RE.search(reply):
             return "macro targets lack provisional/estimate framing"
-        if not _ASK_WEIGHT_RE.search(reply):
+        # Same-turn weight ask is no longer required (hard gate owns first-plan weight).
+        if row.get("expect_ask_weight") and not _ASK_WEIGHT_RE.search(reply):
             return "reply does not ask for weight/body data in the same turn"
     if row.get("expect_no_reply_approve"):
         if _REPLY_APPROVE_STRUCT_RE.search(reply):
@@ -916,6 +1193,169 @@ def try_profile_ux_structural_failure(row: dict, out: dict) -> str | None:
         pending = out.get("pending_approval") or {}
         if not (isinstance(pending, dict) and pending.get("type") == "plan_approval"):
             return "expected pending_approval plan card; missing or wrong type"
+    if row.get("expect_no_weight_reask"):
+        if _ASK_WEIGHT_RE.search(out.get("reply") or ""):
+            return "returning declined user was re-asked for weight"
+    return None
+
+
+def intake_chips_structural_failure(row: dict, out: dict) -> str | None:
+    """Bare quick-reply chip values must persist and advance to a new question."""
+    reply = (out.get("reply") or "").lower()
+    if row.get("expect_sessions") is not None:
+        got = out.get("sessions_per_week")
+        if got != row["expect_sessions"]:
+            return f"sessions_per_week={got!r}, expected {row['expect_sessions']!r}"
+        if "sessions per week" in reply:
+            return "re-asked sessions_per_week after bare chip answer"
+        if out.get("age") == row["expect_sessions"]:
+            return "bare sessions chip was incorrectly stored as age"
+    if row.get("expect_mode"):
+        modes = out.get("preferred_workout_modes") or []
+        if row["expect_mode"] not in modes:
+            return f"modes={modes!r}, expected to include {row['expect_mode']!r}"
+        if "how many training sessions" in reply:
+            return "regressed to sessions question after mode chip"
+    if row.get("expect_food"):
+        if out.get("food_preference") != row["expect_food"]:
+            return (
+                f"food_preference={out.get('food_preference')!r}, "
+                f"expected {row['expect_food']!r}"
+            )
+        if "how do you usually eat" in reply:
+            return "re-asked food_preference after chip answer"
+    if row.get("expect_no_sessions_repeat"):
+        if "sessions per week" in reply and "feel realistic" in reply:
+            return "sessions question repeated after free-text sessions answer"
+        if out.get("sessions_per_week") is None:
+            return "free-text sessions answer did not persist sessions_per_week"
+    return None
+
+
+def weight_gate_structural_failure(row: dict, out: dict) -> str | None:
+    """Hard gate: weight question turn must not leak plan/approval fields."""
+    turns = out.get("turns") or [out]
+    first = turns[0] if turns else out
+    last = turns[-1] if turns else out
+
+    if row.get("expect_weight_question_only"):
+        reply = (first.get("reply") or "").lower()
+        if not _ASK_WEIGHT_RE.search(first.get("reply") or ""):
+            return "first turn must ask for current weight"
+        pending = first.get("pending_approval")
+        if pending:
+            return f"first turn leaked pending_approval: {pending!r}"
+        if first.get("plan_changed"):
+            return "first turn has plan_changed=true"
+        if first.get("proposed_week_plan"):
+            return "first turn leaked proposed_week_plan"
+        if first.get("week_plan"):
+            return "first turn already has week_plan in state"
+        # Reply should not look like a drafted week (Mon/Tue session dump).
+        if re.search(r"(?i)\b(monday|mon:|week_start|calorie_target)\b", reply):
+            if "weight" not in reply:
+                return "first turn looks like a week plan dump"
+        if not first.get("awaiting_weight_for_first_plan"):
+            return "first turn should set awaiting_weight_for_first_plan"
+
+    if row.get("expect_plan_after_weight"):
+        pending = last.get("pending_approval") or out.get("pending_approval") or {}
+        if not (isinstance(pending, dict) and pending.get("type") == "plan_approval"):
+            return "expected plan approval card after weight answer"
+        if last.get("weight_kg") is None and out.get("weight_kg") is None:
+            return "expected weight_kg persisted after answer"
+        reply = last.get("reply") or out.get("reply") or ""
+        if _ESTIMATE_RE.search(reply) and "starting estimate" in reply.lower():
+            return "weight-known plan should not use starting-estimate framing"
+        if _ASK_WEIGHT_RE.search(reply):
+            return "should not re-ask weight after it was provided"
+
+    if row.get("expect_plan_after_decline"):
+        pending = last.get("pending_approval") or out.get("pending_approval") or {}
+        if not (isinstance(pending, dict) and pending.get("type") == "plan_approval"):
+            return "expected plan approval card after weight decline"
+        if not (last.get("weight_declined") or out.get("weight_declined")):
+            return "expected weight_declined=true after skip"
+        reply = last.get("reply") or out.get("reply") or ""
+        if not _ESTIMATE_RE.search(reply):
+            return "decline path should use provisional/estimate macro framing"
+        if _ASK_WEIGHT_RE.search(reply):
+            return "should not re-ask weight after explicit decline"
+
+    if row.get("expect_no_weight_reask"):
+        reply = out.get("reply") or ""
+        if _ASK_WEIGHT_RE.search(reply):
+            return "returning declined user was re-asked for weight"
+        pending = out.get("pending_approval") or {}
+        if not (isinstance(pending, dict) and pending.get("type") == "plan_approval"):
+            return "expected plan card without re-asking weight"
+
+    return None
+
+
+def diet_plan_structural_failure(row: dict, out: dict) -> str | None:
+    """Assert diet-gate approval payload has meals + code macros when requested."""
+    turns = out.get("turns") or [out]
+    last = turns[-1] if turns else out
+    pending = last.get("pending_approval") or out.get("pending_approval") or {}
+
+    if row.get("expect_activity_chip_advances"):
+        if not (isinstance(pending, dict) and pending.get("type") == "plan_approval"):
+            return "expected approval card after activity chip chain"
+        reply = (last.get("reply") or out.get("reply") or "").lower()
+        if "how active" in reply or "activity" in reply and "outside of training" in reply:
+            return "re-asked activity after chip answer"
+
+    if row.get("expect_diet_plan_on_approve") or row.get("expect_vegetarian_diet"):
+        if not (isinstance(pending, dict) and pending.get("type") == "plan_approval"):
+            return "expected plan approval card with diet"
+        diet = pending.get("proposed_diet_plan") or []
+        summary = pending.get("diet_plan_summary") or []
+        if not diet and not summary:
+            return "approval missing proposed_diet_plan / diet_plan_summary"
+        if row.get("expect_vegetarian_diet") or row.get("expect_diet_plan_on_approve"):
+            blob = " ".join(
+                str(m.get("food_description") or "")
+                for m in diet
+                if isinstance(m, dict)
+            ).lower()
+            blob += " " + " ".join(str(s) for s in summary).lower()
+            for banned in ("chicken", "fish", "mutton", "rohu"):
+                if banned in blob:
+                    return f"vegetarian diet leaked non-veg food: {banned}"
+
+    if row.get("expect_tdee_macros"):
+        if not (isinstance(pending, dict) and pending.get("type") == "plan_approval"):
+            return "expected approval for TDEE macro check"
+        cal = pending.get("calorie_target")
+        pro = pending.get("protein_target_g")
+        plan = pending.get("proposed_plan") or {}
+        if cal is None and isinstance(plan, dict):
+            cal = plan.get("calorie_target")
+        if pro is None and isinstance(plan, dict):
+            pro = plan.get("protein_target_g")
+        if cal is None or pro is None:
+            return "approval missing calorie_target / protein_target_g"
+        tdee = pending.get("tdee_targets") or {}
+        if isinstance(tdee, dict) and tdee.get("is_estimate") is True:
+            return "full diet-gate answers should not mark TDEE is_estimate=true"
+        if not (800 <= int(cal) <= 4500 and 40 <= int(pro) <= 300):
+            return f"TDEE macros out of band: {cal} kcal / {pro}g protein"
+
+    if row.get("expect_estimate_macros"):
+        reply = last.get("reply") or out.get("reply") or ""
+        if not _ESTIMATE_RE.search(reply):
+            notes = ""
+            plan = (pending.get("proposed_plan") or {}) if isinstance(pending, dict) else {}
+            if isinstance(plan, dict):
+                notes = str(plan.get("notes") or "")
+            tdee = (pending.get("tdee_targets") or {}) if isinstance(pending, dict) else {}
+            if not (
+                _ESTIMATE_RE.search(notes)
+                or (isinstance(tdee, dict) and tdee.get("is_estimate"))
+            ):
+                return "partial diet-gate decline should keep estimate framing"
+
     return None
 
 

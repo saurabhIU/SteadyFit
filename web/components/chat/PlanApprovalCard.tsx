@@ -32,6 +32,20 @@ export function PlanApprovalCard({
       : "The AI Coaching Team lined up these adjustments — only if they work for you.");
   const rejectLabel = isFirst ? "Not yet" : "Keep my current plan";
 
+  const calorie =
+    approval.calorie_target ??
+    approval.tdee_targets?.calorie_target ??
+    plan?.calorie_target ??
+    null;
+  const protein =
+    approval.protein_target_g ??
+    approval.tdee_targets?.protein_target_g ??
+    plan?.protein_target_g ??
+    null;
+  const dietSummary = approval.diet_plan_summary ?? [];
+  const dietMeals = approval.proposed_diet_plan ?? [];
+  const isEstimate = Boolean(approval.tdee_targets?.is_estimate);
+
   async function decide(decision: "accept" | "reject") {
     setBusy(true);
     try {
@@ -53,14 +67,21 @@ export function PlanApprovalCard({
     }
   }
 
-  const bullets: string[] = [];
+  const workoutBullets: string[] = [];
   if (plan?.days.length) {
     for (const day of plan.days) {
-      bullets.push(`${day.day}: ${day.focus} (${day.duration_min} min)`);
+      workoutBullets.push(`${day.day}: ${day.focus} (${day.duration_min} min)`);
     }
   } else if (approval.scheduler_summary) {
-    bullets.push(approval.scheduler_summary.slice(0, 200));
+    workoutBullets.push(approval.scheduler_summary.slice(0, 200));
   }
+
+  const mealBullets =
+    dietSummary.length > 0
+      ? dietSummary.filter((line) => !line.startsWith("Sources:"))
+      : dietMeals.slice(0, 6).map(
+          (m) => `${m.day} ${m.meal_slot}: ${m.food_description}`,
+        );
 
   return (
     <div className="animate-enter max-w-[92%] rounded-2xl border border-beige-border bg-beige p-4 text-card-text">
@@ -71,17 +92,51 @@ export function PlanApprovalCard({
         {subhead}
       </p>
 
-      {bullets.length > 0 ? (
-        <ul className="mt-3 space-y-1.5 text-sm text-card-text/90">
-          {bullets.map((item) => (
-            <li key={item} className="flex gap-2">
-              <span className="text-sage" aria-hidden>
-                •
-              </span>
-              <span>{item}</span>
-            </li>
-          ))}
-        </ul>
+      {calorie != null || protein != null ? (
+        <p className="mt-3 font-mono text-sm text-card-text/90">
+          {calorie != null ? `${calorie} kcal` : "— kcal"}
+          {" · "}
+          {protein != null ? `${protein}g protein` : "—g protein"}
+          {isEstimate ? (
+            <span className="text-card-text/60"> (starting estimate)</span>
+          ) : null}
+        </p>
+      ) : null}
+
+      {workoutBullets.length > 0 ? (
+        <div className="mt-3">
+          <p className="text-xs font-medium uppercase tracking-wide text-card-text/50">
+            Workouts
+          </p>
+          <ul className="mt-1.5 space-y-1.5 text-sm text-card-text/90">
+            {workoutBullets.map((item) => (
+              <li key={item} className="flex gap-2">
+                <span className="text-sage" aria-hidden>
+                  •
+                </span>
+                <span>{item}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      ) : null}
+
+      {mealBullets.length > 0 ? (
+        <div className="mt-3">
+          <p className="text-xs font-medium uppercase tracking-wide text-card-text/50">
+            Meals
+          </p>
+          <ul className="mt-1.5 space-y-1.5 text-sm text-card-text/90">
+            {mealBullets.map((item) => (
+              <li key={item} className="flex gap-2">
+                <span className="text-sage" aria-hidden>
+                  •
+                </span>
+                <span>{item}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
       ) : null}
 
       {plan?.notes ? (

@@ -177,6 +177,20 @@ def run_local(
                 "coaching_team_transcript": out.get("coaching_team_transcript"),
                 "critique_structural_error": struct_err,
                 "vision_usage": out.get("vision_usage"),
+                # Multi-turn / weight-gate plan leakage proof
+                "turns": out.get("turns"),
+                "plan_changed": out.get("plan_changed"),
+                "proposed_week_plan": out.get("proposed_week_plan"),
+                "week_plan": out.get("week_plan"),
+                "awaiting_weight_for_first_plan": out.get(
+                    "awaiting_weight_for_first_plan"
+                ),
+                "weight_kg": out.get("weight_kg"),
+                "weight_declined": out.get("weight_declined"),
+                "sessions_per_week": out.get("sessions_per_week"),
+                "preferred_workout_modes": out.get("preferred_workout_modes"),
+                "food_preference": out.get("food_preference"),
+                "age": out.get("age"),
             })
             if struct_err:
                 print(f"    ! structural: {struct_err}", flush=True)

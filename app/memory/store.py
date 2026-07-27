@@ -4,8 +4,9 @@ from __future__ import annotations
 import json
 import re
 import uuid
-from datetime import date, datetime, timedelta, timezone
+from datetime import date, datetime, time, timedelta, timezone
 from typing import Any, cast
+from zoneinfo import ZoneInfo
 
 import psycopg
 from psycopg import Connection
@@ -282,6 +283,15 @@ def get_profile(user_id: str) -> UserProfile:
         sex=row.get("sex"),
         sex_declined=bool(row.get("sex_declined")),
         weight_kg=float(row["weight_kg"]) if row.get("weight_kg") is not None else None,
+        weight_declined=bool(row.get("weight_declined")),
+        target_weight_kg=(
+            float(row["target_weight_kg"]) if row.get("target_weight_kg") is not None else None
+        ),
+        target_weight_declined=bool(row.get("target_weight_declined")),
+        height_cm=float(row["height_cm"]) if row.get("height_cm") is not None else None,
+        height_declined=bool(row.get("height_declined")),
+        activity_level=row.get("activity_level"),
+        activity_declined=bool(row.get("activity_declined")),
         preferred_workout_modes=list(modes),
         food_preference=row.get("food_preference"),
         sessions_per_week=row.get("sessions_per_week"),
@@ -289,6 +299,8 @@ def get_profile(user_id: str) -> UserProfile:
         constraints_asked=bool(row.get("constraints_asked")),
         onboarding_complete=bool(row.get("onboarding_complete")),
         awaiting_onboarding_confirm=bool(row.get("awaiting_onboarding_confirm")),
+        awaiting_weight_for_first_plan=bool(row.get("awaiting_weight_for_first_plan")),
+        awaiting_diet_slot=row.get("awaiting_diet_slot"),
     )
 
 
@@ -299,11 +311,15 @@ def save_profile(user_id: str, profile: UserProfile):
             """
             INSERT INTO user_profiles (
                 user_id, name, goal, age, age_declined, sex, sex_declined,
-                weight_kg, preferred_workout_modes, food_preference, sessions_per_week,
-                constraints, constraints_asked, onboarding_complete,
-                awaiting_onboarding_confirm, updated_at
+                weight_kg, weight_declined, target_weight_kg, target_weight_declined,
+                height_cm, height_declined, activity_level, activity_declined,
+                preferred_workout_modes, food_preference,
+                sessions_per_week, constraints, constraints_asked, onboarding_complete,
+                awaiting_onboarding_confirm, awaiting_weight_for_first_plan,
+                awaiting_diet_slot, updated_at
             ) VALUES (
-                %s,%s,%s,%s,%s,%s,%s,%s,%s::jsonb,%s,%s,%s::jsonb,%s,%s,%s, now()
+                %s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s::jsonb,%s,%s,%s::jsonb,
+                %s,%s,%s,%s,%s, now()
             )
             ON CONFLICT (user_id) DO UPDATE SET
                 name = EXCLUDED.name,
@@ -313,6 +329,13 @@ def save_profile(user_id: str, profile: UserProfile):
                 sex = EXCLUDED.sex,
                 sex_declined = EXCLUDED.sex_declined,
                 weight_kg = EXCLUDED.weight_kg,
+                weight_declined = EXCLUDED.weight_declined,
+                target_weight_kg = EXCLUDED.target_weight_kg,
+                target_weight_declined = EXCLUDED.target_weight_declined,
+                height_cm = EXCLUDED.height_cm,
+                height_declined = EXCLUDED.height_declined,
+                activity_level = EXCLUDED.activity_level,
+                activity_declined = EXCLUDED.activity_declined,
                 preferred_workout_modes = EXCLUDED.preferred_workout_modes,
                 food_preference = EXCLUDED.food_preference,
                 sessions_per_week = EXCLUDED.sessions_per_week,
@@ -320,6 +343,8 @@ def save_profile(user_id: str, profile: UserProfile):
                 constraints_asked = EXCLUDED.constraints_asked,
                 onboarding_complete = EXCLUDED.onboarding_complete,
                 awaiting_onboarding_confirm = EXCLUDED.awaiting_onboarding_confirm,
+                awaiting_weight_for_first_plan = EXCLUDED.awaiting_weight_for_first_plan,
+                awaiting_diet_slot = EXCLUDED.awaiting_diet_slot,
                 updated_at = now()
             """,
             (
@@ -331,6 +356,13 @@ def save_profile(user_id: str, profile: UserProfile):
                 profile.sex,
                 profile.sex_declined,
                 profile.weight_kg,
+                profile.weight_declined,
+                profile.target_weight_kg,
+                profile.target_weight_declined,
+                profile.height_cm,
+                profile.height_declined,
+                profile.activity_level,
+                profile.activity_declined,
                 json.dumps(profile.preferred_workout_modes),
                 profile.food_preference,
                 profile.sessions_per_week,
@@ -338,6 +370,8 @@ def save_profile(user_id: str, profile: UserProfile):
                 profile.constraints_asked,
                 profile.onboarding_complete,
                 profile.awaiting_onboarding_confirm,
+                profile.awaiting_weight_for_first_plan,
+                profile.awaiting_diet_slot,
             ),
         )
         c.execute(
@@ -437,6 +471,7 @@ def log_food_entry(
 
 
 def recent_food_logs(user_id: str, *, limit: int = 10) -> list[dict]:
+    """Raw recent rows — does not sum. Prefer get_daily_totals for day intake."""
     with _conn() as c:
         rows = c.execute(
             """
@@ -467,6 +502,248 @@ def recent_food_logs(user_id: str, *, limit: int = 10) -> list[dict]:
             "notes": r.get("notes"),
         })
     return out
+
+
+def _day_window(
+    day: date | None = None,
+    *,
+    tz: str = "UTC",
+) -> tuple[date, str, datetime, datetime]:
+    """Resolve calendar day + timezone-aware [start, end) for food_log filters."""
+    try:
+        zone = ZoneInfo(tz)
+    except Exception:
+        zone = ZoneInfo("UTC")
+        tz = "UTC"
+    if day is None:
+        day = datetime.now(zone).date()
+    start = datetime.combine(day, time.min, tzinfo=zone)
+    end = start + timedelta(days=1)
+    return day, tz, start, end
+
+
+def food_logs_for_day(
+    user_id: str,
+    day: date | None = None,
+    *,
+    tz: str = "UTC",
+) -> list[dict]:
+    """Today's (or given day's) food_log rows — same day boundary as get_daily_totals."""
+    _day, _tz, start, end = _day_window(day, tz=tz)
+    with _conn() as c:
+        rows = c.execute(
+            """
+            SELECT id, logged_at, meal_label, foods, kcal, protein_g, carbs_g, fat_g,
+                   source, notes
+            FROM food_log
+            WHERE user_id = %s
+              AND logged_at >= %s
+              AND logged_at < %s
+            ORDER BY logged_at ASC
+            """,
+            (user_id, start, end),
+        ).fetchall()
+    out = []
+    for r in rows:
+        foods = r["foods"]
+        if isinstance(foods, str):
+            foods = json.loads(foods)
+        out.append({
+            "id": r["id"],
+            "logged_at": r["logged_at"].isoformat() if r.get("logged_at") else None,
+            "meal_label": r.get("meal_label"),
+            "foods": foods,
+            "kcal": r.get("kcal"),
+            "protein_g": r.get("protein_g"),
+            "carbs_g": r.get("carbs_g"),
+            "fat_g": r.get("fat_g"),
+            "source": r.get("source") or "text",
+            "notes": r.get("notes"),
+        })
+    return out
+
+
+def get_daily_totals(
+    user_id: str,
+    day: date | None = None,
+    *,
+    tz: str = "UTC",
+) -> dict[str, Any]:
+    """Sum food_log macros for one calendar day (timezone-aware day boundary).
+
+    Day filter uses logged_at half-open interval [local midnight, next midnight)
+    so Neon TIMESTAMPTZ rows map correctly. Defaults to "today" in ``tz``.
+    """
+    day, tz, start, end = _day_window(day, tz=tz)
+    with _conn() as c:
+        row = c.execute(
+            """
+            SELECT
+                COALESCE(SUM(kcal), 0)::real AS kcal_consumed,
+                COALESCE(SUM(protein_g), 0)::real AS protein_g_consumed,
+                COALESCE(SUM(carbs_g), 0)::real AS carbs_g_consumed,
+                COALESCE(SUM(fat_g), 0)::real AS fat_g_consumed,
+                COUNT(*)::int AS entry_count
+            FROM food_log
+            WHERE user_id = %s
+              AND logged_at >= %s
+              AND logged_at < %s
+            """,
+            (user_id, start, end),
+        ).fetchone()
+    return {
+        "date": day.isoformat(),
+        "tz": tz,
+        "kcal_consumed": float(row["kcal_consumed"] or 0) if row else 0.0,
+        "protein_g_consumed": float(row["protein_g_consumed"] or 0) if row else 0.0,
+        "carbs_g_consumed": float(row["carbs_g_consumed"] or 0) if row else 0.0,
+        "fat_g_consumed": float(row["fat_g_consumed"] or 0) if row else 0.0,
+        "entry_count": int(row["entry_count"] or 0) if row else 0,
+    }
+
+
+def today_food_log_snapshot(
+    user_id: str,
+    *,
+    calorie_target: int | None = None,
+    protein_target_g: int | None = None,
+    tz: str = "UTC",
+) -> dict[str, Any]:
+    """Meals + totals + plan targets for the Plan page (display-only)."""
+    meals = food_logs_for_day(user_id, tz=tz)
+    totals = get_daily_totals(user_id, tz=tz)
+    planned = diet_meals_for_day(user_id, day=None, tz=tz)
+    return {
+        "meals": [
+            {
+                "id": m["id"],
+                "meal_label": m.get("meal_label"),
+                "foods": m.get("foods") or [],
+                "kcal": m.get("kcal"),
+                "protein_g": m.get("protein_g"),
+                "logged_at": m.get("logged_at"),
+            }
+            for m in meals
+        ],
+        "planned_meals": planned,
+        "totals": totals,
+        "targets": {
+            "calorie_target": calorie_target,
+            "protein_target_g": protein_target_g,
+        },
+    }
+
+
+def replace_diet_plan_week(
+    user_id: str,
+    week_start: str,
+    meals: list[dict[str, Any]],
+) -> int:
+    """Replace diet_plan_days for a week with structured meal rows."""
+    with _conn() as c:
+        c.execute(
+            "DELETE FROM diet_plan_days WHERE user_id = %s AND week_start = %s",
+            (user_id, week_start),
+        )
+        n = 0
+        for m in meals:
+            c.execute(
+                """
+                INSERT INTO diet_plan_days (
+                    user_id, week_start, day, meal_slot, food_description,
+                    kcal, protein_g, status, source_kb_id
+                ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+                """,
+                (
+                    user_id,
+                    week_start,
+                    m.get("day") or "",
+                    m.get("meal_slot") or "meal",
+                    m.get("food_description") or "",
+                    m.get("kcal"),
+                    m.get("protein_g"),
+                    m.get("status") or "planned",
+                    m.get("source_kb_id"),
+                ),
+            )
+            n += 1
+        c.commit()
+    return n
+
+
+def diet_meals_for_week(user_id: str, week_start: str) -> list[dict[str, Any]]:
+    with _conn() as c:
+        rows = c.execute(
+            """
+            SELECT id, week_start, day, meal_slot, food_description, kcal, protein_g,
+                   status, source_kb_id
+            FROM diet_plan_days
+            WHERE user_id = %s AND week_start = %s
+            ORDER BY
+              CASE day
+                WHEN 'Mon' THEN 1 WHEN 'Tue' THEN 2 WHEN 'Wed' THEN 3
+                WHEN 'Thu' THEN 4 WHEN 'Fri' THEN 5 WHEN 'Sat' THEN 6
+                WHEN 'Sun' THEN 7 ELSE 8 END,
+              CASE meal_slot
+                WHEN 'breakfast' THEN 1 WHEN 'lunch' THEN 2
+                WHEN 'dinner' THEN 3 WHEN 'snack' THEN 4 ELSE 5 END
+            """,
+            (user_id, week_start),
+        ).fetchall()
+    return [
+        {
+            "id": r["id"],
+            "week_start": str(r["week_start"]),
+            "day": r["day"],
+            "meal_slot": r["meal_slot"],
+            "food_description": r["food_description"],
+            "kcal": r.get("kcal"),
+            "protein_g": r.get("protein_g"),
+            "status": r.get("status") or "planned",
+            "source_kb_id": r.get("source_kb_id"),
+        }
+        for r in rows
+    ]
+
+
+def diet_meals_for_day(
+    user_id: str,
+    day: date | None = None,
+    *,
+    tz: str = "UTC",
+) -> list[dict[str, Any]]:
+    """Planned diet meals for a calendar day (by weekday abbr + current week_start)."""
+    day_resolved, _tz, _start, _end = _day_window(day, tz=tz)
+    abbr = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"][day_resolved.weekday()]
+    week_start = _week_start(day_resolved).isoformat()
+    with _conn() as c:
+        rows = c.execute(
+            """
+            SELECT id, week_start, day, meal_slot, food_description, kcal, protein_g,
+                   status, source_kb_id
+            FROM diet_plan_days
+            WHERE user_id = %s AND week_start = %s AND day = %s
+            ORDER BY
+              CASE meal_slot
+                WHEN 'breakfast' THEN 1 WHEN 'lunch' THEN 2
+                WHEN 'dinner' THEN 3 WHEN 'snack' THEN 4 ELSE 5 END
+            """,
+            (user_id, week_start, abbr),
+        ).fetchall()
+    return [
+        {
+            "id": r["id"],
+            "week_start": str(r["week_start"]),
+            "day": r["day"],
+            "meal_slot": r["meal_slot"],
+            "food_description": r["food_description"],
+            "kcal": r.get("kcal"),
+            "protein_g": r.get("protein_g"),
+            "status": r.get("status") or "planned",
+            "source_kb_id": r.get("source_kb_id"),
+        }
+        for r in rows
+    ]
 
 
 def clear_profile_slots(user_id: str):

@@ -8,12 +8,16 @@ WorkoutMode = Literal["gym", "swimming", "walking", "running", "home", "cycling"
 FoodPreference = Literal[
     "vegetarian", "non-vegetarian", "vegan", "eggetarian", "no-preference"
 ]
+ActivityLevel = Literal["sedentary", "light", "moderate", "active"]
 WORKOUT_MODE_OPTIONS: list[str] = [
     "gym", "swimming", "walking", "running", "home", "cycling", "yoga",
 ]
 FOOD_PREFERENCE_OPTIONS: list[str] = [
     "vegetarian", "non-vegetarian", "vegan", "eggetarian", "no-preference",
 ]
+ACTIVITY_LEVEL_OPTIONS: list[str] = ["sedentary", "light", "moderate", "active"]
+# Diet-metrics gate slots after onboarding (one question per turn).
+DIET_GATE_SLOTS: list[str] = ["weight", "target_weight", "height", "activity"]
 
 
 class WorkoutDay(BaseModel):
@@ -41,6 +45,17 @@ class UserProfile(BaseModel):
     sex_declined: bool = False
     # Optional body mass for macro personalization (kg). None → provisional targets.
     weight_kg: float | None = None
+    weight_declined: bool = False
+    target_weight_kg: float | None = None
+    target_weight_declined: bool = False
+    height_cm: float | None = None
+    height_declined: bool = False
+    activity_level: str | None = None  # sedentary|light|moderate|active
+    activity_declined: bool = False
+    # After onboarding confirm: ask weight once before first WeekPlan generation.
+    awaiting_weight_for_first_plan: bool = False
+    # Next diet-metrics gate question: target_weight | height | activity | None
+    awaiting_diet_slot: str | None = None
     preferred_workout_modes: list[str] = Field(default_factory=list)
     food_preference: str | None = None
     sessions_per_week: int | None = None

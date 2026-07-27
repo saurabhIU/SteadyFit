@@ -1,9 +1,17 @@
 """Scheduler agent: life-aware weekly re-planning with KB + coaching memory."""
+from datetime import date
+
 from app.graph.citations import citations_from_texts, merge_citations
 from app.graph.critique import revision_block
-from app.graph.macros import PROVISIONAL_MACRO_INSTRUCTIONS, macros_provisional
+from app.graph.diet_plan import build_diet_week, diet_plan_contains_nonveg, diet_summary_lines
+from app.graph.macros import (
+    PROVISIONAL_MACRO_INSTRUCTIONS,
+    has_body_stats,
+    macros_provisional,
+)
 from app.graph.plan_utils import parse_week_plan
 from app.graph.state import CoachingTeamState
+from app.graph.tdee import compute_macro_targets
 from app.graph.tool_agent import run_tool_agent
 from app.rag.memory_store import retrieve_memories
 from app.security import (
@@ -59,7 +67,10 @@ Write a short warm proposal, then end with a fenced JSON block for the updated p
 ```
 When stating calorie_target / protein_target_g without profile weight_kg, treat them as
 starting estimates — put the provisional caveat INLINE next to any numbers you write
-in prose, and ask for current weight in the same proposal.
+in prose. Do NOT ask for weight in this proposal (weight was already declined or the
+weight gate handles that in a separate turn).
+When profile has weight_kg, ground calorie/protein in that weight — no "estimate" or
+"share your weight" framing.
 When using KB chunks, mention them with [KB: File.md — Section] tags.
 
 Do NOT tell the user to "reply approve" or type a confirmation keyword — the UI
@@ -102,8 +113,29 @@ def scheduler_node(state: CoachingTeamState) -> dict:
             "Call calendar_conflicts only as a check; if empty, schedule from the user's "
             "stated constraints only. Use exercise lookup/substitutions for constrained swaps."
         )
-    if macros_provisional(state.profile):
-        hint = f"{hint}\n\n{PROVISIONAL_MACRO_INSTRUCTIONS}"
+    macro_targets = compute_macro_targets(
+        weight_kg=state.profile.weight_kg,
+        height_cm=state.profile.height_cm,
+        age=state.profile.age,
+        sex=state.profile.sex,
+        activity_level=state.profile.activity_level,  # type: ignore[arg-type]
+        target_weight_kg=state.profile.target_weight_kg,
+        goal=state.profile.goal,
+    )
+    hint = (
+        f"{hint}\n\nCODE-COMPUTED MACRO TARGETS (Mifflin-St Jeor — use these exact numbers "
+        f"in calorie_target / protein_target_g JSON fields; do not invent different ones): "
+        f"calorie_target={macro_targets.calorie_target}, "
+        f"protein_target_g={macro_targets.protein_target_g}, "
+        f"tdee={macro_targets.tdee_kcal}, is_estimate={macro_targets.is_estimate}.\n"
+    )
+    if macro_targets.is_estimate or macros_provisional(state.profile):
+        hint = f"{hint}\n{PROVISIONAL_MACRO_INSTRUCTIONS}\n"
+    elif has_body_stats(state.profile):
+        hint = (
+            f"{hint}\nWEIGHT/HEIGHT known — present targets as computed, not guesses. "
+            "Do NOT ask for weight again.\n"
+        )
 
     memory_chunks, memory_cites = retrieve_memories(
         _memory_query(state, user_msg),
@@ -131,8 +163,42 @@ def scheduler_node(state: CoachingTeamState) -> dict:
     # Only pause for HITL when we have a structured plan to save. Otherwise a
     # fresh user can "approve" prose and still land with an empty Plan tab.
     if parsed and parsed.days:
+        # Override LLM macros with code-computed TDEE (daily-totals principle).
+        parsed.calorie_target = macro_targets.calorie_target
+        parsed.protein_target_g = macro_targets.protein_target_g
+        if macro_targets.is_estimate:
+            note = (parsed.notes or "").strip()
+            caveat = "Macros are starting estimates (incomplete body stats)."
+            parsed.notes = f"{note} {caveat}".strip()
         proposals["proposed_week_plan"] = parsed.model_dump()
         proposals["plan_changed"] = True
+        proposals["tdee_targets"] = {
+            "calorie_target": macro_targets.calorie_target,
+            "protein_target_g": macro_targets.protein_target_g,
+            "tdee_kcal": macro_targets.tdee_kcal,
+            "bmr_kcal": macro_targets.bmr_kcal,
+            "is_estimate": macro_targets.is_estimate,
+            "formula": macro_targets.formula,
+            "notes": macro_targets.notes,
+        }
+        # KB-grounded diet week (structured — not conversational memory).
+        week_start = parsed.week_start or date.today().isoformat()
+        diet_meals = build_diet_week(state.profile, week_start=week_start)
+        # Preference safety: never ship non-veg to vegetarian/vegan profiles.
+        pref = (state.profile.food_preference or "").lower()
+        if pref in {"vegetarian", "vegan", "eggetarian"} and diet_plan_contains_nonveg(diet_meals):
+            diet_meals = build_diet_week(
+                state.profile.model_copy(update={"food_preference": "vegan"}),
+                week_start=week_start,
+            )
+        proposals["proposed_diet_plan"] = diet_meals
+        proposals["diet_plan_summary"] = diet_summary_lines(diet_meals)
+        proposals["nutrition_plan_change"] = True
+        diet_block = "\n".join(diet_summary_lines(diet_meals, max_days=7))
+        proposals["scheduler"] = (
+            f"{proposal}\n\n--- DIET WEEK (KB Indian macros) ---\n{diet_block}\n"
+            f"Food preference filter: {state.profile.food_preference or 'unspecified'}"
+        )
     elif first_plan:
         proposals["scheduler"] = (
             f"{proposal}\n\n"

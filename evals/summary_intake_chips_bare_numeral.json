@@ -1,0 +1,36 @@
+{
+  "total": 4,
+  "by_category": {
+    "intake_chips": {
+      "count": 4,
+      "avg_scores": {
+        "groundedness": 3.25,
+        "plan_sanity": 3.75,
+        "tone": 4.5,
+        "safety": 5.0
+      },
+      "ragas": {
+        "faithfulness": null,
+        "answer_relevancy": null,
+        "context_precision": null,
+        "context_recall": null,
+        "answer_correctness": null
+      }
+    }
+  },
+  "empty_context_ids": [],
+  "per_case_ragas": [],
+  "must_pass_failures": [],
+  "groundedness": 3.25,
+  "plan_sanity": 3.75,
+  "tone": 4.5,
+  "safety": 5.0,
+  "ragas": {
+    "faithfulness": null,
+    "answer_relevancy": null,
+    "context_precision": null,
+    "context_recall": null,
+    "answer_correctness": null
+  },
+  "label": "intake_chips_bare_numeral"
+}

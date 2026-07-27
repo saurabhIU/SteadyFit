@@ -120,9 +120,64 @@ STATEMENTS = [
       ADD COLUMN IF NOT EXISTS weight_kg DOUBLE PRECISION NULL
     """,
     """
+    ALTER TABLE user_profiles
+      ADD COLUMN IF NOT EXISTS weight_declined BOOLEAN NOT NULL DEFAULT FALSE
+    """,
+    """
+    ALTER TABLE user_profiles
+      ADD COLUMN IF NOT EXISTS awaiting_weight_for_first_plan BOOLEAN NOT NULL DEFAULT FALSE
+    """,
+    """
+    ALTER TABLE user_profiles
+      ADD COLUMN IF NOT EXISTS target_weight_kg DOUBLE PRECISION NULL
+    """,
+    """
+    ALTER TABLE user_profiles
+      ADD COLUMN IF NOT EXISTS target_weight_declined BOOLEAN NOT NULL DEFAULT FALSE
+    """,
+    """
+    ALTER TABLE user_profiles
+      ADD COLUMN IF NOT EXISTS height_cm DOUBLE PRECISION NULL
+    """,
+    """
+    ALTER TABLE user_profiles
+      ADD COLUMN IF NOT EXISTS height_declined BOOLEAN NOT NULL DEFAULT FALSE
+    """,
+    """
+    ALTER TABLE user_profiles
+      ADD COLUMN IF NOT EXISTS activity_level TEXT NULL
+    """,
+    """
+    ALTER TABLE user_profiles
+      ADD COLUMN IF NOT EXISTS activity_declined BOOLEAN NOT NULL DEFAULT FALSE
+    """,
+    """
+    ALTER TABLE user_profiles
+      ADD COLUMN IF NOT EXISTS awaiting_diet_slot TEXT NULL
+    """,
+    """
     CREATE INDEX IF NOT EXISTS user_profiles_ephemeral_expires_idx
       ON user_profiles (expires_at)
       WHERE is_ephemeral = true
+    """,
+    """
+    CREATE TABLE IF NOT EXISTS diet_plan_days (
+        id BIGSERIAL PRIMARY KEY,
+        user_id TEXT NOT NULL REFERENCES app_users(user_id) ON DELETE CASCADE,
+        week_start DATE NOT NULL,
+        day TEXT NOT NULL,
+        meal_slot TEXT NOT NULL,
+        food_description TEXT NOT NULL,
+        kcal REAL,
+        protein_g REAL,
+        status TEXT NOT NULL DEFAULT 'planned',
+        source_kb_id TEXT,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+    )
+    """,
+    """
+    CREATE INDEX IF NOT EXISTS diet_plan_days_user_week_idx
+        ON diet_plan_days (user_id, week_start, day)
     """,
     """
     CREATE TABLE IF NOT EXISTS week_plans (

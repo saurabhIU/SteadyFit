@@ -103,6 +103,64 @@ def log_food_entry(
 
 
 @tool
+def compute_tdee_targets() -> str:
+    """Return code-computed Mifflin-St Jeor calorie/protein targets for this user.
+
+    Call whenever stating daily calorie or protein targets. Do NOT invent numbers —
+    REPORT the JSON fields (calorie_target, protein_target_g, tdee_kcal, is_estimate).
+    """
+    from app.graph.tdee import compute_macro_targets
+    from app.memory.store import get_profile
+    from app.memory.user_context import get_current_user_id
+
+    uid = get_current_user_id()
+    if not uid:
+        return json.dumps({"ok": False, "error": "no_user"})
+    profile = get_profile(uid)
+    targets = compute_macro_targets(
+        weight_kg=profile.weight_kg,
+        height_cm=profile.height_cm,
+        age=profile.age,
+        sex=profile.sex,
+        activity_level=profile.activity_level,  # type: ignore[arg-type]
+        target_weight_kg=profile.target_weight_kg,
+        goal=profile.goal,
+    )
+    return json.dumps({
+        "ok": True,
+        "formula": targets.formula,
+        "bmr_kcal": targets.bmr_kcal,
+        "tdee_kcal": targets.tdee_kcal,
+        "calorie_target": targets.calorie_target,
+        "protein_target_g": targets.protein_target_g,
+        "activity_factor": targets.activity_factor,
+        "activity_level": targets.activity_level,
+        "is_estimate": targets.is_estimate,
+        "estimate_reasons": list(targets.estimate_reasons),
+        "notes": targets.notes,
+    })
+
+
+@tool
+def get_today_totals(tz: str = "UTC") -> str:
+    """Return today's summed food_log intake for this user (real logged data).
+
+    Use whenever the user asks what they've eaten, remaining calories/protein,
+    "left today", or after logging a meal when giving remaining-day guidance.
+    Returns JSON: kcal_consumed, protein_g_consumed, carbs_g_consumed,
+    fat_g_consumed, entry_count, date, tz. Never invent totals — call this.
+    """
+    from app.memory.store import get_daily_totals
+    from app.memory.user_context import get_current_user_id
+
+    uid = get_current_user_id()
+    if not uid:
+        return json.dumps({"ok": False, "error": "no_user"})
+    totals = get_daily_totals(uid, tz=(tz or "UTC").strip() or "UTC")
+    return json.dumps({"ok": True, **totals})
+
+
+@tool
 def retrieve_personal_docs(query: str) -> str:
     """Semantic search over the user's uploaded personal documents only
     (programs, recipes) — not the shared SteadyFit knowledge base."""
@@ -208,6 +266,8 @@ NUTRITION_TOOLS = [
     analyze_meal_photo,
     usda_food_lookup,
     log_food_entry,
+    get_today_totals,
+    compute_tdee_targets,
     retrieve_recipes,
     retrieve_nutrition_science,
 ]

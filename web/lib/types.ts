@@ -22,9 +22,29 @@ export type WeekPlan = {
   notes?: string;
 };
 
+export type ProposedDietMeal = {
+  day: string;
+  meal_slot: string;
+  food_description: string;
+  kcal?: number | null;
+  protein_g?: number | null;
+  source_kb_id?: string | null;
+};
+
 export type PendingApproval = {
   type: "plan_approval";
   proposed_plan: WeekPlan | null;
+  proposed_diet_plan?: ProposedDietMeal[];
+  diet_plan_summary?: string[];
+  tdee_targets?: {
+    calorie_target?: number;
+    protein_target_g?: number;
+    tdee_kcal?: number;
+    is_estimate?: boolean;
+    notes?: string;
+  };
+  calorie_target?: number | null;
+  protein_target_g?: number | null;
   scheduler_summary?: string;
   /** True when the user had no prior WeekPlan (first-ever draft). */
   is_first_plan?: boolean;
@@ -98,4 +118,43 @@ export type PlanResponse = {
   profile: UserProfile;
   week_plan: WeekPlan | null;
   adherence: AdherenceStats;
+};
+
+export type FoodLogMeal = {
+  id: number;
+  meal_label: string | null;
+  foods: Array<{ name?: string; estimated_portion?: string } | string>;
+  kcal: number | null;
+  protein_g: number | null;
+  logged_at: string | null;
+};
+
+export type PlannedDietMeal = {
+  id?: number;
+  day: string;
+  meal_slot: string;
+  food_description: string;
+  kcal?: number | null;
+  protein_g?: number | null;
+  status?: string;
+  source_kb_id?: string | null;
+};
+
+export type TodayFoodLogResponse = {
+  meals: FoodLogMeal[];
+  /** Structured diet_plan_days for today (planned — not logged intake). */
+  planned_meals?: PlannedDietMeal[];
+  totals: {
+    date: string;
+    tz: string;
+    kcal_consumed: number;
+    protein_g_consumed: number;
+    carbs_g_consumed: number;
+    fat_g_consumed: number;
+    entry_count: number;
+  };
+  targets: {
+    calorie_target: number | null;
+    protein_target_g: number | null;
+  };
 };

@@ -73,6 +73,19 @@ def test_awaiting_confirm_skips_scope_gate():
     assert should_skip_scope_gate(profile=profile, pending_approval=None) is True
 
 
+def test_awaiting_weight_for_first_plan_skips_scope_gate():
+    profile = UserProfile(
+        name="Try",
+        goal="lose fat",
+        sessions_per_week=3,
+        preferred_workout_modes=["gym"],
+        food_preference="vegetarian",
+        onboarding_complete=True,
+        awaiting_weight_for_first_plan=True,
+    )
+    assert should_skip_scope_gate(profile=profile, pending_approval=None) is True
+
+
 def test_continuation_affirmation_in_scope_without_llm():
     prior = (
         "Want me to help you hit 140g protein/day from vegetarian sources, "

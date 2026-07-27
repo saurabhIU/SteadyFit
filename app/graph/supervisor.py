@@ -1,12 +1,22 @@
 """Coach (supervisor), AI Coaching Team (negotiation), and approval nodes."""
+import logging
 import re
 
 from langgraph.types import interrupt
+
+logger = logging.getLogger(__name__)
 
 from app.config import get_llm
 from app.graph.intake import looks_like_profile_change_request, needs_intake
 from app.graph.macros import PROVISIONAL_MACRO_INSTRUCTIONS, macros_provisional
 from app.graph.state import CoachingTeamState
+from app.graph.diet_gate import (
+    diet_question_payload,
+    needs_diet_gate_before_first_plan,
+    next_diet_slot,
+)
+from app.graph.weight_gate import looks_like_first_plan_request
+from app.memory.store import get_saved_week_plan, save_profile
 from app.security import (
     as_text,
     llm_history,
@@ -78,6 +88,15 @@ def coach_node(state: CoachingTeamState) -> dict:
             **critique_reset,
         }
 
+    # Diet-metrics gate pending — stay in intake (no scheduler).
+    if state.profile.awaiting_weight_for_first_plan or state.profile.awaiting_diet_slot:
+        return {
+            "intent": "intake",
+            "coaching_team_rounds": rounds,
+            "quick_replies": [],
+            **critique_reset,
+        }
+
     # Completeness gate — unfinished onboarding never goes to specialists.
     if needs_intake(state.profile) and not state.profile.onboarding_complete:
         return {
@@ -122,6 +141,24 @@ def coach_node(state: CoachingTeamState) -> dict:
             **critique_reset,
         }
 
+    # Deterministic first-plan diet gate (do not wait on LLM intent).
+    if looks_like_first_plan_request(user_msg):
+        saved = get_saved_week_plan(state.user_id) if state.user_id else None
+        if needs_diet_gate_before_first_plan(
+            state.profile, week_plan=state.week_plan, saved_plan=saved
+        ):
+            slot = next_diet_slot(state.profile) or "weight"
+            payload = diet_question_payload(state.profile, slot)
+            save_profile(state.user_id, payload["profile"])
+            return {
+                "profile": payload["profile"],
+                "intent": "intake",
+                "proposals": payload["proposals"],
+                "quick_replies": [],
+                "coaching_team_rounds": rounds,
+                **critique_reset,
+            }
+
     llm = get_llm(max_tokens=32)
     history_without_latest = list(state.messages or [])[:-1] if state.messages else []
     prior_assistant, _ = prior_turns_from_messages(history_without_latest)
@@ -143,8 +180,29 @@ def coach_node(state: CoachingTeamState) -> dict:
     intent = as_text(llm.invoke(msgs).content).strip().lower()
     if intent in {"profile_update", "profile", "update"}:
         intent = "intake"
-    elif intent not in {"schedule", "nutrition", "adherence", "knowledge", "intake"}:
+    elif intent not in {"schedule", "nutrition", "adherence", "knowledge", "intake", "first_plan"}:
         intent = "knowledge"
+    if intent == "first_plan":
+        intent = "schedule"
+
+    # Hard gate: first-ever plan missing diet metrics → intake asks only (no WeekPlan).
+    if intent == "schedule":
+        saved = get_saved_week_plan(state.user_id) if state.user_id else None
+        if needs_diet_gate_before_first_plan(
+            state.profile, week_plan=state.week_plan, saved_plan=saved
+        ):
+            slot = next_diet_slot(state.profile) or "weight"
+            payload = diet_question_payload(state.profile, slot)
+            save_profile(state.user_id, payload["profile"])
+            return {
+                "profile": payload["profile"],
+                "intent": "intake",
+                "proposals": payload["proposals"],
+                "quick_replies": [],
+                "coaching_team_rounds": rounds,
+                **critique_reset,
+            }
+
     return {
         "intent": intent,
         "coaching_team_rounds": rounds,
@@ -175,8 +233,9 @@ PLAN APPROVAL CTA (when specialists proposed a plan change / first week with pla
 - The UI approval card is the ONLY confirmation mechanism for plan changes.
 
 PROVISIONAL MACROS (when profile has no weight_kg): every calorie/protein number must
-carry an INLINE starting-estimate caveat next to the number, and the SAME reply must
-ask for current weight. This still applies after a plan was approved/saved.
+carry an INLINE starting-estimate caveat next to the number. Do NOT ask for weight
+again if weight_declined or if weight was already requested in a prior gated turn.
+This still applies after a plan was approved/saved.
 
 Topic INTERRUPTS: if the user raised a new concern (pain/injury, allergy, pregnancy
 safety, "actually…") that does not answer your previous offer, acknowledge that
@@ -296,7 +355,16 @@ def coaching_team_node(state: CoachingTeamState) -> dict:
     )
     retained = {
         k: state.proposals[k]
-        for k in ("plan_changed", "proposed_week_plan", "memory_written")
+        for k in (
+            "plan_changed",
+            "proposed_week_plan",
+            "proposed_diet_plan",
+            "diet_plan_summary",
+            "tdee_targets",
+            "nutrition_plan_change",
+            "scheduler",
+            "memory_written",
+        )
         if k in state.proposals
     }
     quick = list(state.quick_replies or [])
@@ -323,9 +391,14 @@ def approve_node(state: CoachingTeamState) -> dict:
     """Human-in-the-loop: pause the graph until the user accepts/edits the plan change."""
     from app.graph.approval_copy import has_prior_week_plan, plan_approval_framing
     from app.graph.plan_utils import coerce_week_plan
-    from app.memory.store import get_saved_week_plan
+    from app.memory.store import get_saved_week_plan, replace_diet_plan_week
 
     proposed_plan = coerce_week_plan(state.proposals.get("proposed_week_plan")) or state.week_plan
+    proposed_diet = state.proposals.get("proposed_diet_plan") or []
+    if not isinstance(proposed_diet, list):
+        proposed_diet = []
+    diet_summary = state.proposals.get("diet_plan_summary") or []
+    tdee = state.proposals.get("tdee_targets") or {}
     prior = state.week_plan
     if not has_prior_week_plan(prior):
         prior = get_saved_week_plan(state.user_id) if state.user_id else None
@@ -334,6 +407,11 @@ def approve_node(state: CoachingTeamState) -> dict:
     decision = interrupt({
         "type": "plan_approval",
         "proposed_plan": proposed_plan.model_dump() if proposed_plan else None,
+        "proposed_diet_plan": proposed_diet,
+        "diet_plan_summary": diet_summary if isinstance(diet_summary, list) else [],
+        "tdee_targets": tdee if isinstance(tdee, dict) else {},
+        "calorie_target": proposed_plan.calorie_target if proposed_plan else None,
+        "protein_target_g": proposed_plan.protein_target_g if proposed_plan else None,
         "scheduler_summary": (state.proposals.get("scheduler") or "")[:600],
         **framing,
     })
@@ -344,6 +422,15 @@ def approve_node(state: CoachingTeamState) -> dict:
     }
     if accepted and proposed_plan:
         updates["week_plan"] = proposed_plan
+        if proposed_diet and state.user_id:
+            try:
+                replace_diet_plan_week(
+                    state.user_id,
+                    proposed_plan.week_start,
+                    proposed_diet,
+                )
+            except Exception:
+                logger.exception("replace_diet_plan_week failed user=%s", state.user_id)
         updates["messages"] = [{
             "role": "assistant",
             "content": "Plan approved and saved — you're set for the week.",

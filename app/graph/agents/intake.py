@@ -20,45 +20,38 @@ from app.graph.intake import (
     required_slots_filled,
 )
 from app.graph.state import CoachingTeamState
+from app.graph.upload_offer import (
+    ambiguous_reoffer_payload,
+    looks_like_just_ask,
+    looks_like_ready_after_upload,
+    looks_like_upload_now,
+    open_first_diet_slot,
+    upload_now_instruct_payload,
+    weight_after_offer,
+)
 from app.graph.weight_gate import (
+    WEIGHT_ACK_REASK,
     looks_like_first_plan_request,
+    looks_like_weight_already_elsewhere,
     parse_weight_kg_from_message,
 )
-from app.memory.store import get_saved_week_plan, save_profile, user_has_personal_docs
+from app.memory.store import get_saved_week_plan, save_profile
 from app.security import as_text, with_security, wrap_untrusted
-
-UPLOAD_HINT = (
-    "By the way — if you've got a training program, meal notes, or health "
-    "details written down somewhere, you can upload it in the Update tab "
-    "and I'll factor it in. Totally optional."
-)
-
-
-def _with_upload_hint_once(profile, user_id: str, preamble: str) -> tuple:
-    """Append the soft upload invite at most once per user; never blocks the plan."""
-    if profile.shown_upload_hint:
-        return profile, preamble
-    profile.shown_upload_hint = True
-    if user_has_personal_docs(user_id):
-        return profile, preamble
-    return profile, f"{preamble.rstrip()}\n\n{UPLOAD_HINT}"
 
 
 def _handoff_first_plan(profile, state, *, preamble: str, provisional: bool = False) -> dict:
     profile.awaiting_weight_for_first_plan = False
     profile.awaiting_diet_slot = None
-    profile, preamble = _with_upload_hint_once(profile, state.user_id or "", preamble)
+    profile.awaiting_upload_before_weight = False
     save_profile(state.user_id, profile)
     proposals = {
         **{k: v for k, v in state.proposals.items()
-           if k not in {"ask_weight_only", "ask_diet_slot"}},
+           if k not in {"ask_weight_only", "ask_diet_slot", "ask_upload_before_weight"}},
         "intake_handoff": "first_plan",
         "plan_changed": False,
     }
     if provisional:
         proposals["macros_provisional_ok"] = True
-    if profile.shown_upload_hint and UPLOAD_HINT in preamble:
-        proposals["offer_upload"] = True
     return {
         "profile": profile,
         "intent": "first_plan",
@@ -98,13 +91,80 @@ def _ask_next_diet_slot(profile, state, *, after_slot: str | None = None) -> dic
         return _handoff_first_plan(
             profile, state, preamble=preamble, provisional=targets.is_estimate
         )
-    payload = diet_question_payload(profile, nxt)
+    payload = open_first_diet_slot(profile, state.user_id or "", nxt)
+    save_profile(state.user_id, payload["profile"])
+    return payload
+
+
+def _brief_aside(user_msg: str) -> str:
+    """Short non-blocking answer for off-offer questions; never invents profile facts."""
+    try:
+        aside_llm = get_llm(max_tokens=120)
+        return as_text(aside_llm.invoke([
+            {
+                "role": "system",
+                "content": with_security(
+                    "You are SteadyFit mid-onboarding. Answer in 1-2 short warm "
+                    "sentences. Do not ask for weight/height or invent profile facts. "
+                    "Do not say you logged or saved anything."
+                ),
+            },
+            {"role": "user", "content": wrap_untrusted(user_msg, source="user")},
+        ]).content).strip()
+    except Exception:
+        return "Happy to dig into that in a moment."
+
+
+def _handle_upload_offer(state: CoachingTeamState, profile, user_msg: str) -> dict:
+    """Resolve Upload it now / Just ask me / ready / weight / ambiguous free text."""
+    # Coach just opened the gate this turn — present the offer, don't parse the
+    # triggering "yes / draft my plan" message as a chip choice.
+    if looks_like_first_plan_request(user_msg) or looks_like_confirmation_yes(user_msg):
+        from app.graph.upload_offer import maybe_upload_offer_or_weight
+
+        payload = maybe_upload_offer_or_weight(profile, state.user_id or "")
+        save_profile(state.user_id, payload["profile"])
+        return payload
+
+    if looks_like_upload_now(user_msg):
+        payload = upload_now_instruct_payload(profile)
+        save_profile(state.user_id, payload["profile"])
+        return payload
+    if looks_like_just_ask(user_msg) or looks_like_ready_after_upload(user_msg):
+        payload = weight_after_offer(profile)
+        save_profile(state.user_id, payload["profile"])
+        return payload
+
+    parsed = parse_weight_kg_from_message(user_msg)
+    if parsed is not None:
+        updated = weight_after_offer(profile)["profile"]
+        updated.weight_kg = parsed
+        updated.weight_declined = False
+        updated.awaiting_weight_for_first_plan = False
+        return _ask_next_diet_slot(updated, state)
+
+    if looks_like_weight_decline(user_msg):
+        updated = weight_after_offer(profile)["profile"]
+        updated.weight_declined = True
+        updated.weight_kg = None
+        updated.awaiting_weight_for_first_plan = False
+        return _ask_next_diet_slot(updated, state)
+
+    # Ambiguous — do not silently extract profile slots; re-present the offer.
+    aside = _brief_aside(user_msg)
+    payload = ambiguous_reoffer_payload(profile, aside=aside)
     save_profile(state.user_id, payload["profile"])
     return payload
 
 
 def _handle_diet_gate(state: CoachingTeamState, profile, user_msg: str) -> dict:
     """One diet-metrics question per turn — hard stop, no plan."""
+    if (
+        profile.awaiting_upload_before_weight
+        or state.proposals.get("ask_upload_before_weight")
+    ):
+        return _handle_upload_offer(state, profile, user_msg)
+
     slot = (
         state.proposals.get("ask_diet_slot")
         or profile.awaiting_diet_slot
@@ -115,7 +175,16 @@ def _handle_diet_gate(state: CoachingTeamState, profile, user_msg: str) -> dict:
     if state.proposals.get("ask_weight_only") or state.proposals.get("ask_diet_slot"):
         if looks_like_first_plan_request(user_msg) or looks_like_confirmation_yes(user_msg):
             slot = slot or next_diet_slot(profile) or "weight"
-            payload = diet_question_payload(profile, slot)
+            # Already inside the weight waiter (e.g. after Upload it now / prior ask)
+            # → do not re-show the upload offer.
+            if (
+                slot == "weight"
+                and not profile.offered_upload_before_weight_gate
+                and not profile.awaiting_weight_for_first_plan
+            ):
+                payload = open_first_diet_slot(profile, state.user_id or "", slot)
+            else:
+                payload = diet_question_payload(profile, slot)
             save_profile(state.user_id, payload["profile"])
             return payload
 
@@ -133,10 +202,20 @@ def _handle_diet_gate(state: CoachingTeamState, profile, user_msg: str) -> dict:
             profile.weight_declined = True
             profile.weight_kg = None
         else:
+            # After "Upload it now", user may say ready / ask anything — open weight Q.
+            if looks_like_ready_after_upload(user_msg) or looks_like_just_ask(user_msg):
+                payload = diet_question_payload(profile, "weight")
+                save_profile(state.user_id, payload["profile"])
+                return payload
             ext = extract_profile_facts(user_msg, pending_slot=None)
             profile = apply_extraction(profile, ext)
             if profile.weight_kg is None and not profile.weight_declined:
-                q, chips = question_for_slot("weight")
+                # Don't parrot WEIGHT_QUESTION when they think we already have it.
+                if looks_like_weight_already_elsewhere(user_msg):
+                    q = WEIGHT_ACK_REASK
+                else:
+                    q, _ = question_for_slot("weight")
+                chips = ["Prefer not to say"]
                 profile.awaiting_weight_for_first_plan = True
                 save_profile(state.user_id, profile)
                 return {
@@ -229,10 +308,12 @@ def intake_node(state: CoachingTeamState) -> dict:
         user_msg = as_text((last or {}).get("content", ""))  # type: ignore[union-attr]
     profile = state.profile.model_copy(deep=True)
 
-    # --- Diet metrics gate (weight → target → height → activity) ---
+    # --- Diet metrics gate (upload offer → weight → target → height → activity) ---
     if (
-        profile.awaiting_weight_for_first_plan
+        profile.awaiting_upload_before_weight
+        or profile.awaiting_weight_for_first_plan
         or profile.awaiting_diet_slot
+        or state.proposals.get("ask_upload_before_weight")
         or state.proposals.get("ask_weight_only")
         or state.proposals.get("ask_diet_slot")
     ):
@@ -250,8 +331,7 @@ def intake_node(state: CoachingTeamState) -> dict:
             if needs_diet_gate_before_first_plan(
                 profile, week_plan=state.week_plan, saved_plan=saved
             ):
-                slot = next_diet_slot(profile) or "weight"
-                payload = diet_question_payload(profile, slot)
+                payload = open_first_diet_slot(profile, state.user_id or "")
                 save_profile(state.user_id, payload["profile"])
                 return payload
             return _handoff_first_plan(
@@ -311,7 +391,9 @@ def intake_node(state: CoachingTeamState) -> dict:
     save_profile(state.user_id, profile)
 
     if profile.onboarding_complete and not (
-        profile.awaiting_weight_for_first_plan or profile.awaiting_diet_slot
+        profile.awaiting_weight_for_first_plan
+        or profile.awaiting_diet_slot
+        or profile.awaiting_upload_before_weight
     ):
         save_profile(state.user_id, profile)
         return {

@@ -4,7 +4,13 @@ from typing import Any
 
 from app.graph.runtime import thread_config, user_id_from_thread
 from app.graph.state import CoachingTeamState, WeekPlan
-from app.memory.store import get_adherence_stats, get_profile, get_saved_week_plan, save_week_plan
+from app.memory.store import (
+    get_adherence_stats,
+    get_profile,
+    get_saved_week_plan,
+    get_week_workout_logs,
+    save_week_plan,
+)
 from app.memory.user_context import set_current_user_id
 
 logger = logging.getLogger("steadyfit.plan")
@@ -85,10 +91,12 @@ def plan_snapshot(graph, thread_id: str, user_id: str) -> dict:
     profile_data["injuries"] = profile.injuries
     profile_data["food_preferences"] = profile.food_preferences
     profile_data["workout_preferences"] = profile.workout_preferences
+    week_start = week_plan.week_start if week_plan else None
     return {
         "thread_id": thread_id,
         "user_id": user_id,
         "profile": profile_data,
         "week_plan": week_plan.model_dump() if week_plan else None,
         "adherence": get_adherence_stats(user_id),
+        "workout_logs": get_week_workout_logs(user_id, week_start),
     }

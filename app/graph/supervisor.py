@@ -11,10 +11,9 @@ from app.graph.intake import looks_like_profile_change_request, needs_intake
 from app.graph.macros import PROVISIONAL_MACRO_INSTRUCTIONS, macros_provisional
 from app.graph.state import CoachingTeamState
 from app.graph.diet_gate import (
-    diet_question_payload,
     needs_diet_gate_before_first_plan,
-    next_diet_slot,
 )
+from app.graph.upload_offer import open_first_diet_slot
 from app.graph.weight_gate import looks_like_first_plan_request
 from app.graph.micro_workout import (
     looks_like_quick_10_done,
@@ -105,9 +104,9 @@ def coach_node(state: CoachingTeamState) -> dict:
         user_msg = as_text(state.messages[-1].content)
 
     # Quick-10 Done / replace-vs-extra — always schedule fast-path (no intake gate).
-    awaiting_q10 = bool(state.proposals.get("awaiting_quick_10_choice"))
-    micro_open = bool(state.proposals.get("micro_session"))
-    if looks_like_quick_10_replace(user_msg) and awaiting_q10:
+    # Replace/extra match on phrase alone so free-text ("log it separately") never
+    # falls through to intake/LLM after the Done conflict prompt.
+    if looks_like_quick_10_replace(user_msg):
         return {
             "intent": "schedule",
             "coaching_team_rounds": rounds,
@@ -118,7 +117,7 @@ def coach_node(state: CoachingTeamState) -> dict:
             },
             **critique_reset,
         }
-    if looks_like_quick_10_extra(user_msg) and awaiting_q10:
+    if looks_like_quick_10_extra(user_msg):
         return {
             "intent": "schedule",
             "coaching_team_rounds": rounds,
@@ -129,7 +128,9 @@ def coach_node(state: CoachingTeamState) -> dict:
             },
             **critique_reset,
         }
-    if looks_like_quick_10_done(user_msg) and micro_open:
+    awaiting_q10 = bool(state.proposals.get("awaiting_quick_10_choice"))
+    micro_open = bool(state.proposals.get("micro_session"))
+    if looks_like_quick_10_done(user_msg) and (micro_open or awaiting_q10):
         return {
             "intent": "schedule",
             "coaching_team_rounds": rounds,
@@ -152,8 +153,12 @@ def coach_node(state: CoachingTeamState) -> dict:
             **critique_reset,
         }
 
-    # Diet-metrics gate pending — stay in intake (no scheduler).
-    if state.profile.awaiting_weight_for_first_plan or state.profile.awaiting_diet_slot:
+    # Diet-metrics / upload-offer gate pending — stay in intake (no scheduler).
+    if (
+        state.profile.awaiting_weight_for_first_plan
+        or state.profile.awaiting_diet_slot
+        or state.profile.awaiting_upload_before_weight
+    ):
         return {
             "intent": "intake",
             "coaching_team_rounds": rounds,
@@ -215,8 +220,7 @@ def coach_node(state: CoachingTeamState) -> dict:
         if needs_diet_gate_before_first_plan(
             state.profile, week_plan=state.week_plan, saved_plan=saved
         ):
-            slot = next_diet_slot(state.profile) or "weight"
-            payload = diet_question_payload(state.profile, slot)
+            payload = open_first_diet_slot(state.profile, state.user_id or "")
             save_profile(state.user_id, payload["profile"])
             return {
                 "profile": payload["profile"],
@@ -260,8 +264,7 @@ def coach_node(state: CoachingTeamState) -> dict:
         if needs_diet_gate_before_first_plan(
             state.profile, week_plan=state.week_plan, saved_plan=saved
         ):
-            slot = next_diet_slot(state.profile) or "weight"
-            payload = diet_question_payload(state.profile, slot)
+            payload = open_first_diet_slot(state.profile, state.user_id or "")
             save_profile(state.user_id, payload["profile"])
             return {
                 "profile": payload["profile"],

@@ -15,8 +15,8 @@ from app.memory.store import get_saved_week_plan, log_workout, save_week_plan
 
 TEN_MINUTE_CHIP = "I have 10 minutes"
 DONE_CHIP = "done"
-REPLACE_CHIP = "Replace today's session"
-EXTRA_CHIP = "Log as extra"
+REPLACE_CHIP = "Count as today's session"
+EXTRA_CHIP = "Log it separately"
 QUICK_SOURCE = "quick_10min"
 QUICK_FOCUS = "10-min quick session"
 
@@ -59,13 +59,36 @@ def looks_like_quick_10_done(text: str) -> bool:
 
 def looks_like_quick_10_replace(text: str) -> bool:
     t = (text or "").strip().lower()
-    return t == REPLACE_CHIP.lower() or t.startswith("replace today")
+    if not t:
+        return False
+    if t == REPLACE_CHIP.lower():
+        return True
+    if t.startswith("replace today") or t == "replace":
+        return True
+    if "count as today" in t or "count this as today" in t:
+        return True
+    if t in {"today's session", "todays session", "as today's session"}:
+        return True
+    return False
 
 
 def looks_like_quick_10_extra(text: str) -> bool:
     t = (text or "").strip().lower()
-    return t == EXTRA_CHIP.lower() or t in {"log as extra", "extra", "keep both"}
-
+    if not t:
+        return False
+    if t == EXTRA_CHIP.lower():
+        return True
+    if t in {"log as extra", "extra", "keep both", "bonus"}:
+        return True
+    if "log it separately" in t or "log separately" in t:
+        return True
+    if "in addition" in t:
+        return True
+    if "keep today" in t and "planned" in t:
+        return True
+    if "separately" in t and ("log" in t or "keep" in t):
+        return True
+    return False
 
 def _modes(profile: UserProfile) -> set[str]:
     return {m.strip().lower() for m in (profile.preferred_workout_modes or []) if m}

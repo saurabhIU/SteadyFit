@@ -119,11 +119,21 @@ export type AdherenceStats = {
   streak_weeks: number;
 };
 
+export type WorkoutLogEntry = {
+  date: string;
+  focus: string;
+  status: string;
+  source?: string | null;
+  id?: number;
+};
+
 export type PlanResponse = {
   thread_id: string;
   profile: UserProfile;
   week_plan: WeekPlan | null;
   adherence: AdherenceStats;
+  /** Logged sessions this week (includes quick_10min bonus entries). */
+  workout_logs?: WorkoutLogEntry[];
 };
 
 export type FoodLogMeal = {

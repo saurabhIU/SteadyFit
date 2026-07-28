@@ -6,8 +6,8 @@ import { ChevronDown, ChevronRight } from "lucide-react";
 import { ApiError, fetchPlan, fetchTodayFoodLog } from "@/lib/api";
 import { PLAN_UPDATED } from "@/lib/plan-events";
 import { threadStorageKey, useProfile } from "@/lib/profile";
-import type { FoodLogMeal, PlanResponse, TodayFoodLogResponse, WorkoutDay } from "@/lib/types";
-import { dayOfMonthLabel, formatWeekRange } from "@/lib/plan-dates";
+import type { FoodLogMeal, PlanResponse, TodayFoodLogResponse, WorkoutDay, WorkoutLogEntry } from "@/lib/types";
+import { dayOfMonthLabel, formatWeekRange, parseWeekStart } from "@/lib/plan-dates";
 import { cn } from "@/lib/utils";
 
 const DAY_ABBR: Record<string, string> = {
@@ -19,6 +19,47 @@ const DAY_ABBR: Record<string, string> = {
   Saturday: "Sat",
   Sunday: "Sun",
 };
+
+function formatLogDate(iso: string): string {
+  const d = parseWeekStart(iso) ?? new Date(`${iso}T12:00:00`);
+  if (Number.isNaN(d.getTime())) return iso;
+  return d.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" });
+}
+
+function BonusSessionsSection({ logs }: { logs: WorkoutLogEntry[] }) {
+  const bonus = logs.filter(
+    (l) => l.source === "quick_10min" || (l.focus || "").toLowerCase().includes("10-min"),
+  );
+  if (bonus.length === 0) return null;
+
+  return (
+    <section className="space-y-3" aria-labelledby="bonus-sessions-heading">
+      <h3 id="bonus-sessions-heading" className="text-lg font-semibold text-navy-text">
+        Quick sessions
+      </h3>
+      <ul className="space-y-2">
+        {bonus.map((log) => (
+          <li
+            key={`${log.id ?? log.date}-${log.focus}`}
+            className="flex items-center gap-3 rounded-2xl border border-beige-border bg-beige px-4 py-3"
+          >
+            <span className="size-2.5 shrink-0 rounded-full bg-sage" aria-hidden />
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-sm font-medium text-card-text">{log.focus}</p>
+              <p className="font-mono text-xs text-card-text/55">
+                {formatLogDate(log.date)}
+                {log.source === "quick_10min" ? " · quick 10" : ""}
+              </p>
+            </div>
+            <span className="shrink-0 font-mono text-[11px] uppercase text-sage">
+              {log.status}
+            </span>
+          </li>
+        ))}
+      </ul>
+    </section>
+  );
+}
 
 function sessionStats(days: WorkoutDay[], target: number) {
   const done = days.filter((d) => d.status === "done").length;
@@ -359,6 +400,8 @@ export function PlanView() {
           </Link>
         </div>
       )}
+
+      <BonusSessionsSection logs={data.workout_logs ?? []} />
 
       <TodaysMealsSection food={foodLog} />
 

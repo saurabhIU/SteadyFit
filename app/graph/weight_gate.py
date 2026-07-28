@@ -13,11 +13,31 @@ WEIGHT_QUESTION = (
     "Or tap Prefer not to say and I'll use starting estimates."
 )
 
+# When the user thinks weight is already elsewhere (upload/doc) — ack, then ask
+# directly. Does NOT retrieve or extract from documents.
+WEIGHT_ACK_REASK = (
+    "Got it — I've noted that. For your weight specifically, I'll need you to "
+    "tell me directly so I can set accurate targets. What is it?"
+)
+
 WEIGHT_DECLINE_RE = re.compile(
     r"(?i)\b("
     r"prefer not to say|rather not say|skip(?:\s+it)?|no thanks|"
     r"don'?t want to (?:say|share)|not sharing|pass|"
     r"none of your business|decline"
+    r")\b"
+)
+
+# Cheap cue that the user believes the answer is already available elsewhere.
+_ALREADY_ELSEWHERE_RE = re.compile(
+    r"(?i)\b("
+    r"upload(?:ed)?|document|\bdocs?\b|\bfile\b|"
+    r"you should know|already (?:told|gave|shared|said|provided)|"
+    r"i already|"
+    r"it'?s in (?:my |the )?(?:doc|document|upload|file)|"
+    r"check (?:my |the )?(?:doc|document|upload|file)|"
+    r"from (?:my |the )?(?:doc|document|upload|file)|"
+    r"in (?:my |the )?(?:doc|document|upload|file)"
     r")\b"
 )
 
@@ -50,6 +70,14 @@ def needs_weight_before_first_plan(
 
 def looks_like_weight_decline(message: str) -> bool:
     return bool(WEIGHT_DECLINE_RE.search(message or ""))
+
+
+def looks_like_weight_already_elsewhere(message: str) -> bool:
+    """True when the user implies weight is already in a doc/upload/prior answer.
+
+    Heuristic only — never triggers document retrieval or field extraction.
+    """
+    return bool(_ALREADY_ELSEWHERE_RE.search(message or ""))
 
 
 def looks_like_first_plan_request(message: str) -> bool:

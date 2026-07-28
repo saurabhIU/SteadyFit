@@ -35,16 +35,39 @@ const WELCOME: ChatMessage = {
 export const TEN_MINUTE_CHIP = "I have 10 minutes";
 /** Must match backend DONE_CHIP / REPLACE_CHIP / EXTRA_CHIP. */
 const DONE_CHIP = "done";
-const REPLACE_CHIP = "Replace today's session";
-const EXTRA_CHIP = "Log as extra";
+const REPLACE_CHIP = "Count as today's session";
+const EXTRA_CHIP = "Log it separately";
 const PENDING_MICRO_KEY = "steadyfit:pending_micro_10";
 
 function quickWorkoutActionForChip(
   option: string,
 ): "done" | "replace" | "extra" | null {
-  if (option === DONE_CHIP) return "done";
-  if (option === REPLACE_CHIP) return "replace";
-  if (option === EXTRA_CHIP) return "extra";
+  const t = option.trim().toLowerCase();
+  if (!t) return null;
+  if (option === DONE_CHIP || t === "done" || /^(finished|all done)\.?$/.test(t)) {
+    return "done";
+  }
+  if (
+    option === REPLACE_CHIP ||
+    t === REPLACE_CHIP.toLowerCase() ||
+    t.startsWith("replace today") ||
+    t.includes("count as today") ||
+    t.includes("count this as today")
+  ) {
+    return "replace";
+  }
+  if (
+    option === EXTRA_CHIP ||
+    t === EXTRA_CHIP.toLowerCase() ||
+    t === "log as extra" ||
+    t === "extra" ||
+    t.includes("log it separately") ||
+    t.includes("log separately") ||
+    (t.includes("separately") && (t.includes("log") || t.includes("keep"))) ||
+    t.includes("in addition")
+  ) {
+    return "extra";
+  }
   return null;
 }
 
@@ -129,6 +152,47 @@ export function ChatView() {
 
   const submitMessage = useCallback(
     async (text: string, image?: PendingImage | null) => {
+      // Free-text replace/extra must hit the dedicated path (not intake/LLM).
+      // Bare "done" stays chip-only via handleChip to avoid mid-intake collisions.
+      const quickAction = quickWorkoutActionForChip(text);
+      if (!image && (quickAction === "replace" || quickAction === "extra")) {
+        if (loading || restoring || pendingApproval) return;
+        setError(null);
+        setLoading(true);
+        const userMsg: ChatMessage = {
+          id: crypto.randomUUID(),
+          role: "user",
+          content: text,
+        };
+        setMessages((prev) => [...markQuickRepliesAnswered(prev), userMsg]);
+        try {
+          const data = await completeQuickWorkout(quickAction, threadId);
+          setThreadId(data.thread_id);
+          sessionStorage.setItem(threadStorageKey(userId), data.thread_id);
+          const chips = data.quick_replies ?? [];
+          setMessages((prev) => [
+            ...prev,
+            {
+              id: crypto.randomUUID(),
+              role: "assistant",
+              content: data.reply,
+              quickReplies: chips.length ? chips : undefined,
+            },
+          ]);
+          setPendingApproval(null);
+          notifyPlanUpdated();
+        } catch (err) {
+          const message =
+            err instanceof ApiError
+              ? `API error (${err.status}): ${err.message}`
+              : "Oops something went wrong, Saurabh must be fixing it. Try again in a min";
+          setError(message);
+        } finally {
+          setLoading(false);
+        }
+        return;
+      }
+
       setError(null);
       setLoading(true);
       const hasImage = Boolean(image?.base64);
@@ -176,7 +240,7 @@ export function ChatView() {
         setLookingAtMeal(false);
       }
     },
-    [threadId, userId],
+    [threadId, userId, loading, restoring, pendingApproval],
   );
 
   async function handleSubmit(e?: React.FormEvent) {

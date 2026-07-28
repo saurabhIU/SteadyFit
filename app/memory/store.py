@@ -195,15 +195,36 @@ def log_weight(user_id: str, date_str: str, kg: float):
 
 def get_workouts_between(user_id: str, start: date, end: date) -> list[dict]:
     with _conn() as c:
+        c.execute("ALTER TABLE workout_log ADD COLUMN IF NOT EXISTS source TEXT")
         rows = c.execute(
             """
-            SELECT date::text AS date, focus, status FROM workout_log
+            SELECT date::text AS date, focus, status, source, id
+            FROM workout_log
             WHERE user_id = %s AND date >= %s AND date < %s
-            ORDER BY date
+            ORDER BY date ASC, id ASC
             """,
             (user_id, start.isoformat(), end.isoformat()),
         ).fetchall()
-    return [{"date": r["date"][:10], "focus": r["focus"], "status": r["status"]} for r in rows]
+    return [
+        {
+            "date": r["date"][:10],
+            "focus": r["focus"],
+            "status": r["status"],
+            "source": r.get("source"),
+            "id": r["id"],
+        }
+        for r in rows
+    ]
+
+
+def get_week_workout_logs(user_id: str, week_start: str | None = None) -> list[dict]:
+    """Workout log rows for the Mon–Sun week containing week_start (or this week)."""
+    if week_start:
+        start = date.fromisoformat(week_start[:10])
+    else:
+        start = _week_start(date.today())
+    end = start + timedelta(days=7)
+    return get_workouts_between(user_id, start, end)
 
 
 def list_workout_week_starts(user_id: str) -> list[date]:
@@ -339,6 +360,10 @@ def get_profile(user_id: str) -> UserProfile:
         awaiting_weight_for_first_plan=bool(row.get("awaiting_weight_for_first_plan")),
         awaiting_diet_slot=row.get("awaiting_diet_slot"),
         shown_upload_hint=bool(row.get("shown_upload_hint")),
+        offered_upload_before_weight_gate=bool(
+            row.get("offered_upload_before_weight_gate")
+        ),
+        awaiting_upload_before_weight=bool(row.get("awaiting_upload_before_weight")),
     )
 
 
@@ -354,10 +379,12 @@ def save_profile(user_id: str, profile: UserProfile):
                 preferred_workout_modes, food_preference,
                 sessions_per_week, constraints, constraints_asked, onboarding_complete,
                 awaiting_onboarding_confirm, awaiting_weight_for_first_plan,
-                awaiting_diet_slot, shown_upload_hint, updated_at
+                awaiting_diet_slot, shown_upload_hint,
+                offered_upload_before_weight_gate, awaiting_upload_before_weight,
+                updated_at
             ) VALUES (
                 %s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s::jsonb,%s,%s,%s::jsonb,
-                %s,%s,%s,%s,%s,%s, now()
+                %s,%s,%s,%s,%s,%s,%s,%s, now()
             )
             ON CONFLICT (user_id) DO UPDATE SET
                 name = EXCLUDED.name,
@@ -384,6 +411,8 @@ def save_profile(user_id: str, profile: UserProfile):
                 awaiting_weight_for_first_plan = EXCLUDED.awaiting_weight_for_first_plan,
                 awaiting_diet_slot = EXCLUDED.awaiting_diet_slot,
                 shown_upload_hint = EXCLUDED.shown_upload_hint,
+                offered_upload_before_weight_gate = EXCLUDED.offered_upload_before_weight_gate,
+                awaiting_upload_before_weight = EXCLUDED.awaiting_upload_before_weight,
                 updated_at = now()
             """,
             (
@@ -412,6 +441,8 @@ def save_profile(user_id: str, profile: UserProfile):
                 profile.awaiting_weight_for_first_plan,
                 profile.awaiting_diet_slot,
                 profile.shown_upload_hint,
+                profile.offered_upload_before_weight_gate,
+                profile.awaiting_upload_before_weight,
             ),
         )
         c.execute(

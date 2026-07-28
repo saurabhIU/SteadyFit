@@ -68,7 +68,7 @@ def test_intake_ask_weight_only_does_not_handoff_plan():
     assert "weight" in out["messages"][0]["content"].lower()
 
 
-def test_intake_weight_answer_handoffs_to_first_plan():
+def test_intake_weight_answer_advances_to_target_weight():
     from unittest.mock import patch
 
     from app.graph.intake import ProfileExtraction
@@ -87,15 +87,17 @@ def test_intake_weight_answer_handoffs_to_first_plan():
         patch("app.graph.agents.intake.save_profile"),
     ):
         out = intake_node(state)
-    assert out["intent"] == "first_plan"
+    assert out["intent"] == "intake"
     assert out["profile"].weight_kg == 75.0
     assert out["profile"].awaiting_weight_for_first_plan is False
+    assert out["proposals"].get("ask_diet_slot") == "target_weight"
+    assert "target weight" in out["messages"][0]["content"].lower()
     assert route_from_intake(
         CoachingTeamState(intent=out["intent"], proposals=out["proposals"])
-    ) == "scheduler"
+    ) == "end"
 
 
-def test_intake_decline_handoffs_with_provisional_ok():
+def test_intake_decline_advances_to_target_weight():
     from unittest.mock import patch
 
     from app.graph.intake import ProfileExtraction
@@ -115,11 +117,96 @@ def test_intake_decline_handoffs_with_provisional_ok():
         patch("app.graph.agents.intake.save_profile"),
     ):
         out = intake_node(state)
-    assert out["intent"] == "first_plan"
+    assert out["intent"] == "intake"
     assert out["profile"].weight_declined is True
-    assert out["proposals"].get("macros_provisional_ok") is True
+    assert out["proposals"].get("ask_diet_slot") == "target_weight"
+    assert route_from_intake(
+        CoachingTeamState(intent=out["intent"], proposals=out["proposals"])
+    ) == "end"
 
 
 def test_awaiting_weight_skips_scope_gate():
     profile = _fresh_profile(awaiting_weight_for_first_plan=True)
     assert should_skip_scope_gate(profile=profile, pending_approval=None) is True
+
+
+def test_weight_already_elsewhere_gets_ack_not_verbatim_repeat():
+    from unittest.mock import patch
+
+    from app.graph.intake import ProfileExtraction
+    from app.graph.weight_gate import WEIGHT_ACK_REASK, WEIGHT_QUESTION
+
+    state = CoachingTeamState(
+        user_id="eval-weight-ack",
+        profile=_fresh_profile(awaiting_weight_for_first_plan=True),
+        messages=[{
+            "role": "user",
+            "content": "I uploaded my document, you should know my weight",
+        }],
+        proposals={"ask_weight_only": True},
+    )
+    with (
+        patch(
+            "app.graph.agents.intake.extract_profile_facts",
+            return_value=ProfileExtraction(),
+        ),
+        patch("app.graph.agents.intake.save_profile"),
+    ):
+        out = intake_node(state)
+    reply = out["messages"][0]["content"]
+    assert reply == WEIGHT_ACK_REASK
+    assert reply != WEIGHT_QUESTION
+    assert "tell me directly" in reply.lower()
+    assert out["intent"] == "intake"
+    assert out["profile"].awaiting_weight_for_first_plan is True
+    assert out["profile"].weight_kg is None
+
+
+def test_weight_number_unaffected_by_elsewhere_heuristic():
+    from unittest.mock import patch
+
+    from app.graph.intake import ProfileExtraction
+    from app.graph.weight_gate import WEIGHT_ACK_REASK
+
+    state = CoachingTeamState(
+        user_id="eval-weight-num",
+        profile=_fresh_profile(awaiting_weight_for_first_plan=True),
+        messages=[{"role": "user", "content": "75 kg"}],
+        proposals={"ask_weight_only": True},
+    )
+    with (
+        patch(
+            "app.graph.agents.intake.extract_profile_facts",
+            return_value=ProfileExtraction(),
+        ),
+        patch("app.graph.agents.intake.save_profile"),
+    ):
+        out = intake_node(state)
+    assert out["profile"].weight_kg == 75.0
+    assert WEIGHT_ACK_REASK not in out["messages"][0]["content"]
+    assert out["proposals"].get("ask_diet_slot") == "target_weight"
+
+
+def test_weight_decline_unaffected_by_elsewhere_heuristic():
+    from unittest.mock import patch
+
+    from app.graph.intake import ProfileExtraction
+    from app.graph.weight_gate import WEIGHT_ACK_REASK
+
+    state = CoachingTeamState(
+        user_id="eval-weight-decline",
+        profile=_fresh_profile(awaiting_weight_for_first_plan=True),
+        messages=[{"role": "user", "content": "prefer not to say"}],
+        proposals={"ask_weight_only": True},
+    )
+    with (
+        patch(
+            "app.graph.agents.intake.extract_profile_facts",
+            return_value=ProfileExtraction(weight_declined=True),
+        ),
+        patch("app.graph.agents.intake.save_profile"),
+    ):
+        out = intake_node(state)
+    assert out["profile"].weight_declined is True
+    assert WEIGHT_ACK_REASK not in out["messages"][0]["content"]
+    assert out["proposals"].get("ask_diet_slot") == "target_weight"

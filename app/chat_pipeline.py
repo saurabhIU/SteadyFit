@@ -75,6 +75,8 @@ def should_skip_scope_gate(
         return True
     if getattr(profile, "awaiting_diet_slot", None):
         return True
+    if getattr(profile, "awaiting_upload_before_weight", False):
+        return True
     if history is not None and is_first_user_turn(history):
         return True
     return False

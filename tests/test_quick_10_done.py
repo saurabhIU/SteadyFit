@@ -17,6 +17,8 @@ from app.graph.micro_workout import (
     build_ten_minute_reply,
     handle_quick_10_choice,
     handle_quick_10_done,
+    looks_like_quick_10_extra,
+    looks_like_quick_10_replace,
     resolve_today_plan_context,
 )
 from app.graph.plan_utils import current_week_monday, date_for_weekday
@@ -62,6 +64,21 @@ def _plan_for_today(
                 WorkoutDay(day=name, focus=f"{name} work", duration_min=40, status="planned")
             )
     return WeekPlan(week_start=monday.isoformat(), days=days, calorie_target=2100, protein_target_g=140)
+
+
+def test_choice_phrase_matching():
+    """Free-text must hit dedicated replace/extra handlers — not the LLM."""
+    assert looks_like_quick_10_extra("log it separately")
+    assert looks_like_quick_10_extra("Log it separately")
+    assert looks_like_quick_10_extra("log separately")
+    assert looks_like_quick_10_extra("keep both")
+    assert looks_like_quick_10_extra("in addition to current workout")
+    assert not looks_like_quick_10_extra("I have 10 minutes")
+
+    assert looks_like_quick_10_replace("Count as today's session")
+    assert looks_like_quick_10_replace("count this as today's session")
+    assert looks_like_quick_10_replace("Replace today's session")
+    assert not looks_like_quick_10_replace("log it separately")
 
 
 def test_resolve_cases_same_week_start_source():
@@ -153,7 +170,7 @@ def test_pending_prompt_and_both_chips(uid):
     assert "Count this as today's session" in done.reply
     assert any(r["source"] == QUICK_SOURCE for r in store.get_workouts_on(uid, today.isoformat()))
 
-    # Extra keeps day planned
+    # Extra keeps day planned; quick log stays visible via workout_log
     extra = handle_quick_10_choice(
         user_id=uid,
         profile=profile,
@@ -162,6 +179,7 @@ def test_pending_prompt_and_both_chips(uid):
         as_of=today,
     )
     assert extra.awaiting_choice is False
+    assert "bonus" in extra.reply.lower()
     loaded = store.get_saved_week_plan(uid)
     assert loaded is not None
     today_day = next(
@@ -170,6 +188,8 @@ def test_pending_prompt_and_both_chips(uid):
         if date_for_weekday(loaded.week_start, d.day) == today
     )
     assert today_day.status == "planned"
+    week_logs = store.get_week_workout_logs(uid, loaded.week_start)
+    assert any(r["source"] == QUICK_SOURCE for r in week_logs)
 
     # Fresh pending plan for replace path
     plan2 = _plan_for_today(today=today, status="planned")

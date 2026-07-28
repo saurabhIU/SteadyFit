@@ -160,6 +160,14 @@ STATEMENTS = [
       ADD COLUMN IF NOT EXISTS shown_upload_hint BOOLEAN NOT NULL DEFAULT FALSE
     """,
     """
+    ALTER TABLE user_profiles
+      ADD COLUMN IF NOT EXISTS offered_upload_before_weight_gate BOOLEAN NOT NULL DEFAULT FALSE
+    """,
+    """
+    ALTER TABLE user_profiles
+      ADD COLUMN IF NOT EXISTS awaiting_upload_before_weight BOOLEAN NOT NULL DEFAULT FALSE
+    """,
+    """
     CREATE INDEX IF NOT EXISTS user_profiles_ephemeral_expires_idx
       ON user_profiles (expires_at)
       WHERE is_ephemeral = true

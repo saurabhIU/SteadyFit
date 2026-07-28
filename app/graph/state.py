@@ -64,8 +64,12 @@ class UserProfile(BaseModel):
     onboarding_complete: bool = False
     # Required slots filled; awaiting "looks good" before first WeekPlan.
     awaiting_onboarding_confirm: bool = False
-    # One-time soft invite to upload personal docs (after onboarding → first plan).
+    # Retired: post-handoff soft hint (kept for DB back-compat; no longer written).
     shown_upload_hint: bool = False
+    # One-time upload choice before the diet weight-gate chain.
+    offered_upload_before_weight_gate: bool = False
+    # True while the upload-choice chips are live (coach routes to intake).
+    awaiting_upload_before_weight: bool = False
 
     # Backward-compatible aliases used by older agents / UI.
     @property

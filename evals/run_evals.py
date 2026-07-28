@@ -191,6 +191,9 @@ def run_local(
                 "preferred_workout_modes": out.get("preferred_workout_modes"),
                 "food_preference": out.get("food_preference"),
                 "age": out.get("age"),
+                "intent": out.get("intent"),
+                "onboarding_complete": out.get("onboarding_complete"),
+                "goal": out.get("goal"),
             })
             if struct_err:
                 print(f"    ! structural: {struct_err}", flush=True)

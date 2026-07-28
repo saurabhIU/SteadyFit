@@ -62,7 +62,7 @@ def test_should_critique_schedule_and_first_plan():
 
 
 def test_should_critique_skips_topic_interrupts():
-    """Pain/allergy/pregnancy acknowledgments must not enter critique→revise."""
+    """Pain/allergy/pregnancy/cardiometabolic acknowledgments must not enter critique→revise."""
     from langchain_core.messages import HumanMessage
 
     pain = CoachingTeamState(
@@ -80,11 +80,24 @@ def test_should_critique_skips_topic_interrupts():
         messages=[HumanMessage(content="wait, is that safe during pregnancy?")],
         proposals={"knowledge": "pregnancy safety guidance"},
     )
+    diabetes = CoachingTeamState(
+        intent="knowledge",
+        messages=[HumanMessage(content="I have type 2 diabetes, is this workout okay?")],
+        proposals={"knowledge": "diabetes KB guidance"},
+    )
+    hypertension = CoachingTeamState(
+        intent="knowledge",
+        messages=[HumanMessage(content="I have high blood pressure")],
+        proposals={"knowledge": "hypertension KB guidance"},
+    )
     assert not should_critique(pain)
     assert not should_critique(allergy)
     assert not should_critique(pregnancy)
+    assert not should_critique(diabetes)
+    assert not should_critique(hypertension)
     assert route_after_specialist(pain) == "coaching_team"
     assert route_after_specialist(allergy) == "coaching_team"
+    assert route_after_specialist(diabetes) == "coaching_team"
 
 
 def test_should_critique_skips_knowledge_and_adherence():

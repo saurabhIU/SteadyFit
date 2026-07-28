@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
-import { IBM_Plex_Mono, Work_Sans } from "next/font/google";
+import { Fraunces, IBM_Plex_Mono, Work_Sans } from "next/font/google";
 import { Header } from "@/components/layout/Header";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { ProfileProvider } from "@/lib/profile";
@@ -10,6 +10,12 @@ import "./globals.css";
 const workSans = Work_Sans({
   subsets: ["latin"],
   variable: "--font-ui",
+  display: "swap",
+});
+
+const fraunces = Fraunces({
+  subsets: ["latin"],
+  variable: "--font-fraunces",
   display: "swap",
 });
 
@@ -33,7 +39,13 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={cn("h-full", workSans.variable, plexMono.variable, "font-sans")}
+      className={cn(
+        "h-full",
+        workSans.variable,
+        fraunces.variable,
+        plexMono.variable,
+        "font-sans",
+      )}
     >
       <body className="flex min-h-dvh flex-col bg-navy text-navy-text">
         <TooltipProvider>

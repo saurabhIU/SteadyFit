@@ -198,6 +198,8 @@ def test_topic_interrupt_pain_not_continuation():
     assert not looks_like_short_affirmation("actually my knee hurts")
     assert looks_like_topic_interrupt("also I think I'm allergic to dairy")
     assert looks_like_topic_interrupt("wait, is that safe during pregnancy?")
+    assert looks_like_topic_interrupt("I have type 2 diabetes, is this workout okay?")
+    assert looks_like_topic_interrupt("I have high blood pressure")
     assert not looks_like_topic_interrupt("yes please")
 
 
@@ -206,6 +208,36 @@ def test_topic_interrupt_messages_stay_in_scope():
         "actually my knee hurts",
         "also I think I'm allergic to dairy",
         "wait, is that safe during pregnancy?",
+        "I have type 2 diabetes, is this workout okay?",
+        "I have high blood pressure — any meal tips?",
     ):
         assert looks_like_fitness_query(msg), msg
         assert classify_scope(msg, prior_assistant="Want a 140g protein day?") == "in_scope", msg
+
+
+def test_cardiometabolic_safety_interrupt_triggers():
+    from app.security import (
+        cardiometabolic_doctor_line,
+        ensure_cardiometabolic_doctor_line,
+        looks_like_cardiometabolic_safety_interrupt,
+        looks_like_diabetes_safety_interrupt,
+        looks_like_hypertension_safety_interrupt,
+    )
+
+    assert looks_like_diabetes_safety_interrupt("I have type 2 diabetes, is this workout okay?")
+    assert looks_like_diabetes_safety_interrupt("worried about my blood sugar after lifting")
+    assert looks_like_hypertension_safety_interrupt("I have high blood pressure")
+    assert looks_like_hypertension_safety_interrupt("BP issues — can I still deadlift?")
+    assert looks_like_cardiometabolic_safety_interrupt("hypertension and training")
+    assert not looks_like_cardiometabolic_safety_interrupt("actually my knee hurts")
+    line = cardiometabolic_doctor_line("I have type 2 diabetes")
+    assert "doctor" in line.lower()
+    assert "diabetes" in line.lower()
+    assert "medical guidance" in line.lower()
+    once = ensure_cardiometabolic_doctor_line(
+        "Try walking after meals. Talk with your doctor first.",
+        "I have diabetes",
+    )
+    assert once.count("This isn't medical guidance") == 1
+    twice = ensure_cardiometabolic_doctor_line(once, "I have diabetes")
+    assert twice.count("This isn't medical guidance") == 1

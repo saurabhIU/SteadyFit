@@ -104,6 +104,31 @@ export async function sendApprove(
   return parseJson<ChatResponse>(res);
 }
 
+export type QuickWorkoutAction = "done" | "replace" | "extra";
+
+export type QuickWorkoutResponse = ChatResponse & {
+  logged?: boolean;
+  awaiting_choice?: boolean;
+  case?: string;
+  action?: QuickWorkoutAction;
+};
+
+/** Structured Done / replace / extra — bypasses /api/chat entirely. */
+export async function completeQuickWorkout(
+  action: QuickWorkoutAction = "done",
+  threadId?: string | null,
+): Promise<QuickWorkoutResponse> {
+  const res = await fetch(`${API_URL}/api/quick-workout/complete`, {
+    method: "POST",
+    headers: userHeaders({ "Content-Type": "application/json" }),
+    body: JSON.stringify({
+      action,
+      thread_id: threadId ?? undefined,
+    }),
+  });
+  return parseJson<QuickWorkoutResponse>(res);
+}
+
 export async function fetchChatHistory(
   threadId: string,
 ): Promise<ChatHistoryResponse> {
@@ -115,24 +140,32 @@ export async function fetchChatHistory(
   return parseJson<ChatHistoryResponse>(res);
 }
 
-export async function fetchPlan(threadId?: string | null): Promise<PlanResponse> {
+export async function fetchPlan(
+  threadId?: string | null,
+  opts?: { userId?: string },
+): Promise<PlanResponse> {
   const params = threadId ? `?thread_id=${encodeURIComponent(threadId)}` : "";
+  const headers = new Headers();
+  headers.set("X-User-Id", opts?.userId?.trim() || activeUserId);
   const res = await fetch(`${API_URL}/api/plan${params}`, {
     cache: "no-store",
-    headers: userHeaders(),
+    headers,
   });
   return parseJson<PlanResponse>(res);
 }
 
 export async function fetchTodayFoodLog(
   threadId?: string | null,
+  opts?: { userId?: string },
 ): Promise<TodayFoodLogResponse> {
   const params = new URLSearchParams();
   if (threadId) params.set("thread_id", threadId);
   const qs = params.toString();
+  const headers = new Headers();
+  headers.set("X-User-Id", opts?.userId?.trim() || activeUserId);
   const res = await fetch(`${API_URL}/api/food_log/today${qs ? `?${qs}` : ""}`, {
     cache: "no-store",
-    headers: userHeaders(),
+    headers,
   });
   return parseJson<TodayFoodLogResponse>(res);
 }

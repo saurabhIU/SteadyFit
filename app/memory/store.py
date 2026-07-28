@@ -138,13 +138,50 @@ def ensure_user(user_id: str, name: str | None = None) -> str:
     return create_user(name or user_id, user_id=user_id)
 
 
-def log_workout(user_id: str, date_str: str, focus: str, status: str):
+def log_workout(
+    user_id: str,
+    date_str: str,
+    focus: str,
+    status: str,
+    *,
+    source: str | None = None,
+):
     with _conn() as c:
+        # Idempotent for DBs created before source column existed.
+        c.execute("ALTER TABLE workout_log ADD COLUMN IF NOT EXISTS source TEXT")
         c.execute(
-            "INSERT INTO workout_log(user_id, date, focus, status) VALUES (%s,%s,%s,%s)",
-            (user_id, date_str[:10], focus, status),
+            """
+            INSERT INTO workout_log(user_id, date, focus, status, source)
+            VALUES (%s,%s,%s,%s,%s)
+            """,
+            (user_id, date_str[:10], focus, status, source),
         )
         c.commit()
+
+
+def get_workouts_on(user_id: str, date_str: str) -> list[dict]:
+    """Workout log rows for a single calendar day (newest first)."""
+    with _conn() as c:
+        c.execute("ALTER TABLE workout_log ADD COLUMN IF NOT EXISTS source TEXT")
+        rows = c.execute(
+            """
+            SELECT date::text AS date, focus, status, source, id
+            FROM workout_log
+            WHERE user_id = %s AND date = %s
+            ORDER BY id DESC
+            """,
+            (user_id, date_str[:10]),
+        ).fetchall()
+    return [
+        {
+            "date": r["date"][:10],
+            "focus": r["focus"],
+            "status": r["status"],
+            "source": r.get("source"),
+            "id": r["id"],
+        }
+        for r in rows
+    ]
 
 
 def log_weight(user_id: str, date_str: str, kg: float):
@@ -301,6 +338,7 @@ def get_profile(user_id: str) -> UserProfile:
         awaiting_onboarding_confirm=bool(row.get("awaiting_onboarding_confirm")),
         awaiting_weight_for_first_plan=bool(row.get("awaiting_weight_for_first_plan")),
         awaiting_diet_slot=row.get("awaiting_diet_slot"),
+        shown_upload_hint=bool(row.get("shown_upload_hint")),
     )
 
 
@@ -316,10 +354,10 @@ def save_profile(user_id: str, profile: UserProfile):
                 preferred_workout_modes, food_preference,
                 sessions_per_week, constraints, constraints_asked, onboarding_complete,
                 awaiting_onboarding_confirm, awaiting_weight_for_first_plan,
-                awaiting_diet_slot, updated_at
+                awaiting_diet_slot, shown_upload_hint, updated_at
             ) VALUES (
                 %s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s::jsonb,%s,%s,%s::jsonb,
-                %s,%s,%s,%s,%s, now()
+                %s,%s,%s,%s,%s,%s, now()
             )
             ON CONFLICT (user_id) DO UPDATE SET
                 name = EXCLUDED.name,
@@ -345,6 +383,7 @@ def save_profile(user_id: str, profile: UserProfile):
                 awaiting_onboarding_confirm = EXCLUDED.awaiting_onboarding_confirm,
                 awaiting_weight_for_first_plan = EXCLUDED.awaiting_weight_for_first_plan,
                 awaiting_diet_slot = EXCLUDED.awaiting_diet_slot,
+                shown_upload_hint = EXCLUDED.shown_upload_hint,
                 updated_at = now()
             """,
             (
@@ -372,6 +411,7 @@ def save_profile(user_id: str, profile: UserProfile):
                 profile.awaiting_onboarding_confirm,
                 profile.awaiting_weight_for_first_plan,
                 profile.awaiting_diet_slot,
+                profile.shown_upload_hint,
             ),
         )
         c.execute(
@@ -379,6 +419,24 @@ def save_profile(user_id: str, profile: UserProfile):
             (profile.name, user_id),
         )
         c.commit()
+
+
+def user_has_personal_docs(user_id: str) -> bool:
+    """True when the user has at least one uploaded personal document chunk."""
+    if not user_id:
+        return False
+    personal_types = ("personal", "program", "recipes", "reference", "knowledge")
+    with _conn() as c:
+        row = c.execute(
+            """
+            SELECT 1 AS ok
+            FROM documents
+            WHERE user_id = %s AND doc_type = ANY(%s)
+            LIMIT 1
+            """,
+            (user_id, list(personal_types)),
+        ).fetchone()
+    return bool(row)
 
 
 def get_saved_week_plan(user_id: str) -> WeekPlan | None:
@@ -608,11 +666,12 @@ def today_food_log_snapshot(
     calorie_target: int | None = None,
     protein_target_g: int | None = None,
     tz: str = "UTC",
+    week_start: str | None = None,
 ) -> dict[str, Any]:
     """Meals + totals + plan targets for the Plan page (display-only)."""
     meals = food_logs_for_day(user_id, tz=tz)
     totals = get_daily_totals(user_id, tz=tz)
-    planned = diet_meals_for_day(user_id, day=None, tz=tz)
+    planned = diet_meals_for_day(user_id, day=None, tz=tz, week_start=week_start)
     return {
         "meals": [
             {
@@ -711,11 +770,16 @@ def diet_meals_for_day(
     day: date | None = None,
     *,
     tz: str = "UTC",
+    week_start: str | None = None,
 ) -> list[dict[str, Any]]:
-    """Planned diet meals for a calendar day (by weekday abbr + current week_start)."""
+    """Planned diet meals for a calendar day (weekday abbr + week_start).
+
+    Prefer the caller's week_start (usually the saved WeekPlan.week_start) so
+    planned meals stay aligned with the approved plan week.
+    """
     day_resolved, _tz, _start, _end = _day_window(day, tz=tz)
     abbr = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"][day_resolved.weekday()]
-    week_start = _week_start(day_resolved).isoformat()
+    ws = (week_start or "").strip()[:10] or _week_start(day_resolved).isoformat()
     with _conn() as c:
         rows = c.execute(
             """
@@ -728,7 +792,7 @@ def diet_meals_for_day(
                 WHEN 'breakfast' THEN 1 WHEN 'lunch' THEN 2
                 WHEN 'dinner' THEN 3 WHEN 'snack' THEN 4 ELSE 5 END
             """,
-            (user_id, week_start, abbr),
+            (user_id, ws, abbr),
         ).fetchall()
     return [
         {

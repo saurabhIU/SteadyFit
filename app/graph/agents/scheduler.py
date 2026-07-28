@@ -1,6 +1,4 @@
 """Scheduler agent: life-aware weekly re-planning with KB + coaching memory."""
-from datetime import date
-
 from app.graph.citations import citations_from_texts, merge_citations
 from app.graph.critique import revision_block
 from app.graph.diet_plan import build_diet_week, diet_plan_contains_nonveg, diet_summary_lines
@@ -9,7 +7,14 @@ from app.graph.macros import (
     has_body_stats,
     macros_provisional,
 )
-from app.graph.plan_utils import parse_week_plan
+from app.graph.micro_workout import (
+    DONE_CHIP,
+    build_ten_minute_reply,
+    handle_quick_10_choice,
+    handle_quick_10_done,
+    looks_like_ten_minute_request,
+)
+from app.graph.plan_utils import current_week_start_iso, parse_week_plan
 from app.graph.state import CoachingTeamState
 from app.graph.tdee import compute_macro_targets
 from app.graph.tool_agent import run_tool_agent
@@ -58,13 +63,16 @@ matching goal + sessions_per_week + preferred modes, then adapt it.
 Write a short warm proposal, then end with a fenced JSON block for the updated plan:
 ```json
 {
-  "week_start": "2026-07-14",
+  "week_start": "YYYY-MM-DD",
   "days": [{"day": "Mon", "focus": "Full body — goblet squat (legs_002), push-up (chest_010)", "duration_min": 45, "status": "planned"}],
   "calorie_target": 2200,
   "protein_target_g": 150,
   "notes": "cite kb ids / memory tags used"
 }
 ```
+IMPORTANT: week_start will be overwritten in code to this calendar week's Monday —
+you may put any ISO date; do not invent a far-past or far-future week for display.
+
 When stating calorie_target / protein_target_g without profile weight_kg, treat them as
 starting estimates — put the provisional caveat INLINE next to any numbers you write
 in prose. Do NOT ask for weight in this proposal (weight was already declined or the
@@ -88,18 +96,85 @@ def _memory_query(state: CoachingTeamState, user_msg: str) -> str:
 
 
 def scheduler_node(state: CoachingTeamState) -> dict:
-    user_msg = as_text(state.messages[-1].content) if state.messages else ""
+    last = state.messages[-1] if state.messages else None
+    if last is None:
+        user_msg = ""
+    elif hasattr(last, "content"):
+        user_msg = as_text(last.content)
+    elif isinstance(last, dict):
+        user_msg = as_text(last.get("content", ""))
+    else:
+        user_msg = as_text(str(last))
+
+    # Quick-10 Done / replace / extra — before suggestion path.
+    choice = state.proposals.get("micro_done_choice")
+    if choice in {"replace", "extra"}:
+        result = handle_quick_10_choice(
+            user_id=state.user_id or "",
+            profile=state.profile,
+            week_plan=state.week_plan,
+            choice=choice,  # type: ignore[arg-type]
+        )
+        out: dict = {
+            "proposals": {
+                "scheduler": result.reply,
+                "micro_session_log": True,
+                "plan_changed": False,
+                "awaiting_quick_10_choice": False,
+                "quick_replies": result.quick_replies,
+            },
+            "retrieved_context": state.retrieved_context,
+            "citations": list(state.citations),
+        }
+        if result.week_plan is not None:
+            out["week_plan"] = result.week_plan
+        return out
+
+    if state.proposals.get("micro_done"):
+        result = handle_quick_10_done(
+            user_id=state.user_id or "",
+            profile=state.profile,
+            week_plan=state.week_plan,
+        )
+        return {
+            "proposals": {
+                "scheduler": result.reply,
+                "micro_session_log": True,
+                "plan_changed": False,
+                "awaiting_quick_10_choice": result.awaiting_choice,
+                "quick_replies": result.quick_replies,
+            },
+            "retrieved_context": state.retrieved_context,
+            "citations": list(state.citations),
+        }
+
+    # Instant 10-minute session — no LLM, no week-plan HITL.
+    if state.proposals.get("micro_session") or looks_like_ten_minute_request(user_msg):
+        reply = build_ten_minute_reply(state.profile)
+        return {
+            "proposals": {
+                **state.proposals,
+                "scheduler": reply,
+                "micro_session": True,
+                "plan_changed": False,
+            },
+            "retrieved_context": state.retrieved_context,
+            "citations": list(state.citations),
+        }
+
     first_plan = (
         state.intent == "first_plan"
         or state.proposals.get("intake_handoff") == "first_plan"
         or state.week_plan is None
     )
     modes = ", ".join(state.profile.preferred_workout_modes) or "gym"
+    week_start = current_week_start_iso()
     if first_plan:
         hint = (
             "FIRST week after onboarding. Match preferred_workout_modes and sessions_per_week. "
             f"Modes: {modes}. Retrieve a Volume 3 template scaffold, then adapt with kb_ids. "
-            "Do NOT invent travel/meetings — calendar is empty unless the user stated conflicts."
+            "Do NOT invent travel/meetings — calendar is empty unless the user stated conflicts. "
+            f"Use week_start={week_start} (this week's Monday) in the JSON."
         )
     elif looks_like_pain_injury_interrupt(user_msg):
         hint = (
@@ -113,6 +188,7 @@ def scheduler_node(state: CoachingTeamState) -> dict:
             "Call calendar_conflicts only as a check; if empty, schedule from the user's "
             "stated constraints only. Use exercise lookup/substitutions for constrained swaps."
         )
+
     macro_targets = compute_macro_targets(
         weight_kg=state.profile.weight_kg,
         height_cm=state.profile.height_cm,
@@ -163,6 +239,8 @@ def scheduler_node(state: CoachingTeamState) -> dict:
     # Only pause for HITL when we have a structured plan to save. Otherwise a
     # fresh user can "approve" prose and still land with an empty Plan tab.
     if parsed and parsed.days:
+        # Authoritative week_start = this calendar week's Monday (never LLM placeholder).
+        parsed.week_start = week_start
         # Override LLM macros with code-computed TDEE (daily-totals principle).
         parsed.calorie_target = macro_targets.calorie_target
         parsed.protein_target_g = macro_targets.protein_target_g
@@ -181,23 +259,29 @@ def scheduler_node(state: CoachingTeamState) -> dict:
             "formula": macro_targets.formula,
             "notes": macro_targets.notes,
         }
-        # KB-grounded diet week (structured — not conversational memory).
-        week_start = parsed.week_start or date.today().isoformat()
-        diet_meals = build_diet_week(state.profile, week_start=week_start)
+        diet_meals = build_diet_week(
+            state.profile,
+            week_start=week_start,
+            conversation_text=user_msg,
+        )
         # Preference safety: never ship non-veg to vegetarian/vegan profiles.
         pref = (state.profile.food_preference or "").lower()
         if pref in {"vegetarian", "vegan", "eggetarian"} and diet_plan_contains_nonveg(diet_meals):
+            safe_pref = "vegan" if pref == "vegan" else "vegetarian"
             diet_meals = build_diet_week(
-                state.profile.model_copy(update={"food_preference": "vegan"}),
+                state.profile.model_copy(update={"food_preference": safe_pref}),
                 week_start=week_start,
+                conversation_text=user_msg,
             )
         proposals["proposed_diet_plan"] = diet_meals
         proposals["diet_plan_summary"] = diet_summary_lines(diet_meals)
         proposals["nutrition_plan_change"] = True
-        diet_block = "\n".join(diet_summary_lines(diet_meals, max_days=7))
+        # Keep scheduler draft short for any downstream LLM — day detail lives in
+        # proposed_week_plan / proposed_diet_plan (approval card source of truth).
         proposals["scheduler"] = (
-            f"{proposal}\n\n--- DIET WEEK (KB Indian macros) ---\n{diet_block}\n"
-            f"Food preference filter: {state.profile.food_preference or 'unspecified'}"
+            f"{proposal}\n\n"
+            f"[structured week_start={week_start}; "
+            f"{len(parsed.days)} workout days; {len(diet_meals)} planned meals]"
         )
     elif first_plan:
         proposals["scheduler"] = (

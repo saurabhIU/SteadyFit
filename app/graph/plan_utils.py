@@ -1,11 +1,59 @@
 """Helpers to extract structured week plans from specialist LLM output."""
 import json
 import re
-from datetime import date
+from datetime import date, timedelta
 
 from app.graph.state import WeekPlan, WorkoutDay
 
 _VALID_STATUS = frozenset({"planned", "done", "skipped", "moved"})
+
+# Mirrors web/lib/plan-dates.ts — week_start is Monday; offsets Mon=+0 … Sun=+6.
+_WEEKDAY_OFFSET: dict[str, int] = {
+    "monday": 0,
+    "mon": 0,
+    "tuesday": 1,
+    "tue": 1,
+    "wednesday": 2,
+    "wed": 2,
+    "thursday": 3,
+    "thu": 3,
+    "friday": 4,
+    "fri": 4,
+    "saturday": 5,
+    "sat": 5,
+    "sunday": 6,
+    "sun": 6,
+}
+
+
+def weekday_offset(day_name: str) -> int | None:
+    key = (day_name or "").strip().lower()
+    return _WEEKDAY_OFFSET.get(key)
+
+
+def date_for_weekday(week_start: str | date, day_name: str) -> date | None:
+    """Calendar date for a named weekday in the week starting at week_start (Mon)."""
+    if isinstance(week_start, date):
+        start = week_start
+    else:
+        try:
+            start = date.fromisoformat(str(week_start)[:10])
+        except ValueError:
+            return None
+    off = weekday_offset(day_name)
+    if off is None:
+        return None
+    return start + timedelta(days=off)
+
+
+def current_week_monday(as_of: date | None = None) -> date:
+    """ISO week start (Monday) for the calendar week containing ``as_of``."""
+    d = as_of or date.today()
+    return d - timedelta(days=d.weekday())
+
+
+def current_week_start_iso(as_of: date | None = None) -> str:
+    return current_week_monday(as_of).isoformat()
 
 
 def _loads_object(text: str) -> dict | None:

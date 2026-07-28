@@ -67,6 +67,8 @@ export type ChatResponse = {
   pending_approval?: PendingApproval | null;
   quick_replies?: string[];
   citations?: Citation[];
+  /** One-time soft invite to upload a personal doc (chat Upload chip). */
+  offer_upload?: boolean;
 };
 
 export type ChatHistoryMessage = {
@@ -88,6 +90,10 @@ export type ChatMessage = {
   imagePreviewUrl?: string;
   coaching_team?: CoachingTeamProposals;
   citations?: Citation[];
+  /** Contextual answer chips for this assistant turn (intake / Done conflict, etc.). */
+  quickReplies?: string[];
+  /** True after the user answered via chip or free text — chips stay visible but inert. */
+  quickRepliesAnswered?: boolean;
 };
 
 export type UserProfile = {

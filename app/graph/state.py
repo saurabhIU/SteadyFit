@@ -64,6 +64,8 @@ class UserProfile(BaseModel):
     onboarding_complete: bool = False
     # Required slots filled; awaiting "looks good" before first WeekPlan.
     awaiting_onboarding_confirm: bool = False
+    # One-time soft invite to upload personal docs (after onboarding → first plan).
+    shown_upload_hint: bool = False
 
     # Backward-compatible aliases used by older agents / UI.
     @property

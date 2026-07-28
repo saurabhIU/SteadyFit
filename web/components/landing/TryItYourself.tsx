@@ -4,7 +4,20 @@ import { useState } from "react";
 import { createTryProfile } from "@/lib/api";
 import { cn } from "@/lib/utils";
 
-export function TryItYourself() {
+type TryItYourselfProps = {
+  label?: string;
+  loadingLabel?: string;
+  className?: string;
+  /** Hide the helper line under the button (landing hero has its own trust copy). */
+  hideHint?: boolean;
+};
+
+export function TryItYourself({
+  label = "Try it yourself",
+  loadingLabel = "Starting…",
+  className,
+  hideHint = false,
+}: TryItYourselfProps) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -24,24 +37,26 @@ export function TryItYourself() {
   }
 
   return (
-    <div className="flex flex-col items-center gap-3">
+    <div className={cn("flex flex-col gap-2", className)}>
       <button
         type="button"
         onClick={onTry}
         disabled={loading}
         className={cn(
-          "rounded-[var(--radius-pill)] bg-sage px-6 py-2.5 text-sm font-medium text-sage-foreground",
+          "rounded-[var(--radius-pill)] bg-sage px-5 py-2.5 text-sm font-medium text-sage-foreground",
           "transition-opacity hover:opacity-90 disabled:opacity-60",
           "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sage/50",
         )}
       >
-        {loading ? "Starting…" : "Try it yourself"}
+        {loading ? loadingLabel : label}
       </button>
-      <p className="max-w-sm text-center font-mono text-xs text-navy-muted">
-        No sign-up — try a real conversation right now.
-      </p>
+      {!hideHint ? (
+        <p className="max-w-sm font-mono text-xs text-navy-muted">
+          No sign-up — try a real conversation right now.
+        </p>
+      ) : null}
       {error ? (
-        <p className="max-w-sm text-center text-xs text-red-300/90" role="alert">
+        <p className="max-w-sm text-xs text-red-300/90" role="alert">
           {error}
         </p>
       ) : null}

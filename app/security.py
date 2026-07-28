@@ -99,6 +99,7 @@ _IN_SCOPE_HINTS = re.compile(
     # Topic-interrupt fitness concerns (must stay in-scope mid-thread)
     r"allerg(?:y|ic)|dairy|lactose|gluten|intoleran(?:t|ce)|"
     r"pregnan(?:t|cy)|breastfeed(?:ing)?|safe\s+during|"
+    r"diabet(?:es|ic)|blood\s+sugar|hypertens(?:ion|ive)|high\s+blood\s+pressure|"
     r"knee|shoulder|hip|ankle|injury|hurt|hurts|pain|sore"
     r")\b",
     re.IGNORECASE,
@@ -197,6 +198,33 @@ _PREGNANCY_SAFETY_RE = re.compile(
     re.IGNORECASE,
 )
 
+# Cardiometabolic safety (same volunteer interrupt pattern as pregnancy).
+_DIABETES_SAFETY_RE = re.compile(
+    r"\b("
+    r"diabet(?:es|ic)|"
+    r"type\s*[12]\s*diabet(?:es|ic)?|"
+    r"blood\s+sugar|"
+    r"blood\s+glucose|"
+    r"hypoglyc(?:ae|e)mia|"
+    r"hyperglyc(?:ae|e)mia"
+    r")\b",
+    re.IGNORECASE,
+)
+
+_HYPERTENSION_SAFETY_RE = re.compile(
+    r"\b("
+    r"hypertens(?:ion|ive)|"
+    r"high\s+blood\s+pressure|"
+    r"blood\s+pressure\s+issues?|"
+    r"BP\s+issues?"
+    r")\b",
+    re.IGNORECASE,
+)
+
+_DOCTOR_COORDINATION_MARKER_RE = re.compile(
+    r"(?i)this isn't medical guidance"
+)
+
 SECURITY_PREAMBLE = """SECURITY & SCOPE (non-negotiable):
 - You are a fitness coaching specialist only (training, nutrition, scheduling,
   motivation, the user's own uploaded fitness documents).
@@ -276,6 +304,53 @@ def looks_like_pregnancy_safety_interrupt(message: str) -> bool:
     return bool(message and _PREGNANCY_SAFETY_RE.search(message))
 
 
+def looks_like_diabetes_safety_interrupt(message: str) -> bool:
+    return bool(message and _DIABETES_SAFETY_RE.search(message))
+
+
+def looks_like_hypertension_safety_interrupt(message: str) -> bool:
+    return bool(message and _HYPERTENSION_SAFETY_RE.search(message))
+
+
+def looks_like_cardiometabolic_safety_interrupt(message: str) -> bool:
+    """Diabetes / hypertension volunteer mention — same fail-safe family as pregnancy."""
+    return looks_like_diabetes_safety_interrupt(
+        message
+    ) or looks_like_hypertension_safety_interrupt(message)
+
+
+def cardiometabolic_condition_label(message: str) -> str:
+    """Short label for the standing doctor-coordination line."""
+    has_d = looks_like_diabetes_safety_interrupt(message)
+    has_h = looks_like_hypertension_safety_interrupt(message)
+    if has_d and has_h:
+        return "diabetes and blood pressure"
+    if has_d:
+        return "diabetes"
+    if has_h:
+        return "blood pressure"
+    return "your condition"
+
+
+def cardiometabolic_doctor_line(message: str) -> str:
+    label = cardiometabolic_condition_label(message)
+    return (
+        "This isn't medical guidance — please coordinate any exercise or diet "
+        f"changes with your doctor, especially around {label}-specific concerns."
+    )
+
+
+def ensure_cardiometabolic_doctor_line(reply: str, message: str) -> str:
+    """Append the standing safety line once when a cardiometabolic interrupt fires."""
+    text = (reply or "").rstrip()
+    if _DOCTOR_COORDINATION_MARKER_RE.search(text):
+        return text
+    line = cardiometabolic_doctor_line(message)
+    if not text:
+        return line
+    return f"{text}\n\n{line}"
+
+
 def looks_like_topic_interrupt(message: str) -> bool:
     """True when the message introduces a new concern rather than answering an offer."""
     if not message or not message.strip():
@@ -286,7 +361,11 @@ def looks_like_topic_interrupt(message: str) -> bool:
         return True
     if _INTERRUPT_DISCOURSE_RE.search(message.strip()):
         return True
-    if looks_like_allergy_interrupt(message) or looks_like_pregnancy_safety_interrupt(message):
+    if (
+        looks_like_allergy_interrupt(message)
+        or looks_like_pregnancy_safety_interrupt(message)
+        or looks_like_cardiometabolic_safety_interrupt(message)
+    ):
         return True
     return False
 
@@ -302,11 +381,12 @@ def looks_like_fitness_query(message: str) -> bool:
         return False
     if looks_like_coaching_opener(message):
         return True
-    # Fitness-relevant topic interrupts (allergy, pregnancy safety, pain) stay in-scope.
+    # Fitness-relevant topic interrupts (allergy, pregnancy, cardiometabolic, pain) stay in-scope.
     if looks_like_topic_interrupt(message) and (
         looks_like_pain_injury_interrupt(message)
         or looks_like_allergy_interrupt(message)
         or looks_like_pregnancy_safety_interrupt(message)
+        or looks_like_cardiometabolic_safety_interrupt(message)
     ):
         return True
     # Jailbreak + non-fitness task wins over incidental words ("fitness is important").

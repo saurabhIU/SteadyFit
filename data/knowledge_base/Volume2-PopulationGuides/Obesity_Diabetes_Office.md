@@ -140,6 +140,45 @@ general:
 
 ---
 
+# Guide: Hypertension (High Blood Pressure)
+Tags: `hypertension` `high-blood-pressure` `BP` `cardiovascular`
+
+## Overview
+```yaml
+population: "Adults with hypertension or elevated blood pressure"
+primary_risks: [blood_pressure_spikes_during_heavy_lifting, dizziness, medication_interactions]
+primary_goals: [blood_pressure_management, cardiovascular_fitness, sustainable activity]
+key_principle: "Regular aerobic activity and moderate resistance training support BP control; avoid breath-holding and maximal loads without medical clearance."
+medical_clearance: "Coordinate exercise and diet changes with a doctor — especially if on BP medication"
+```
+
+## Exercise Guidance
+```yaml
+prefer:
+  aerobic: "Brisk walking, cycling, swimming — most days of the week"
+  resistance: "Moderate loads, controlled tempo, full breathing between reps"
+  intensity: "Conversational pace for cardio; stop short of straining / Valsalva"
+
+avoid_or_modify:
+  valsalva: "Do not hold breath under heavy load"
+  isometric_max: "Avoid prolonged maximal isometric holds"
+  sudden_spikes: "Build intensity gradually; cool down after sessions"
+
+monitoring:
+  stop_if: "Chest pain, unusual dizziness, severe headache, or lightheadedness"
+  hydration: "Stay hydrated; stand up slowly after floor work"
+```
+
+## Nutrition Notes (Practical, Non-Clinical)
+```yaml
+pattern:
+  sodium_awareness: "Favour whole foods; go easy on heavily salted restaurant meals when possible"
+  potassium_rich: "Fruit, vegetables, legumes when appropriate for the person"
+  alcohol: "Limit if BP is a concern — coordinate with clinician"
+```
+
+---
+
 # Guide: Office Workers
 Tags: `office` `sedentary` `desk` `posture` `movement-breaks`
 

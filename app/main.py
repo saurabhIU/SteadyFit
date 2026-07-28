@@ -17,6 +17,7 @@ from starlette.types import ExceptionHandler
 from app.chat_pipeline import process_user_chat
 from app.config import settings
 from app.graph.build import build_graph, close_checkpointer_pool
+from app.graph.quick_workout_api import run_quick_workout_action
 from app.graph.response import build_chat_payload, build_thread_history
 from app.graph.runtime import make_thread_id, thread_config, weekly_review_thread
 from app.memory.context import (
@@ -230,6 +231,30 @@ def chat(
     )
 
 
+class QuickWorkoutIn(BaseModel):
+    """Structured Done / replace / extra — never free-text chat."""
+
+    action: Literal["done", "replace", "extra"] = "done"
+    thread_id: str | None = None
+
+
+@app.post("/api/quick-workout/complete")
+@limiter.limit(settings.chat_rate_limit)
+def quick_workout_complete(
+    request: Request,
+    body: QuickWorkoutIn,
+    x_user_id: str | None = Header(default=None),
+):
+    """Log or resolve a 10-minute session without the chat/intake pipeline."""
+    uid = require_user_id(x_user_id)
+    return run_quick_workout_action(
+        require_graph(),
+        user_id=uid,
+        action=body.action,
+        conversation_id=body.thread_id,
+    )
+
+
 @app.get("/api/chat/history")
 def chat_history(
     thread_id: str,
@@ -284,6 +309,7 @@ def get_food_log_today(
         uid,
         calorie_target=plan.calorie_target if plan else None,
         protein_target_g=plan.protein_target_g if plan else None,
+        week_start=plan.week_start if plan else None,
         tz=(tz or "UTC").strip() or "UTC",
     )
 

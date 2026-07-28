@@ -16,11 +16,20 @@ from app.graph.diet_gate import (
     next_diet_slot,
 )
 from app.graph.weight_gate import looks_like_first_plan_request
+from app.graph.micro_workout import (
+    looks_like_quick_10_done,
+    looks_like_quick_10_extra,
+    looks_like_quick_10_replace,
+    looks_like_ten_minute_request,
+    DONE_CHIP,
+)
 from app.memory.store import get_saved_week_plan, save_profile
 from app.security import (
     as_text,
+    ensure_cardiometabolic_doctor_line,
     llm_history,
     looks_like_allergy_interrupt,
+    looks_like_cardiometabolic_safety_interrupt,
     looks_like_pain_injury_interrupt,
     looks_like_pregnancy_safety_interrupt,
     looks_like_short_affirmation,
@@ -47,12 +56,15 @@ Turn types (pick exactly one):
 2) INTERRUPT — the message introduces a NEW concern that does NOT answer what
    you just asked. Signals include: "actually", "wait", "also", "by the way",
    or stating a new fact (body part + pain/hurt/sore/injury; allergy / food
-   constraint; pregnancy / safety) while mid another topic.
+   constraint; pregnancy / safety; diabetes / blood sugar; hypertension /
+   high blood pressure) while mid another topic.
    → Classify intent from THIS message ONLY. NEVER inherit the prior offer's
    intent. Pain/injury mentions ALWAYS → schedule or adherence (prefer
    schedule when exercise swaps / plan changes are needed). Allergy / dairy /
    food constraints → nutrition or profile_update. Pregnancy / "is that safe"
-   mid-nutrition → knowledge or adherence — do NOT continue protein/meal talk.
+   mid-nutrition → knowledge — do NOT continue protein/meal talk.
+   Diabetes / hypertension / high blood pressure → knowledge (population
+   guides) — do NOT continue prior meal/schedule offers.
 3) NEW TOPIC — unambiguous new request with no relation to the open offer.
    → Classify from the message content alone.
 
@@ -88,6 +100,58 @@ def coach_node(state: CoachingTeamState) -> dict:
             **critique_reset,
         }
 
+    user_msg = ""
+    if state.messages:
+        user_msg = as_text(state.messages[-1].content)
+
+    # Quick-10 Done / replace-vs-extra — always schedule fast-path (no intake gate).
+    awaiting_q10 = bool(state.proposals.get("awaiting_quick_10_choice"))
+    micro_open = bool(state.proposals.get("micro_session"))
+    if looks_like_quick_10_replace(user_msg) and awaiting_q10:
+        return {
+            "intent": "schedule",
+            "coaching_team_rounds": rounds,
+            "quick_replies": [],
+            "proposals": {
+                **state.proposals,
+                "micro_done_choice": "replace",
+            },
+            **critique_reset,
+        }
+    if looks_like_quick_10_extra(user_msg) and awaiting_q10:
+        return {
+            "intent": "schedule",
+            "coaching_team_rounds": rounds,
+            "quick_replies": [],
+            "proposals": {
+                **state.proposals,
+                "micro_done_choice": "extra",
+            },
+            **critique_reset,
+        }
+    if looks_like_quick_10_done(user_msg) and micro_open:
+        return {
+            "intent": "schedule",
+            "coaching_team_rounds": rounds,
+            "quick_replies": [],
+            "proposals": {
+                **state.proposals,
+                "micro_done": True,
+                "micro_session": False,
+            },
+            **critique_reset,
+        }
+
+    # Instant micro-session suggestion — allowed even mid-intake (like meal photos).
+    if looks_like_ten_minute_request(user_msg):
+        return {
+            "intent": "schedule",
+            "coaching_team_rounds": rounds,
+            "quick_replies": [],
+            "proposals": {**state.proposals, "micro_session": True},
+            **critique_reset,
+        }
+
     # Diet-metrics gate pending — stay in intake (no scheduler).
     if state.profile.awaiting_weight_for_first_plan or state.profile.awaiting_diet_slot:
         return {
@@ -105,10 +169,6 @@ def coach_node(state: CoachingTeamState) -> dict:
             "quick_replies": [],
             **critique_reset,
         }
-
-    user_msg = ""
-    if state.messages:
-        user_msg = as_text(state.messages[-1].content)
 
     if looks_like_profile_change_request(user_msg):
         return {
@@ -134,6 +194,14 @@ def coach_node(state: CoachingTeamState) -> dict:
             **critique_reset,
         }
     if looks_like_pregnancy_safety_interrupt(user_msg):
+        return {
+            "intent": "knowledge",
+            "coaching_team_rounds": rounds,
+            "quick_replies": [],
+            **critique_reset,
+        }
+    if looks_like_cardiometabolic_safety_interrupt(user_msg):
+        # Same path as pregnancy: population-guide KB via knowledge agent.
         return {
             "intent": "knowledge",
             "coaching_team_rounds": rounds,
@@ -170,8 +238,9 @@ def coach_node(state: CoachingTeamState) -> dict:
             "CONTINUATION only if the latest user message answers/accepts that "
             "offer (yes/ok/sounds good / a requested value). "
             "INTERRUPT if they raise a new concern (actually/wait/also; knee "
-            "hurts; allergy; pregnancy/safety) — route on the new concern only, "
-            "never inherit nutrition from a protein offer.\n"
+            "hurts; allergy; pregnancy/safety; diabetes; high blood pressure) — "
+            "route on the new concern only, never inherit nutrition from a "
+            "protein offer.\n"
         )
     msgs = (
         [{"role": "system", "content": with_security(COACH_SYSTEM) + hint}]
@@ -227,7 +296,11 @@ CALENDAR / TRAVEL: Only mention travel, meetings, flights, or busy blocks the US
 explicitly stated in this conversation or profile constraints. Empty calendar = no conflicts.
 
 PLAN APPROVAL CTA (when specialists proposed a plan change / first week with plan_changed):
-- End with a soft look-below line only, e.g. "Here's your first week — take a look below."
+- The structured WeekPlan + diet meals on the approval card are the ONLY day-by-day source.
+- Your reply must be a SHORT intro only (1–3 sentences): acknowledge the goal and give
+  high-level framing (e.g. modes / focus). Then a soft look-below line.
+- NEVER list Mon/Tue/… days, NEVER list workouts day-by-day, NEVER list meals or macros
+  tables — the UI card shows that. Do not restate calorie/protein targets in a schedule dump.
 - NEVER say "reply approve", "reply yes to confirm", "type accept", "lock it in by
   replying…", or any text-keyword confirmation instruction.
 - The UI approval card is the ONLY confirmation mechanism for plan changes.
@@ -238,16 +311,18 @@ again if weight_declined or if weight was already requested in a prior gated tur
 This still applies after a plan was approved/saved.
 
 Topic INTERRUPTS: if the user raised a new concern (pain/injury, allergy, pregnancy
-safety, "actually…") that does not answer your previous offer, acknowledge that
-concern FIRST by name ("Good to know you're asking about pregnancy safety",
-"Sorry your knee hurts", "Thanks for flagging the dairy allergy"). Address it from
-the specialist proposals, and do NOT deliver the prior protein/meal/either-or offer.
+safety, diabetes, hypertension / high blood pressure, "actually…") that does not
+answer your previous offer, acknowledge that concern FIRST by name ("Good to know
+you're asking about pregnancy safety", "Sorry your knee hurts", "Thanks for flagging
+the dairy allergy", "Thanks for mentioning diabetes"). Address it from the specialist
+proposals, and do NOT deliver the prior protein/meal/either-or offer.
 Do NOT restate macros, meal plans, hotel weeks, or other prior-offer details in the
 same reply — not even as a "circle back" teaser. A single vague line is OK only if
 needed ("we can return to the earlier question later"); never name the prior offer
 content (e.g. never say "140g protein meal plan" after a pregnancy interrupt).
-For pregnancy interrupts: the word "pregnancy" (or clear safety framing) must appear
-in the reply — vague clarifications that never name the concern FAIL.
+For pregnancy / diabetes / hypertension interrupts: name the concern (or clear
+safety framing) in the reply — vague clarifications that never name it FAIL.
+Keep any standing doctor-coordination line from the knowledge proposal intact.
 
 Either/or CONTINUATIONS only: if your previous message offered two options (A or B)
 and the user affirmed without choosing (and this is NOT an interrupt), fully deliver
@@ -263,6 +338,30 @@ _REPLY_APPROVE_RE = re.compile(
     r"[\"'`]?(?:approve|accept|yes|confirm|ok)[\"'`]?"
     r"[^.!?\n]*[.!?]?"
 )
+
+
+def _plan_change_intro(state: CoachingTeamState) -> str:
+    """Deterministic short intro — day-by-day lives only on the approval card."""
+    from app.graph.approval_copy import has_prior_week_plan, plan_approval_framing
+    from app.memory.store import get_saved_week_plan
+
+    prior = state.week_plan
+    if not has_prior_week_plan(prior):
+        prior = get_saved_week_plan(state.user_id) if state.user_id else None
+    is_first = bool(plan_approval_framing(has_prior=has_prior_week_plan(prior))["is_first_plan"])
+    modes = [m for m in (state.profile.preferred_workout_modes or []) if m]
+    mode_bit = ", ".join(modes) if modes else "your preferred training"
+    goal = (state.profile.goal or "fitness").strip()
+    if is_first:
+        return (
+            f"I've built your first week around {mode_bit} for your {goal} goal, "
+            "with workouts and meals ready for you to review. "
+            "Here's your plan — take a look below."
+        )
+    return (
+        f"I've adjusted this week around {mode_bit} while keeping your {goal} goal "
+        "in mind. Here's the update — take a look below."
+    )
 
 
 def _sanitize_plan_change_reply(text: str, *, plan_changed: bool) -> str:
@@ -283,6 +382,84 @@ def _sanitize_plan_change_reply(text: str, *, plan_changed: bool) -> str:
 
 
 def coaching_team_node(state: CoachingTeamState) -> dict:
+    plan_changed = bool(state.proposals.get("plan_changed"))
+    user_msg = as_text(state.messages[-1].content) if state.messages else ""
+    # One source of truth: structured plan on the approval card. Free-text is intro only.
+    if plan_changed:
+        # Pain/topic interrupts must keep the safety acknowledgment visible — the
+        # generic tweak intro alone fails "acknowledge knee first" must-pass cases.
+        if looks_like_topic_interrupt(user_msg) and looks_like_pain_injury_interrupt(
+            user_msg
+        ):
+            specialist = str(state.proposals.get("scheduler") or "").strip()
+            parts = [p.strip() for p in specialist.split("\n\n") if p.strip()]
+            # Keep ack + concrete knee-safe swaps (approval card still holds the week).
+            chunk = "\n\n".join(parts[:3]) if parts else ""
+            if len(chunk) > 900:
+                chunk = chunk[:897].rstrip() + "…"
+            body = chunk or (
+                "Sorry your knee hurts — I've adjusted this week's sessions toward "
+                "knee-safer options (no deep loaded squats/lunges)."
+            )
+            reply_text = _sanitize_plan_change_reply(body, plan_changed=True)
+        else:
+            reply_text = _sanitize_plan_change_reply(
+                _plan_change_intro(state),
+                plan_changed=True,
+            )
+        retained = {
+            k: state.proposals[k]
+            for k in (
+                "plan_changed",
+                "proposed_week_plan",
+                "proposed_diet_plan",
+                "diet_plan_summary",
+                "tdee_targets",
+                "nutrition_plan_change",
+                "scheduler",
+                "memory_written",
+                "offer_upload",
+            )
+            if k in state.proposals
+        }
+        return {
+            "messages": [{"role": "assistant", "content": reply_text}],
+            "proposals": retained,
+            "quick_replies": [],
+            "coaching_team_transcript": list(state.coaching_team_transcript or []),
+            "critique_verdict": state.critique_verdict,
+            "critique_rounds": state.critique_rounds,
+        }
+
+    # Deterministic 10-minute session — don't re-LLM the workout away.
+    if state.proposals.get("micro_session"):
+        reply_text = str(state.proposals.get("scheduler") or "").strip()
+        return {
+            "messages": [{"role": "assistant", "content": reply_text}],
+            "proposals": {"micro_session": True},
+            "quick_replies": [DONE_CHIP],
+            "coaching_team_transcript": list(state.coaching_team_transcript or []),
+            "critique_verdict": state.critique_verdict,
+            "critique_rounds": state.critique_rounds,
+        }
+
+    # Quick-10 Done / conflict resolution — pass chips through, no LLM merge.
+    if state.proposals.get("micro_session_log"):
+        reply_text = str(state.proposals.get("scheduler") or "").strip()
+        chips = list(state.proposals.get("quick_replies") or [])
+        awaiting = bool(state.proposals.get("awaiting_quick_10_choice"))
+        return {
+            "messages": [{"role": "assistant", "content": reply_text}],
+            "proposals": {
+                "awaiting_quick_10_choice": awaiting,
+                "micro_session": False,
+            },
+            "quick_replies": chips,
+            "coaching_team_transcript": list(state.coaching_team_transcript or []),
+            "critique_verdict": state.critique_verdict,
+            "critique_rounds": state.critique_rounds,
+        }
+
     llm = get_llm()
     context = "\n\n".join(state.retrieved_context) if state.retrieved_context else "none"
     proposal_parts = []
@@ -290,6 +467,9 @@ def coaching_team_node(state: CoachingTeamState) -> dict:
         if key in {
             "plan_changed",
             "proposed_week_plan",
+            "proposed_diet_plan",
+            "diet_plan_summary",
+            "tdee_targets",
             "intake_handoff",
             "revision_instructions",
             "nutrition_plan_change",
@@ -305,9 +485,7 @@ def coaching_team_node(state: CoachingTeamState) -> dict:
         cite_hint = f"\nKnown citations to preserve when relevant: {tags}\n"
     history_without_latest = list(state.messages or [])[:-1] if state.messages else []
     prior_assistant, _ = prior_turns_from_messages(history_without_latest)
-    user_msg = as_text(state.messages[-1].content) if state.messages else ""
     interrupt = looks_like_topic_interrupt(user_msg)
-    plan_changed = bool(state.proposals.get("plan_changed"))
     turn_hint = ""
     if prior_assistant and interrupt:
         turn_hint = (
@@ -324,12 +502,6 @@ def coaching_team_node(state: CoachingTeamState) -> dict:
             f"{prior_assistant[:1000]}\n"
             "If the user affirmed without picking A vs B, deliver A fully, then "
             "one-line re-offer B (quick_replies may include B).\n"
-        )
-    if plan_changed:
-        turn_hint += (
-            "\nPLAN CHANGE PENDING — end with a soft look-below line only "
-            "(e.g. \"Here's your first week — take a look below\"). "
-            "NEVER tell the user to reply/type/say approve, accept, or confirm.\n"
         )
     if macros_provisional(state.profile):
         turn_hint += f"\n{PROVISIONAL_MACRO_INSTRUCTIONS}\n"
@@ -351,8 +523,10 @@ def coaching_team_node(state: CoachingTeamState) -> dict:
     )
     reply_text = _sanitize_plan_change_reply(
         as_text(getattr(reply, "content", reply)),
-        plan_changed=plan_changed,
+        plan_changed=False,
     )
+    if looks_like_cardiometabolic_safety_interrupt(user_msg):
+        reply_text = ensure_cardiometabolic_doctor_line(reply_text, user_msg)
     retained = {
         k: state.proposals[k]
         for k in (
@@ -364,6 +538,7 @@ def coaching_team_node(state: CoachingTeamState) -> dict:
             "nutrition_plan_change",
             "scheduler",
             "memory_written",
+            "offer_upload",
         )
         if k in state.proposals
     }
@@ -380,7 +555,6 @@ def coaching_team_node(state: CoachingTeamState) -> dict:
         "messages": [{"role": "assistant", "content": reply_text}],
         "proposals": retained,
         "quick_replies": quick,
-        # Preserve critique deliberation for the API / CoachingTeamPanel.
         "coaching_team_transcript": list(state.coaching_team_transcript or []),
         "critique_verdict": state.critique_verdict,
         "critique_rounds": state.critique_rounds,

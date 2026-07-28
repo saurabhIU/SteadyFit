@@ -7,6 +7,7 @@ import { ApiError, fetchPlan, fetchTodayFoodLog } from "@/lib/api";
 import { PLAN_UPDATED } from "@/lib/plan-events";
 import { threadStorageKey, useProfile } from "@/lib/profile";
 import type { FoodLogMeal, PlanResponse, TodayFoodLogResponse, WorkoutDay } from "@/lib/types";
+import { dayOfMonthLabel, formatWeekRange } from "@/lib/plan-dates";
 import { cn } from "@/lib/utils";
 
 const DAY_ABBR: Record<string, string> = {
@@ -18,16 +19,6 @@ const DAY_ABBR: Record<string, string> = {
   Saturday: "Sat",
   Sunday: "Sun",
 };
-
-function formatDateRange(weekStart: string, dayCount: number) {
-  const start = new Date(`${weekStart}T12:00:00`);
-  if (Number.isNaN(start.getTime())) return weekStart;
-  const end = new Date(start);
-  end.setDate(end.getDate() + Math.max(dayCount - 1, 0));
-  const fmt = (d: Date) =>
-    d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
-  return `${fmt(start)} – ${fmt(end)}`;
-}
 
 function sessionStats(days: WorkoutDay[], target: number) {
   const done = days.filter((d) => d.status === "done").length;
@@ -47,14 +38,14 @@ function StatusDot({ status }: { status: WorkoutDay["status"] }) {
   if (status === "skipped") {
     return (
       <span
-        className="size-2.5 shrink-0 rounded-full border-2 border-neutral/60 bg-transparent"
+        className="size-2.5 shrink-0 rounded-full border-2 border-surface-raised bg-transparent"
         aria-label="Skipped"
       />
     );
   }
   return (
     <span
-      className="size-2.5 shrink-0 rounded-full border-2 border-beige-border bg-transparent"
+      className="size-2.5 shrink-0 rounded-full border-2 border-surface-raised bg-transparent"
       aria-label="Planned"
     />
   );
@@ -68,7 +59,7 @@ function ProgressDots({ done, total }: { done: number; total: number }) {
           key={i}
           className={cn(
             "size-2 rounded-full",
-            i < done ? "bg-sage" : "bg-navy-muted-dim/40",
+            i < done ? "bg-sage" : "bg-surface-raised",
           )}
         />
       ))}
@@ -177,9 +168,16 @@ function TodaysMealsSection({ food }: { food: TodayFoodLogResponse | null }) {
   );
 }
 
-function DayRow({ day, index }: { day: WorkoutDay; index: number }) {
+function DayRow({
+  day,
+  weekStart,
+}: {
+  day: WorkoutDay;
+  weekStart: string;
+}) {
   const [open, setOpen] = useState(false);
   const abbr = DAY_ABBR[day.day] ?? day.day.slice(0, 3);
+  const dateNum = dayOfMonthLabel(weekStart, day.day);
 
   const detail =
     day.status === "skipped"
@@ -202,9 +200,7 @@ function DayRow({ day, index }: { day: WorkoutDay; index: number }) {
           <p className="font-mono text-[11px] font-medium uppercase text-card-text/50">
             {abbr}
           </p>
-          <p className="font-mono text-sm font-medium text-card-text">
-            {String(index + 1).padStart(2, "0")}
-          </p>
+          <p className="font-mono text-sm font-medium text-card-text">{dateNum}</p>
         </div>
 
         <StatusDot status={day.status} />
@@ -323,7 +319,7 @@ export function PlanView() {
           <h2 className="text-lg font-semibold text-navy-text">This week</h2>
           {plan ? (
             <p className="mt-0.5 font-mono text-sm text-navy-muted">
-              {formatDateRange(plan.week_start, plan.days.length)}
+              {formatWeekRange(plan.week_start)}
             </p>
           ) : (
             <p className="mt-0.5 text-sm text-navy-muted">No plan yet</p>
@@ -342,8 +338,12 @@ export function PlanView() {
 
       {plan ? (
         <div className="space-y-2">
-          {plan.days.map((day, index) => (
-            <DayRow key={`${day.day}-${day.focus}`} day={day} index={index} />
+          {plan.days.map((day) => (
+            <DayRow
+              key={`${day.day}-${day.focus}`}
+              day={day}
+              weekStart={plan.week_start}
+            />
           ))}
         </div>
       ) : (
@@ -367,15 +367,34 @@ export function PlanView() {
           A miss is information, not failure. When life shifts, we adjust — no
           scorekeeping, just steady progress.
         </p>
-        <Link
-          href="/chat"
-          className={cn(
-            "mt-4 inline-flex rounded-[var(--radius-pill)] bg-sage px-5 py-2 text-sm font-medium text-sage-foreground",
-            "transition-colors duration-150 ease-out hover:bg-sage-hover",
-          )}
-        >
-          Chat about it
-        </Link>
+        <div className="mt-4 flex flex-wrap gap-2">
+          <Link
+            href="/chat"
+            onClick={() => {
+              try {
+                sessionStorage.setItem("steadyfit:pending_micro_10", "1");
+              } catch {
+                /* ignore */
+              }
+            }}
+            className={cn(
+              "inline-flex items-center gap-1.5 rounded-[var(--radius-pill)] border border-sage/50",
+              "bg-accent-tint px-5 py-2 text-sm font-medium text-sage",
+              "transition-colors duration-150 ease-out hover:bg-sage/20",
+            )}
+          >
+            I have 10 minutes
+          </Link>
+          <Link
+            href="/chat"
+            className={cn(
+              "inline-flex rounded-[var(--radius-pill)] bg-sage px-5 py-2 text-sm font-medium text-sage-foreground",
+              "transition-colors duration-150 ease-out hover:bg-sage-hover",
+            )}
+          >
+            Chat about it
+          </Link>
+        </div>
       </div>
     </div>
   );

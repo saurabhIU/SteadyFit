@@ -156,6 +156,10 @@ STATEMENTS = [
       ADD COLUMN IF NOT EXISTS awaiting_diet_slot TEXT NULL
     """,
     """
+    ALTER TABLE user_profiles
+      ADD COLUMN IF NOT EXISTS shown_upload_hint BOOLEAN NOT NULL DEFAULT FALSE
+    """,
+    """
     CREATE INDEX IF NOT EXISTS user_profiles_ephemeral_expires_idx
       ON user_profiles (expires_at)
       WHERE is_ephemeral = true
@@ -203,6 +207,7 @@ STATEMENTS = [
     )
     """,
     "CREATE INDEX IF NOT EXISTS workout_log_user_date_idx ON workout_log (user_id, date)",
+    "ALTER TABLE workout_log ADD COLUMN IF NOT EXISTS source TEXT",
     """
     CREATE TABLE IF NOT EXISTS weight_log (
         id BIGSERIAL PRIMARY KEY,

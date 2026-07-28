@@ -1,12 +1,11 @@
 "use client";
 
 import { Fragment, useCallback, useEffect, useRef, useState } from "react";
-import { CopyIcon, ImagePlusIcon, XIcon } from "lucide-react";
+import { CopyIcon, ImagePlusIcon, TimerIcon, XIcon } from "lucide-react";
 import {
   Conversation,
-  ConversationAutoScroll,
   ConversationContent,
-  ConversationScrollButton,
+  ConversationScrollChrome,
 } from "@/components/ai-elements/conversation";
 import {
   Message,
@@ -18,7 +17,7 @@ import {
 import { CitationChips } from "@/components/chat/CitationChips";
 import { CoachingTeamPanel } from "@/components/chat/CoachingTeamPanel";
 import { PlanApprovalCard } from "@/components/chat/PlanApprovalCard";
-import { ApiError, fetchChatHistory, sendChat } from "@/lib/api";
+import { ApiError, completeQuickWorkout, fetchChatHistory, sendChat } from "@/lib/api";
 import { compressImageForChat } from "@/lib/compress-image";
 import { notifyPlanUpdated } from "@/lib/plan-events";
 import { threadStorageKey, useProfile } from "@/lib/profile";
@@ -32,11 +31,37 @@ const WELCOME: ChatMessage = {
     "Hi — I'm Steady. If you're new here I'll ask a few quick things about your goals and how you like to train. Or jump straight in: log a meal, or say what got in the way this week.",
 };
 
+/** Stable chip label — must match backend `TEN_MINUTE_CHIP`. */
+export const TEN_MINUTE_CHIP = "I have 10 minutes";
+/** Must match backend DONE_CHIP / REPLACE_CHIP / EXTRA_CHIP. */
+const DONE_CHIP = "done";
+const REPLACE_CHIP = "Replace today's session";
+const EXTRA_CHIP = "Log as extra";
+const PENDING_MICRO_KEY = "steadyfit:pending_micro_10";
+
+function quickWorkoutActionForChip(
+  option: string,
+): "done" | "replace" | "extra" | null {
+  if (option === DONE_CHIP) return "done";
+  if (option === REPLACE_CHIP) return "replace";
+  if (option === EXTRA_CHIP) return "extra";
+  return null;
+}
+
+function markQuickRepliesAnswered(messages: ChatMessage[]): ChatMessage[] {
+  return messages.map((m) =>
+    m.role === "assistant" && m.quickReplies?.length && !m.quickRepliesAnswered
+      ? { ...m, quickRepliesAnswered: true }
+      : m,
+  );
+}
+
 const USER_BUBBLE =
   "group-[.is-user]:bubble-user group-[.is-user]:max-w-[85%] group-[.is-user]:rounded-[var(--radius-bubble)] group-[.is-user]:border-0 group-[.is-user]:bg-sage group-[.is-user]:px-4 group-[.is-user]:py-3 group-[.is-user]:text-sage-foreground";
 
 const COACH_BUBBLE =
   "group-[.is-assistant]:bubble-coach group-[.is-assistant]:max-w-[92%] group-[.is-assistant]:rounded-[var(--radius-bubble)] group-[.is-assistant]:border group-[.is-assistant]:border-beige-border group-[.is-assistant]:bg-beige group-[.is-assistant]:px-4 group-[.is-assistant]:py-3 group-[.is-assistant]:text-card-text";
+
 
 function hasCoachingTeam(proposals?: CoachingTeamProposals) {
   if (!proposals) return false;
@@ -61,7 +86,6 @@ export function ChatView() {
   const [lookingAtMeal, setLookingAtMeal] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [pendingApproval, setPendingApproval] = useState<PendingApproval | null>(null);
-  const [quickReplies, setQuickReplies] = useState<string[]>([]);
   const [restoring, setRestoring] = useState(false);
   const [pendingImage, setPendingImage] = useState<PendingImage | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
@@ -71,7 +95,6 @@ export function ChatView() {
 
     setMessages([WELCOME]);
     setPendingApproval(null);
-    setQuickReplies([]);
     setError(null);
     setInput("");
     setPendingImage(null);
@@ -117,7 +140,9 @@ export function ChatView() {
         content: text || (hasImage ? "Meal photo" : ""),
         imagePreviewUrl: image?.previewUrl,
       };
-      setMessages((prev) => [...prev, userMsg]);
+      // Free-text (or chip via submitMessage) answers the pending question —
+      // retire prior chips so they are no longer live.
+      setMessages((prev) => [...markQuickRepliesAnswered(prev), userMsg]);
       setPendingImage(null);
 
       try {
@@ -129,16 +154,17 @@ export function ChatView() {
         setThreadId(data.thread_id);
         sessionStorage.setItem(threadStorageKey(userId), data.thread_id);
 
+        const chips = data.quick_replies ?? [];
         const assistantMsg: ChatMessage = {
           id: crypto.randomUUID(),
           role: "assistant",
           content: data.reply,
           coaching_team: hasCoachingTeam(data.coaching_team) ? data.coaching_team : undefined,
           citations: data.citations?.length ? data.citations : undefined,
+          quickReplies: chips.length ? chips : undefined,
         };
         setMessages((prev) => [...prev, assistantMsg]);
         setPendingApproval(data.pending_approval ?? null);
-        setQuickReplies(data.quick_replies ?? []);
       } catch (err) {
         const message =
           err instanceof ApiError
@@ -178,9 +204,8 @@ export function ChatView() {
 
   function handleApprovalResolved(reply: string) {
     setPendingApproval(null);
-    setQuickReplies([]);
     setMessages((prev) => [
-      ...prev,
+      ...markQuickRepliesAnswered(prev),
       {
         id: crypto.randomUUID(),
         role: "assistant",
@@ -192,24 +217,97 @@ export function ChatView() {
 
   async function handleChip(option: string) {
     if (loading || restoring || pendingApproval) return;
-    setQuickReplies([]);
+
+    const quickAction = quickWorkoutActionForChip(option);
+    if (quickAction) {
+      setError(null);
+      setLoading(true);
+      const userMsg: ChatMessage = {
+        id: crypto.randomUUID(),
+        role: "user",
+        content: option,
+      };
+      setMessages((prev) => [...markQuickRepliesAnswered(prev), userMsg]);
+      try {
+        const data = await completeQuickWorkout(quickAction, threadId);
+        setThreadId(data.thread_id);
+        sessionStorage.setItem(threadStorageKey(userId), data.thread_id);
+        const chips = data.quick_replies ?? [];
+        setMessages((prev) => [
+          ...prev,
+          {
+            id: crypto.randomUUID(),
+            role: "assistant",
+            content: data.reply,
+            quickReplies: chips.length ? chips : undefined,
+          },
+        ]);
+        setPendingApproval(null);
+        notifyPlanUpdated();
+      } catch (err) {
+        const message =
+          err instanceof ApiError
+            ? `API error (${err.status}): ${err.message}`
+            : "Oops something went wrong, Saurabh must be fixing it. Try again in a min";
+        setError(message);
+      } finally {
+        setLoading(false);
+      }
+      return;
+    }
+
     await submitMessage(option);
   }
+
+  // Plan page (and deep links) can stash a pending micro-session request.
+  useEffect(() => {
+    if (!ready || restoring || loading || pendingApproval) return;
+    try {
+      if (sessionStorage.getItem(PENDING_MICRO_KEY) !== "1") return;
+      sessionStorage.removeItem(PENDING_MICRO_KEY);
+    } catch {
+      return;
+    }
+    void submitMessage(TEN_MINUTE_CHIP);
+  }, [ready, restoring, loading, pendingApproval, submitMessage]);
 
   const lastAssistantIndex = messages.findLastIndex((m) => m.role === "assistant");
   const composerDisabled = loading || restoring || Boolean(pendingApproval);
   const canSend = Boolean(input.trim() || pendingImage) && !composerDisabled;
+  const showTenMinute = !composerDisabled;
+  const activeChipCount = messages.reduce(
+    (n, m) =>
+      n +
+      (m.role === "assistant" && m.quickReplies?.length && !m.quickRepliesAnswered
+        ? m.quickReplies.length
+        : 0),
+    0,
+  );
+  // Include approval + last assistant extras so multi-part renders (team panel,
+  // citations, approval card) re-trigger stick-to-bottom, not just message count.
+  const lastMsg = messages[messages.length - 1];
+  const scrollWatch = [
+    messages.length,
+    loading ? 1 : 0,
+    restoring ? 1 : 0,
+    pendingApproval ? `a:${pendingApproval.headline ?? "plan"}` : "a:0",
+    activeChipCount,
+    lastMsg?.id ?? "",
+    lastMsg?.citations?.length ?? 0,
+    hasCoachingTeam(lastMsg?.coaching_team) ? 1 : 0,
+    error ? 1 : 0,
+  ].join(":");
 
   return (
     <div className="content-width flex min-h-0 flex-1 flex-col">
       <Conversation className="min-h-0 flex-1">
-        <ConversationAutoScroll
-          watch={`${messages.length}:${loading}:${restoring}:${pendingApproval ? 1 : 0}:${quickReplies.length}`}
-        />
-        <ConversationContent className="gap-4 p-0 py-5">
+        <ConversationScrollChrome watch={scrollWatch} />
+        <ConversationContent className="gap-4 p-0 py-5 pb-8">
           {messages.map((msg, messageIndex) => {
             const isLastAssistant =
               msg.role === "assistant" && messageIndex === lastAssistantIndex;
+            const chips = msg.role === "assistant" ? msg.quickReplies : undefined;
+            const chipsAnswered = Boolean(msg.quickRepliesAnswered);
 
             return (
               <Fragment key={msg.id}>
@@ -249,6 +347,37 @@ export function ChatView() {
 
                   {msg.role === "assistant" && msg.citations?.length ? (
                     <CitationChips citations={msg.citations} />
+                  ) : null}
+
+                  {chips?.length ? (
+                    <div
+                      className={cn(
+                        "ml-1 flex flex-wrap gap-2",
+                        chipsAnswered && "pointer-events-none opacity-45",
+                      )}
+                      aria-label={
+                        chipsAnswered
+                          ? "Previous answer options"
+                          : "Quick reply options"
+                      }
+                    >
+                      {chips.map((option) => (
+                        <button
+                          key={option}
+                          type="button"
+                          disabled={chipsAnswered || loading || restoring || Boolean(pendingApproval)}
+                          onClick={() => void handleChip(option)}
+                          className={cn(
+                            "rounded-[var(--radius-pill)] border border-sage/40 bg-sage/90 px-3.5 py-1.5",
+                            "text-xs font-medium text-sage-foreground transition-colors",
+                            !chipsAnswered && "hover:bg-sage-hover",
+                            chipsAnswered && "cursor-default",
+                          )}
+                        >
+                          {option}
+                        </button>
+                      ))}
+                    </div>
                   ) : null}
                 </div>
 
@@ -298,32 +427,57 @@ export function ChatView() {
             />
           ) : null}
         </ConversationContent>
-
-        <ConversationScrollButton
-          className="border-beige-border/30 bg-team-panel text-navy-muted hover:bg-team-panel hover:text-navy-text"
-        />
       </Conversation>
 
       <form
         onSubmit={handleSubmit}
         className="sticky bottom-0 z-10 -mx-5 border-t border-beige-border/15 bg-navy px-5 py-3"
       >
-        {quickReplies.length > 0 && !composerDisabled ? (
+        <input
+          ref={fileRef}
+          type="file"
+          accept="image/*"
+          capture="environment"
+          className="hidden"
+          onChange={(e) => {
+            const f = e.target.files?.[0] ?? null;
+            void handleFileChange(f);
+            e.target.value = "";
+          }}
+        />
+
+        {!composerDisabled ? (
           <div className="mb-3 flex flex-wrap gap-2">
-            {quickReplies.map((option) => (
+            {showTenMinute ? (
               <button
-                key={option}
                 type="button"
-                onClick={() => void handleChip(option)}
+                onClick={() => void handleChip(TEN_MINUTE_CHIP)}
                 className={cn(
-                  "rounded-[var(--radius-pill)] border border-sage/40 bg-sage/90 px-3.5 py-1.5",
-                  "text-xs font-medium text-sage-foreground transition-colors",
-                  "hover:bg-sage-hover",
+                  "inline-flex items-center gap-1.5 rounded-[var(--radius-pill)]",
+                  "border border-sage/50 bg-accent-tint px-3.5 py-1.5",
+                  "text-xs font-medium text-sage transition-colors",
+                  "hover:border-sage hover:bg-sage/20",
                 )}
               >
-                {option}
+                <TimerIcon className="size-3.5" aria-hidden />
+                {TEN_MINUTE_CHIP}
               </button>
-            ))}
+            ) : null}
+            <button
+              type="button"
+              onClick={() => fileRef.current?.click()}
+              aria-label="Upload meal photo"
+              title="Upload meal photo"
+              className={cn(
+                "inline-flex items-center gap-1.5 rounded-[var(--radius-pill)]",
+                "border border-sage/50 bg-accent-tint px-3.5 py-1.5",
+                "text-xs font-medium text-sage transition-colors",
+                "hover:border-sage hover:bg-sage/20",
+              )}
+            >
+              <ImagePlusIcon className="size-3.5 stroke-[2.25]" aria-hidden />
+              Upload meal photo
+            </button>
           </div>
         ) : null}
 
@@ -354,35 +508,6 @@ export function ChatView() {
             composerDisabled && "opacity-60",
           )}
         >
-          <input
-            ref={fileRef}
-            type="file"
-            accept="image/*"
-            capture="environment"
-            className="hidden"
-            onChange={(e) => {
-              const f = e.target.files?.[0] ?? null;
-              void handleFileChange(f);
-              e.target.value = "";
-            }}
-          />
-          <button
-            type="button"
-            disabled={composerDisabled}
-            onClick={() => fileRef.current?.click()}
-            aria-label="Attach meal photo"
-            title="Attach meal photo"
-            className={cn(
-              "mb-0.5 inline-flex shrink-0 items-center gap-1.5 rounded-[var(--radius-pill)]",
-              "border border-sage/50 bg-sage/20 px-2.5 py-1.5",
-              "text-xs font-semibold text-navy-text transition-colors",
-              "hover:border-sage hover:bg-sage/35",
-              "disabled:cursor-not-allowed disabled:opacity-40",
-            )}
-          >
-            <ImagePlusIcon className="size-4 stroke-[2.25]" aria-hidden />
-            Photo
-          </button>
           <textarea
             value={input}
             onChange={(e) => setInput(e.target.value)}

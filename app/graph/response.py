@@ -74,6 +74,30 @@ def proposals_from_state(state: Any) -> dict:
     return {k: v for k, v in proposals.items() if isinstance(v, str)}
 
 
+def offer_upload_from_state(state: Any) -> bool:
+    """True when this turn (or an earlier message still in-thread) invited Upload."""
+    data = _as_dict(state)
+    proposals = data.get("proposals") or {}
+    if isinstance(proposals, dict) and proposals.get("offer_upload"):
+        return True
+    for message in data.get("messages") or []:
+        if isinstance(message, dict):
+            role = message.get("role")
+            text = str(message.get("content") or "")
+        else:
+            msg_type = (getattr(message, "type", None) or message.__class__.__name__).lower()
+            if "ai" in msg_type or msg_type == "assistant":
+                role = "assistant"
+            else:
+                continue
+            text = str(getattr(message, "content", "") or "")
+        if role != "assistant":
+            continue
+        if "Update tab" in text and "Totally optional" in text:
+            return True
+    return False
+
+
 def coaching_team_from_state(state: Any) -> list | dict:
     """Prefer critique transcript when present; else legacy proposal map."""
     data = _as_dict(state)
@@ -193,6 +217,7 @@ def build_chat_payload(
         "pending_approval": pending,
         "quick_replies": quick_replies,
         "citations": citations,
+        "offer_upload": offer_upload_from_state(state),
         "critique_verdict": data.get("critique_verdict"),
         "critique_rounds": data.get("critique_rounds", 0),
     }

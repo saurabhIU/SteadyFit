@@ -24,13 +24,30 @@ from app.graph.weight_gate import (
     looks_like_first_plan_request,
     parse_weight_kg_from_message,
 )
-from app.memory.store import get_saved_week_plan, save_profile
+from app.memory.store import get_saved_week_plan, save_profile, user_has_personal_docs
 from app.security import as_text, with_security, wrap_untrusted
+
+UPLOAD_HINT = (
+    "By the way — if you've got a training program, meal notes, or health "
+    "details written down somewhere, you can upload it in the Update tab "
+    "and I'll factor it in. Totally optional."
+)
+
+
+def _with_upload_hint_once(profile, user_id: str, preamble: str) -> tuple:
+    """Append the soft upload invite at most once per user; never blocks the plan."""
+    if profile.shown_upload_hint:
+        return profile, preamble
+    profile.shown_upload_hint = True
+    if user_has_personal_docs(user_id):
+        return profile, preamble
+    return profile, f"{preamble.rstrip()}\n\n{UPLOAD_HINT}"
 
 
 def _handoff_first_plan(profile, state, *, preamble: str, provisional: bool = False) -> dict:
     profile.awaiting_weight_for_first_plan = False
     profile.awaiting_diet_slot = None
+    profile, preamble = _with_upload_hint_once(profile, state.user_id or "", preamble)
     save_profile(state.user_id, profile)
     proposals = {
         **{k: v for k, v in state.proposals.items()
@@ -40,6 +57,8 @@ def _handoff_first_plan(profile, state, *, preamble: str, provisional: bool = Fa
     }
     if provisional:
         proposals["macros_provisional_ok"] = True
+    if profile.shown_upload_hint and UPLOAD_HINT in preamble:
+        proposals["offer_upload"] = True
     return {
         "profile": profile,
         "intent": "first_plan",

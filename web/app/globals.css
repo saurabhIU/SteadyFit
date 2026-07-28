@@ -4,57 +4,63 @@
 @source "../node_modules/streamdown/dist/*.js";
 
 /* ─────────────────────────────────────────────────────────────────────────────
-   Steady Coach — dark variant (single source of truth)
+   Night Shift — dark, muted-rust palette (single source of truth)
+   Legacy Steady Coach names (--sage, --navy, --beige, …) alias these so
+   existing utility classes keep working without a component rewrite.
    ───────────────────────────────────────────────────────────────────────────── */
 
 :root {
-  /* Navy shell */
-  --navy: #141922;
-  --navy-text: #eae4d3;
-  --navy-muted: #a8a28d;
-  --navy-muted-dim: #8b8570;
+  /* Night Shift primitives */
+  --bg: #12151c;
+  --surface: #1b202b;
+  --surface-raised: #232833;
+  --accent: #c1694a;
+  --accent-hover: #a8563a;
+  --accent-tint: #2e211b;
+  --text-primary: #eef0f3;
+  --text-secondary: #8b93a3;
+  --text-on-accent: #161311;
+  --border: #262c39;
+  --success: #7a9b76;
+  --danger-muted: #a85a4a;
 
-  /* Beige cards */
-  --beige: #ede6d6;
-  --beige-border: #dcd2b8;
-  --card-text: #2c2a24;
-
-  /* Sage accent */
-  --sage: #6c9478;
-  --sage-hover: #7fa88a;
-  --sage-foreground: #141922;
-
-  /* AI Coaching Team inset panel */
-  --team-panel-bg: #1d2530;
-
-  /* Amber — streak badge only */
-  --amber: #e08a52;
-  --amber-bg: #2a1f16;
-  --amber-border: #4a3524;
-
-  /* Neutral — skipped / missed */
-  --neutral: #8b8570;
+  /* Legacy aliases → Night Shift */
+  --navy: var(--bg);
+  --navy-text: var(--text-primary);
+  --navy-muted: var(--text-secondary);
+  --navy-muted-dim: color-mix(in srgb, var(--text-secondary) 72%, var(--bg));
+  --beige: var(--surface);
+  --beige-border: var(--border);
+  --card-text: var(--text-primary);
+  --sage: var(--accent);
+  --sage-hover: var(--accent-hover);
+  --sage-foreground: var(--text-on-accent);
+  --team-panel-bg: var(--surface);
+  --amber: var(--accent);
+  --amber-bg: var(--accent-tint);
+  --amber-border: color-mix(in srgb, var(--accent) 40%, var(--border));
+  --neutral: var(--text-secondary);
 
   /* shadcn semantic mapping */
-  --background: var(--navy);
-  --foreground: var(--navy-text);
-  --card: var(--beige);
-  --card-foreground: var(--card-text);
-  --popover: var(--beige);
-  --popover-foreground: var(--card-text);
-  --primary: var(--sage);
-  --primary-foreground: var(--sage-foreground);
-  --secondary: color-mix(in srgb, var(--beige) 85%, var(--beige-border));
-  --secondary-foreground: var(--card-text);
-  --muted-bg: color-mix(in srgb, var(--navy) 92%, var(--navy-muted));
-  --muted-foreground: var(--navy-muted);
-  --accent: color-mix(in srgb, var(--sage) 18%, var(--navy));
-  --accent-foreground: var(--navy-text);
-  --destructive: var(--neutral);
-  --destructive-foreground: var(--navy-text);
-  --border: var(--beige-border);
-  --input: var(--beige-border);
-  --ring: var(--sage);
+  --background: var(--bg);
+  --foreground: var(--text-primary);
+  --card: var(--surface);
+  --card-foreground: var(--text-primary);
+  --popover: var(--surface);
+  --popover-foreground: var(--text-primary);
+  --primary: var(--accent);
+  --primary-foreground: var(--text-on-accent);
+  --secondary: var(--surface-raised);
+  --secondary-foreground: var(--text-primary);
+  --muted-bg: var(--surface-raised);
+  --muted-foreground: var(--text-secondary);
+  /* Subtle UI highlight (menus/focus fills) — not the brand rust fill */
+  --ui-accent: var(--accent-tint);
+  --ui-accent-foreground: var(--text-primary);
+  --destructive: var(--danger-muted);
+  --destructive-foreground: var(--text-primary);
+  --input: var(--border);
+  --ring: var(--accent);
 
   /* Shape & layout */
   --radius: 1rem;
@@ -86,13 +92,28 @@
   --color-secondary-foreground: var(--secondary-foreground);
   --color-muted: var(--muted-bg);
   --color-muted-foreground: var(--muted-foreground);
-  --color-accent: var(--accent);
-  --color-accent-foreground: var(--accent-foreground);
+  /* Map Tailwind accent utilities to tinted rust, not solid brand fill */
+  --color-accent: var(--ui-accent);
+  --color-accent-foreground: var(--ui-accent-foreground);
   --color-destructive: var(--destructive);
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
 
+  /* Night Shift named colors */
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-surface-raised: var(--surface-raised);
+  --color-brand: var(--accent);
+  --color-accent-hover: var(--accent-hover);
+  --color-accent-tint: var(--accent-tint);
+  --color-text-primary: var(--text-primary);
+  --color-text-secondary: var(--text-secondary);
+  --color-text-on-accent: var(--text-on-accent);
+  --color-success: var(--success);
+  --color-danger-muted: var(--danger-muted);
+
+  /* Legacy Steady Coach utility names (aliased) */
   --color-navy: var(--navy);
   --color-navy-text: var(--navy-text);
   --color-navy-muted: var(--navy-muted);
@@ -111,6 +132,7 @@
 
   --font-sans: var(--font-ui), ui-sans-serif, system-ui, sans-serif;
   --font-mono: var(--font-data), ui-monospace, monospace;
+  --font-display: var(--font-fraunces), ui-serif, Georgia, "Times New Roman", serif;
 
   --radius-sm: calc(var(--radius) * 0.5);
   --radius-md: calc(var(--radius) * 0.75);
@@ -131,6 +153,7 @@
   html {
     @apply font-sans antialiased;
     letter-spacing: var(--tracking-ui);
+    color-scheme: dark;
   }
 
   body {
@@ -138,7 +161,7 @@
   }
 
   :focus-visible {
-    outline: 2px solid var(--sage);
+    outline: 2px solid var(--accent);
     outline-offset: 2px;
   }
 }
@@ -183,9 +206,9 @@
 .skeleton {
   background: linear-gradient(
     90deg,
-    color-mix(in srgb, var(--team-panel-bg) 80%, var(--navy)) 25%,
-    color-mix(in srgb, var(--beige) 40%, var(--team-panel-bg)) 50%,
-    color-mix(in srgb, var(--team-panel-bg) 80%, var(--navy)) 75%
+    color-mix(in srgb, var(--surface) 80%, var(--bg)) 25%,
+    color-mix(in srgb, var(--surface-raised) 70%, var(--surface)) 50%,
+    color-mix(in srgb, var(--surface) 80%, var(--bg)) 75%
   );
   background-size: 200% 100%;
 }
@@ -203,7 +226,7 @@
 .coach-prose {
   font-size: 0.875rem;
   line-height: 1.6;
-  color: var(--card-text);
+  color: var(--text-primary);
 }
 
 .coach-prose :where(p) {
@@ -232,7 +255,7 @@
 }
 
 .coach-prose :where(a) {
-  color: var(--sage);
+  color: var(--accent);
   text-decoration: underline;
   text-underline-offset: 2px;
 }
@@ -241,7 +264,7 @@
   font-family: var(--font-mono);
   font-size: 0.8125rem;
   border-radius: 0.25rem;
-  background: color-mix(in srgb, var(--beige-border) 40%, var(--beige));
+  background: color-mix(in srgb, var(--surface-raised) 70%, var(--surface));
   padding: 0.1rem 0.35rem;
 }
 
@@ -249,8 +272,8 @@
   margin: 0.75rem 0;
   overflow-x: auto;
   border-radius: 0.5rem;
-  border: 1px solid var(--beige-border);
-  background: color-mix(in srgb, var(--beige-border) 25%, var(--beige));
+  border: 1px solid var(--border);
+  background: color-mix(in srgb, var(--surface-raised) 55%, var(--surface));
   padding: 0.75rem;
 }
 
@@ -261,9 +284,9 @@
 
 .coach-prose :where(blockquote) {
   margin: 0.75rem 0;
-  border-left: 3px solid var(--sage);
+  border-left: 3px solid var(--accent);
   padding-left: 0.75rem;
-  color: color-mix(in srgb, var(--card-text) 75%, transparent);
+  color: color-mix(in srgb, var(--text-primary) 75%, transparent);
 }
 
 .content-width {
@@ -280,5 +303,178 @@
 @media (min-width: 768px) {
   .page-shell {
     padding-bottom: 1.5rem;
+  }
+}
+
+/* Landing (/) — no bottom app nav */
+body:has(.landing-page) .page-shell {
+  padding-bottom: 0;
+}
+
+.landing-hero {
+  width: 100%;
+}
+
+.landing-hero-grid {
+  display: grid;
+  gap: 2.5rem;
+  align-items: center;
+}
+
+@media (min-width: 900px) {
+  .landing-hero-grid {
+    grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr);
+    gap: 3rem;
+    /* Wider than chat content-max for the two-column hero */
+    max-width: 68rem;
+    margin-inline: auto;
+  }
+
+  .landing-hero.content-width {
+    max-width: 68rem;
+  }
+}
+
+.landing-hero-copy {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 1rem;
+  animation: landing-rise 0.7s var(--ease-out) both;
+}
+
+.landing-eyebrow {
+  margin: 0;
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+
+.landing-headline {
+  margin: 0;
+  max-width: 18ch;
+  font-family: var(--font-display);
+  font-size: clamp(2rem, 4.5vw, 3.25rem);
+  font-weight: 600;
+  line-height: 1.12;
+  letter-spacing: -0.02em;
+  color: var(--text-primary);
+}
+
+.landing-subhead {
+  margin: 0;
+  max-width: 36rem;
+  font-size: 1rem;
+  line-height: 1.55;
+  color: var(--text-secondary);
+}
+
+@media (min-width: 640px) {
+  .landing-subhead {
+    font-size: 1.0625rem;
+  }
+}
+
+.landing-cta-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem 1.25rem;
+  padding-top: 0.35rem;
+  animation: landing-rise 0.7s var(--ease-out) 0.08s both;
+}
+
+.landing-demo-link {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
+  transition: color var(--duration-fast) var(--ease-out);
+}
+
+.landing-demo-link:hover {
+  color: var(--text-primary);
+}
+
+.landing-trust {
+  margin: 0;
+  padding-top: 0.25rem;
+  font-size: 0.75rem;
+  line-height: 1.45;
+  color: color-mix(in srgb, var(--text-secondary) 72%, var(--bg));
+  animation: landing-rise 0.7s var(--ease-out) 0.14s both;
+}
+
+.landing-hero-visual {
+  display: flex;
+  justify-content: center;
+  animation: landing-rise 0.85s var(--ease-out) 0.12s both;
+}
+
+@media (min-width: 900px) {
+  .landing-hero-visual {
+    justify-content: flex-end;
+  }
+}
+
+.landing-phone {
+  position: relative;
+  width: min(100%, 17.5rem);
+  aspect-ratio: 9 / 19.2;
+  border-radius: 2rem;
+  border: 2px solid color-mix(in srgb, var(--accent) 55%, var(--border));
+  background: color-mix(in srgb, var(--bg) 88%, #000);
+  box-shadow:
+    0 0 0 1px color-mix(in srgb, var(--accent) 18%, transparent),
+    0 24px 48px -20px rgba(0, 0, 0, 0.55);
+  overflow: hidden;
+}
+
+.landing-phone-notch {
+  position: absolute;
+  top: 0.55rem;
+  left: 50%;
+  z-index: 2;
+  width: 5.5rem;
+  height: 1.15rem;
+  transform: translateX(-50%);
+  border-radius: 999px;
+  background: #0a0d12;
+}
+
+.landing-phone-screen {
+  position: absolute;
+  inset: 0.45rem;
+  top: 1.85rem;
+  overflow: auto;
+  border-radius: 1.35rem;
+  background: var(--bg);
+  scrollbar-width: none;
+}
+
+.landing-phone-screen::-webkit-scrollbar {
+  display: none;
+}
+
+@keyframes landing-rise {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .landing-hero-copy,
+  .landing-cta-row,
+  .landing-trust,
+  .landing-hero-visual {
+    animation: none;
   }
 }

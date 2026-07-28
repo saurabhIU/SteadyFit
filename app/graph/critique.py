@@ -94,8 +94,9 @@ def looks_like_nutrition_plan_change(text: str) -> bool:
 def should_critique(state: CoachingTeamState) -> bool:
     """Only plan-changing turns — skip knowledge, adherence check-ins, and interrupts.
 
-    Safety interrupts (pain/allergy/pregnancy) are acknowledgments, not draft plans to
-    optimize — critique must not second-guess them (same skip path as pure knowledge).
+    Safety interrupts (pain/allergy/pregnancy/diabetes/hypertension) are acknowledgments,
+    not draft plans to optimize — critique must not second-guess them (same skip path as
+    pure knowledge).
     Meal logging (photo or text "I ate…") is informational — skip critique for speed.
     """
     if state.proposals.get("meal_log_only"):

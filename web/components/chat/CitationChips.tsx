@@ -25,8 +25,8 @@ export function CitationChips({ citations }: { citations: Citation[] }) {
               className={cn(
                 "rounded-[var(--radius-pill)] border px-2.5 py-1 font-mono text-[10px] tracking-tight transition-colors",
                 active
-                  ? "border-sage bg-sage/20 text-navy-text"
-                  : "border-sage/50 bg-transparent text-sage hover:bg-sage/10",
+                  ? "border-sage bg-accent-tint text-sage"
+                  : "border-sage/50 bg-transparent text-sage hover:bg-accent-tint/80",
               )}
             >
               {label}

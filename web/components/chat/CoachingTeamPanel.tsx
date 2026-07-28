@@ -58,7 +58,7 @@ export function CoachingTeamPanel({
         <button
           type="button"
           onClick={() => setOpen((v) => !v)}
-          className="flex w-full items-center justify-between gap-2 border-l-[3px] border-sage px-3 py-2.5 text-left transition-colors hover:bg-white/5"
+          className="flex w-full items-center justify-between gap-2 border-l-[3px] border-sage px-3 py-2.5 text-left transition-colors hover:bg-surface-raised/60"
           aria-expanded={open}
         >
           <span className="font-mono text-xs text-navy-muted">
@@ -82,7 +82,7 @@ export function CoachingTeamPanel({
                 key={`${entry.type}-${entry.agent}-${idx}`}
                 className={cn(
                   "font-mono text-xs leading-relaxed",
-                  entry.type === "critique" && "text-amber-200/90",
+                  entry.type === "critique" && "text-danger-muted",
                 )}
               >
                 <span className="font-semibold text-navy-text">

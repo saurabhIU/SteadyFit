@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { TryItYourself } from "@/components/landing/TryItYourself";
 import { useProfile } from "@/lib/profile";
 import { useWeekStreak } from "@/lib/use-week-streak";
 import { cn } from "@/lib/utils";
@@ -146,14 +147,38 @@ function ProfileSwitcher() {
   );
 }
 
+function LandingHeader() {
+  return (
+    <header className="sticky top-0 z-40 border-b border-beige-border/15 bg-navy/95 backdrop-blur-md">
+      <div className="content-width flex h-[var(--header-h)] items-center justify-between gap-3">
+        <Link href="/" className="shrink-0">
+          <span className="font-display text-xl font-semibold tracking-tight text-navy-text sm:text-2xl">
+            SteadyFit
+          </span>
+        </Link>
+        <TryItYourself
+          label="Try it yourself"
+          hideHint
+          className="items-end [&_button]:px-4 [&_button]:py-2 [&_button]:text-xs sm:[&_button]:text-sm"
+        />
+      </div>
+    </header>
+  );
+}
+
 export function Header() {
   const pathname = usePathname();
   const { hrefWithProfile } = useProfile();
   const streakWeeks = useWeekStreak();
+  const isLanding = pathname === "/";
   const showStreak =
     (pathname === "/chat" || pathname === "/plan") &&
     streakWeeks !== null &&
     streakWeeks >= MIN_STREAK_WEEKS;
+
+  if (isLanding) {
+    return <LandingHeader />;
+  }
 
   return (
     <>

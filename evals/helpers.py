@@ -120,6 +120,9 @@ Rules for this category (CRITICAL):
   * dairy/allergy mid-schedule → acknowledge allergy; dairy-free food guidance
     IS correct (even if it mentions protein targets)
   * pregnancy safety mid-nutrition → addresses safety; not a protein meal plan dump
+  * diabetes / hypertension mid-thread → acknowledges the condition; grounds in
+    population-guide coaching; includes a brief doctor-coordination note; does
+    NOT dump the prior meal/schedule offer
 - tone: warm, never guilt-tripping; do not encourage training through sharp pain.
 - plan_sanity: 5 when advice is realistic and interrupt-appropriate.
 Expected behavior is in the case; prioritize that."""
@@ -811,6 +814,9 @@ def _plan_gate_fields_from_state(state: Any) -> dict:
             "awaiting_weight_for_first_plan": False,
             "weight_kg": None,
             "weight_declined": False,
+            "intent": None,
+            "onboarding_complete": False,
+            "goal": None,
         }
     if hasattr(state, "model_dump"):
         data = state.model_dump()
@@ -841,6 +847,9 @@ def _plan_gate_fields_from_state(state: Any) -> dict:
         "food_preference": (profile or {}).get("food_preference"),
         "age": (profile or {}).get("age"),
         "age_declined": bool((profile or {}).get("age_declined")),
+        "intent": data.get("intent"),
+        "onboarding_complete": bool((profile or {}).get("onboarding_complete")),
+        "goal": (profile or {}).get("goal"),
     }
 
 
@@ -1101,6 +1110,8 @@ def critique_structural_failure(row: dict, out: dict) -> str | None:
         return photo_meal_structural_failure(row, out)
     if row.get("category") == "approval_card":
         return approval_card_structural_failure(row, out)
+    if row.get("category") == "topic_interrupt":
+        return topic_interrupt_structural_failure(row, out)
     if row.get("category") != "council_critique":
         return None
     verdict = out.get("critique_verdict")
@@ -1147,6 +1158,63 @@ def critique_structural_failure(row: dict, out: dict) -> str | None:
         if rounds > 1:
             return f"critique_rounds={rounds} exceeded one revise cycle"
         return None
+
+    return None
+
+
+_DOCTOR_LINE_STRUCT_RE = re.compile(
+    r"(?i)this isn't medical guidance"
+)
+_CARDIOMETABOLIC_KB_STRUCT_RE = re.compile(
+    r"(?i)(?:obesity_diabetes_office|type\s*2\s*diabetes|diabetes|"
+    r"hypertens|blood\s+pressure|blood\s+glucose|glyca?emic)"
+)
+
+
+def topic_interrupt_structural_failure(row: dict, out: dict) -> str | None:
+    """Deterministic guards for cardiometabolic / critique-skip interrupt cases."""
+    reply = out.get("reply") or ""
+    transcript = out.get("coaching_team_transcript") or out.get("coaching_team") or []
+    if not isinstance(transcript, list):
+        transcript = []
+    n_critique = sum(1 for e in transcript if isinstance(e, dict) and e.get("type") == "critique")
+    n_revision = sum(1 for e in transcript if isinstance(e, dict) and e.get("type") == "revision")
+    verdict = out.get("critique_verdict")
+
+    if row.get("expect_critique_skipped"):
+        if verdict not in (None, "skipped"):
+            return f"expected critique skipped, got verdict={verdict!r}"
+        if n_critique or n_revision:
+            return "expected no critique/revision transcript entries when skipped"
+
+    if row.get("expect_doctor_coordination_line"):
+        if not _DOCTOR_LINE_STRUCT_RE.search(reply):
+            return "expected standing doctor-coordination safety line"
+
+    if row.get("expect_cardiometabolic_kb"):
+        blob = "\n".join(str(c) for c in (out.get("contexts") or []))
+        blob = f"{blob}\n{reply}"
+        if not _CARDIOMETABOLIC_KB_STRUCT_RE.search(blob):
+            return "expected diabetes/hypertension population-guide grounding in reply or contexts"
+
+    if row.get("expect_stays_intake"):
+        intent = (out.get("intent") or "").lower()
+        if intent and intent != "intake":
+            return f"expected intake path mid-onboarding, got intent={intent!r}"
+        if out.get("onboarding_complete") is True:
+            return "diabetes/hypertension mention must not complete onboarding"
+        # No dedicated condition profile field — only existing slots.
+        profile_blob = json.dumps(
+            {
+                "goal": out.get("goal"),
+                "sessions_per_week": out.get("sessions_per_week"),
+                "food_preference": out.get("food_preference"),
+                "preferred_workout_modes": out.get("preferred_workout_modes"),
+            },
+            default=str,
+        ).lower()
+        if "diabetes_required" in profile_blob or "hypertension_required" in profile_blob:
+            return "must not invent a mandatory diabetes/hypertension profile field"
 
     return None
 
@@ -1313,16 +1381,48 @@ def diet_plan_structural_failure(row: dict, out: dict) -> str | None:
         summary = pending.get("diet_plan_summary") or []
         if not diet and not summary:
             return "approval missing proposed_diet_plan / diet_plan_summary"
-        if row.get("expect_vegetarian_diet") or row.get("expect_diet_plan_on_approve"):
+        plan = pending.get("proposed_plan") or {}
+        if isinstance(plan, dict) and plan.get("week_start"):
+            from datetime import date, timedelta
+
+            today = date.today()
+            monday = today - timedelta(days=today.weekday())
+            if str(plan["week_start"])[:10] != monday.isoformat():
+                return (
+                    f"week_start {plan['week_start']!r} != current Monday "
+                    f"{monday.isoformat()}"
+                )
+        if row.get("expect_vegetarian_diet"):
             blob = " ".join(
                 str(m.get("food_description") or "")
                 for m in diet
                 if isinstance(m, dict)
             ).lower()
             blob += " " + " ".join(str(s) for s in summary).lower()
-            for banned in ("chicken", "fish", "mutton", "rohu"):
+            for banned in ("chicken", "fish", "mutton", "rohu", "turkey", "salmon"):
                 if banned in blob:
                     return f"vegetarian diet leaked non-veg food: {banned}"
+
+    if row.get("expect_short_plan_intro"):
+        reply = last.get("reply") or out.get("reply") or ""
+        weekdays = sum(
+            1
+            for d in ("monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday")
+            if d in reply.lower()
+        )
+        if weekdays >= 2 or re.search(r"(?i)\b(mon|tue|wed|thu|fri)\s*[:—-]", reply):
+            return "free-text reply contains day-by-day schedule (should be intro only)"
+        if "breakfast" in reply.lower() and "lunch" in reply.lower():
+            return "free-text reply lists meals (should be intro only)"
+
+    if row.get("expect_neutral_cuisine"):
+        diet = (pending.get("proposed_diet_plan") or []) if isinstance(pending, dict) else []
+        blob = " ".join(
+            str(m.get("food_description") or "") for m in diet if isinstance(m, dict)
+        ).lower()
+        for marker in ("dal", "roti", "paneer", "rajma", "chole", "dahi"):
+            if marker in blob:
+                return f"neutral cuisine expected but found Indian marker: {marker}"
 
     if row.get("expect_tdee_macros"):
         if not (isinstance(pending, dict) and pending.get("type") == "plan_approval"):

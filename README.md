@@ -10,7 +10,9 @@ USDA, exercise lookup, meal vision, TDEE, and RAG.
 **Shipped product surface:** conversational onboarding → diet-metrics gate → first
 week of **workouts + KB meal plan** (HITL approve) · **photo meal logging** ·
 **try-it-yourself** guest profiles · **council critique-and-revise** before merge ·
-context-aware scope gate · multi-profile demo (`demo-new` / `demo-veteran`).
+context-aware scope gate · `demo-veteran` profile switcher for the public demo
+(`demo-new` is an internal eval fixture, not shown in the UI — use
+**try-it-yourself** for a new-user walkthrough).
 
 See **deliverables.md** (Tasks 1–7) and **IMPROVEMENTS_LOG.md** (post-baseline changelog
 with eval evidence).
@@ -46,9 +48,13 @@ Next.js UI (Vercel) ──► FastAPI API (Render)
          └── citations / quick_replies / plan+diet approval / photo log
 
 External cron ──► POST /internal/weekly-review
-               └── POST /internal/cleanup-expired-profiles  (try-* TTL)
+               └── POST /internal/cleanup-expired-profiles  (try-* TTL, 4h)
 
-Tools: calendar · USDA · Tavily · exercise_lookup · meal_vision · compute_tdee · retrieve_*
+API: /api/chat · /api/profiles (+/try guest, +/{id}/reset) · /api/approve
+     /api/plan · /api/food_log/today · /api/quick-workout/complete · /api/upload
+
+Tools: calendar · USDA · Tavily · exercise_lookup · meal_vision · compute_tdee ·
+       get_today_totals · log_food_entry · retrieve_*
 RAG / memory (Postgres + pgvector `documents`):
   personal uploads  ──► doc_type=personal   (user_id; dense)
   curated KB Volumes──► doc_type=kb_*       (shared; hybrid dense+FTS RRF)
@@ -61,25 +67,26 @@ Evals: 115 golden cases · RAGAS + LLM-judge
 ```mermaid
 flowchart TD
     subgraph CLIENT[Client]
-        UI[Next.js on Vercel<br/>chat / plan / try-yourself / photo]
+        UI[Next.js on Vercel<br/>Chat / Plan / Update tabs<br/>demo-veteran switcher · try-yourself 4h]
     end
 
     subgraph BACKEND[Render FastAPI]
         GATE[Scope gate<br/>normalize + rate-limit]
         LG[LangGraph<br/>thread = user_id:conv]
         GW[Vercel AI Gateway]
-        CRON[Sunday weekly-review<br/>+ ephemeral cleanup]
+        CRON[Sunday weekly-review<br/>+ daily ephemeral cleanup]
     end
 
     subgraph AGENTS[Coaching Team]
-        COACH[Coach supervisor]
-        INT[Intake + diet gate]
-        SCH[Scheduler + diet week]
-        NUT[Nutrition + vision + TDEE]
+        COACH[Coach supervisor<br/>+ weight/upload/diet gates]
+        INT[Intake<br/>+ diet/weight/upload gate]
+        SCH[Scheduler<br/>+ diet_plan week + personalization]
+        NUT[Nutrition + vision + TDEE<br/>+ condition_food nudges]
         ADH[Adherence]
         KNOW[Knowledge]
-        CRIT[Critique revise ≤1]
+        CRIT[Critique revise ≤1<br/>skips meal-log-only / topic-interrupt]
         TEAM[Coaching team merge]
+        MWRITE[Memory write<br/>weekly summary]
         HITL[Approve HITL]
     end
 
@@ -88,9 +95,10 @@ flowchart TD
         T2[USDA FoodData]
         T3[Tavily web]
         T4[exercise_lookup]
-        T5[Hybrid retriever]
+        T5[Hybrid retriever<br/>dense + FTS RRF*]
         T6[Meal vision]
         T7[compute_tdee_targets]
+        T8[get_today_totals]
     end
 
     subgraph STORAGE[Neon Postgres + pgvector]
@@ -120,15 +128,20 @@ flowchart TD
     ADH --> CRIT
     KNOW --> CRIT
     CRIT --> TEAM
-    TEAM --> HITL
+    TEAM --> MWRITE
+    MWRITE --> HITL
+    MWRITE -.->|risk loop, ≤2 rounds| COACH
     SCH --> T1
     SCH --> T4
     SCH --> T5
     SCH --> T7
+    SCH -.->|personalization.py<br/>code-level, pre-prompt| PERS
     NUT --> T2
     NUT --> T5
     NUT --> T6
     NUT --> T7
+    NUT --> T8
+    NUT -.->|personalization.py<br/>code-level, pre-prompt| PERS
     KNOW --> T3
     KNOW --> T5
     T5 --> KB
@@ -145,6 +158,12 @@ flowchart TD
     style STORAGE fill:#d97706,stroke:#78350f,color:#fff
     style OBS fill:#e11d48,stroke:#881337,color:#fff
 ```
+
+*Hybrid retriever (`retrieve()` / `retrieve_hybrid()` in `app/rag/retriever.py`) had a
+silent SQL parameter-ordering bug — every filtered KB query fell back to
+`[kb:error]` — introduced the same day hybrid retrieval shipped and undetected
+for 13 days across multiple eval runs. Fixed this week; re-run comparison in
+`evals/comparison_baseline_fixed_v2_vs_hybrid_retrieval_v2.md`.
 
 ### Turn flow
 
@@ -209,7 +228,7 @@ uv run python scripts/migrate_documents_kb.py
 uv run python scripts/migrate_documents_memory.py
 uv run python scripts/migrate_add_fts.py
 uv run python -m app.rag.ingest_kb data/knowledge_base/
-uv run python scripts/seed_memory.py --profile fresh
+uv run python scripts/seed_memory.py --profile fresh     # demo-new: internal eval fixture only, not in the UI
 uv run python scripts/seed_memory.py --profile veteran --no-llm
 uv run uvicorn app.main:app --reload --port 8000
 ```

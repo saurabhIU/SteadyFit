@@ -104,7 +104,7 @@ HITL plan approval — that re-plans training and nutrition around real life.
 ```mermaid
 flowchart TD
     subgraph CLIENT["🖥️  Client"]
-        U["📱 Browser UI<br/>chat · plan · profile switcher"]
+        U["📱 Browser UI<br/>Chat · Plan · Update tabs<br/>demo-veteran switcher · try-yourself (4h, self-serve)"]
     end
 
     subgraph FRONTEND["▲  Vercel"]
@@ -112,9 +112,9 @@ flowchart TD
     end
 
     subgraph BACKEND["⚙️  Render"]
-        API["FastAPI<br/>/api/chat · /api/profiles<br/>/internal/weekly-review"]
+        API["FastAPI<br/>/api/chat · /api/profiles (+/try)<br/>/api/plan · /api/food_log/today<br/>/internal/weekly-review (+cleanup-expired-profiles)"]
         GATE["🛡️ Scope gate<br/>normalize · rate-limit"]
-        CRON["⏰ Sunday cron<br/>weekly review, all profiles"]
+        CRON["⏰ Sunday cron<br/>weekly review, all profiles<br/>+ daily expired-profile cleanup"]
     end
 
     subgraph AGENTS["🧠  LangGraph Coaching Team"]
@@ -127,12 +127,14 @@ flowchart TD
         FOOD["🥗 USDA FoodData<br/>macro grounding"]
         CAL["📅 Calendar mock"]
         XL["📦 exercise_lookup.json"]
-        RET["🔍 Hybrid retriever<br/>dense + BM25 + RRF"]
+        RET["🔍 Hybrid retriever<br/>dense + BM25 + RRF*"]
+        VIS["📷 analyze_meal_photo<br/>vision meal ID"]
+        TOT["📊 get_today_totals<br/>daily macro sum"]
     end
 
     subgraph STORAGE["🗄️  Neon Postgres"]
         PG[("pgvector<br/>documents + checkpointer")]
-        APP[("App state<br/>profiles · plans · logs")]
+        APP[("App state<br/>profiles · plans · diet_plan_days · logs")]
     end
 
     subgraph OBS["📊  Observability"]
@@ -144,7 +146,7 @@ flowchart TD
     CRON --> API
     API --> GATE --> LG
     LG --> GW
-    LG --> TAV & FOOD & CAL & XL & RET
+    LG --> TAV & FOOD & CAL & XL & RET & VIS & TOT
     RET --> PG
     LG --> PG & APP
     LG --> LS
@@ -170,11 +172,17 @@ flowchart TD
     style CAL fill:#22c55e,stroke:#14532d,color:#fff
     style XL fill:#22c55e,stroke:#14532d,color:#fff
     style RET fill:#22c55e,stroke:#14532d,color:#fff
+    style VIS fill:#22c55e,stroke:#14532d,color:#fff
+    style TOT fill:#22c55e,stroke:#14532d,color:#fff
     style PG fill:#f59e0b,stroke:#78350f,color:#fff
     style APP fill:#f59e0b,stroke:#78350f,color:#fff
     style LS fill:#f43f5e,stroke:#881337,color:#fff
     style EV fill:#f43f5e,stroke:#881337,color:#fff
 ```
+
+\* `retrieve()` / `retrieve_hybrid()` had a silent SQL parameter-ordering bug —
+filtered KB queries fell back to `[kb:error]` — live for 13 days across the
+Task 5/6 eval runs before being fixed this week (see Task 6 update below).
 
 ### Component choices (one sentence each)
 
@@ -196,17 +204,17 @@ flowchart TD
 
 ```mermaid
 flowchart TD
-    IN[User message or Sunday cron]
+    IN[User message, photo, or Sunday cron]
     UID[Resolve user_id from X-User-Id]
     SG{Scope gate fitness coaching?}
     REJ[Fitness-only refusal fixed template]
-    COACH[Coach load profile + week plan]
-    INT[Intake extract persist one question]
+    COACH[Coach: load profile + week plan<br/>+ weight/upload/diet gates]
+    INT[Intake: extract, persist one question<br/>+ diet/weight/upload gate]
     FIRST[First plan to Scheduler]
 
     subgraph SPECIALISTS[Specialist Agents]
-        SCH[Scheduler]
-        NUT[Nutrition]
+        SCH[Scheduler<br/>+ diet_plan.build_diet_week]
+        NUT[Nutrition + vision + TDEE<br/>+ condition_food nudges]
         ADH[Adherence]
         KNOW[Knowledge]
     end
@@ -218,7 +226,7 @@ flowchart TD
         WEB[Tavily web]
     end
 
-    CRIT[Critique-and-revise max 1 cycle]
+    CRIT[Critique-and-revise max 1 cycle<br/>skips meal-log-only / topic-interrupt turns]
     TEAM[Coaching team merge citations risk]
     MWRITE[memory_write weekly summary to pgvector]
     HITL[Approve interrupt — workouts + diet + macros]
@@ -240,9 +248,11 @@ flowchart TD
     COACH -->|knowledge| KNOW
     SCH --> KB
     SCH --> MEM
+    SCH -.->|personalization.py<br/>code-level, feeds plan gen| PERS
     NUT --> KB
     NUT --> MEM
     NUT --> WEB
+    NUT -.->|personalization.py<br/>code-level, feeds plan gen| PERS
     ADH --> MEM
     KNOW --> KB
     KNOW --> PERS
@@ -282,6 +292,12 @@ flowchart TD
     style WEB fill:#dbeafe,stroke:#93c5fd,color:#1e3a8a
 ```
 
+\* Personal-doc retrieval previously only fed **Knowledge** (direct Q&A). It
+now also feeds **Scheduler** and **Nutrition** — dotted edges above — via
+`app.graph.personalization.load_personal_plan_context()`, a deterministic
+code-level RAG call injected into the plan-generation prompt, distinct from
+the LLM-driven `retrieve_personal_docs` tool call Knowledge uses.
+
 **How it works:** Each request carries **`X-User-Id`** (or a `try-*` guest from
 Try it yourself). Threads are namespaced `{user_id}:{conversation_id}`. Chat enters a
 **scope gate**. The Coach loads that user's Postgres profile; incomplete onboarding or
@@ -292,8 +308,11 @@ vision). Plan-changing drafts pass **critique** (≤1 revise) before the coachin
 merges. Citations: `[KB: …]` / `[Memory: …]` / `[doc:…]` / `[web:…]`. Weekly-review
 turns upsert coaching memory. Plan changes hit HITL approve (workouts + diet + macros).
 
-**Demo personas:** `demo-new`, `demo-veteran`, plus **Try it yourself** ephemeral
-profiles. Frontend uses `?profile=` / try flow (not localStorage for active identity).
+**Demo personas:** `demo-veteran` (public profile switcher) plus **Try it
+yourself** ephemeral profiles for a new-user walkthrough. `demo-new` is an
+internal eval fixture only (`scripts/seed_memory.py --profile fresh`,
+`evals/helpers.py:EVAL_USER_NEW`) — not exposed in the UI. Frontend uses
+`?profile=` / try flow (not localStorage for active identity).
 
 ---
 
@@ -566,7 +585,7 @@ and covered by golden-set categories. Full changelog: **IMPROVEMENTS_LOG.md**.
 |---|---|---|
 | **Council critique-and-revise** | Pre-merge critique node (≤1 revise) for plan-changing specialists; hard fails on knee / preference / volume mismatches; Coaching Team panel shows critique → revision chips | `council_critique` (4): all judge dims 5.0 · `critique_interrupt_fix` (**92** cases, **0** critical must-pass) · `summary_council_critique*.md` |
 | **Vision / photo meal logging** | Chat photo → vision food ID → USDA macros → `food_log` (image not retained); critique skipped on meal-log-only turns; non-food + adversarial-in-notes handled | `photo_meal` (**5**): groundedness/plan_sanity/tone/safety all **5.0**, **0** critical · `summary_photo_meal.md` |
-| **Try-it-yourself profiles** | `POST /api/profiles/try` ephemeral `try-*` users (48h TTL + cleanup cron); full onboarding without demo personas | `try_profile_ux_full` (**96** cases, **0** critical): groundedness 4.87 · plan_sanity 4.89 · tone 4.91 · safety 4.96 · `summary_try_profile_ux_full.md` |
+| **Try-it-yourself profiles** | `POST /api/profiles/try` ephemeral `try-*` users (4h TTL + cleanup cron); full onboarding without demo personas | `try_profile_ux_full` (**96** cases, **0** critical): groundedness 4.87 · plan_sanity 4.89 · tone 4.91 · safety 4.96 · `summary_try_profile_ux_full.md` |
 | **Diet gate + TDEE + KB diet week** | Hard-stop weight → target → height → activity; code Mifflin–St Jeor; KB Indian meals → `diet_plan_days`; approval + Plan page planned vs logged | `diet_plan` (4) + `weight_gate` (5): structural hard-stop / TDEE / veg-safe · `summary_diet_plan.md` |
 | **Live deploy** | Vercel app + Render API with CORS wired | https://steady-fit.vercel.app · https://steadyfit-api.onrender.com/health |
 

@@ -38,14 +38,15 @@ A typical `/api/chat` tree looks like:
 ```
 LangGraph          ← parent graph.invoke
 ├─ scope_gate      ← verdict: in_scope | out_of_scope | bypassed_pending_state
-├─ coach           ← intent routing LLM (schedule / nutrition / …)
-├─ scheduler|nutrition|adherence|knowledge
+├─ coach           ← intent routing LLM (schedule / nutrition / …; relative-day → schedule)
+├─ intake | scheduler | nutrition | adherence | knowledge
 │  ├─ ChatOpenAI (+ tool_calls)
 │  ├─ calendar_conflicts / usda_food_lookup / web_search_fitness   (@tool)
 │  ├─ find_exercises / get_substitutions                           (tool)
 │  ├─ retrieve_kb / retrieve_personal / retrieve_memory            (retriever)
-│  └─ …
-├─ coaching_team   ← council merge LLM
+│  └─ …  (scheduler may short-circuit informational relative-day replies)
+├─ critique        ← plan-changing turns only (≤1 revise)
+├─ coaching_team   ← merge LLM; plan_changed chat from plan_diff
 └─ memory_write / weekly_summary   (weekly-review turns only)
 ```
 

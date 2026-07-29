@@ -25,6 +25,10 @@ from app.graph.micro_workout import (
     looks_like_ten_minute_request,
     DONE_CHIP,
 )
+from app.graph.plan_utils import (
+    looks_like_informational_day_plan_query,
+    resolve_relative_day,
+)
 from app.memory.store import get_saved_week_plan, save_profile
 from app.security import (
     as_text,
@@ -153,6 +157,24 @@ def coach_node(state: CoachingTeamState) -> dict:
             "coaching_team_rounds": rounds,
             "quick_replies": [],
             "proposals": {**state.proposals, "micro_session": True},
+            **critique_reset,
+        }
+
+    # Relative-day plan asks ("what's my plan for tomorrow" / "tomorrow I only
+    # have 30 mins") → schedule. Weekday resolution is deterministic in the
+    # scheduler — never leave "tomorrow = ?" to coach LLM intent guessing alone.
+    if looks_like_informational_day_plan_query(user_msg) or (
+        resolve_relative_day(user_msg) is not None
+        and re.search(
+            r"(?is)\b(readjust|re-?adjust|adjust|shorten|only\s+have|"
+            r"reschedule|trim|30\s*min)\b",
+            user_msg,
+        )
+    ):
+        return {
+            "intent": "schedule",
+            "coaching_team_rounds": rounds,
+            "quick_replies": [],
             **critique_reset,
         }
 
@@ -358,26 +380,34 @@ _REPLY_APPROVE_RE = re.compile(
 
 
 def _plan_change_intro(state: CoachingTeamState) -> str:
-    """Deterministic short intro — day-by-day lives only on the approval card."""
-    from app.graph.approval_copy import has_prior_week_plan, plan_approval_framing
+    """Diff-based intro — concrete day/duration/memory, not a vague template.
+
+    Day-by-day detail still lives on the approval card; the chat reply must
+    name what actually changed so the user is not left guessing.
+    """
+    from app.graph.approval_copy import has_prior_week_plan
+    from app.graph.plan_diff import compute_plan_diff, format_plan_diff_reply
     from app.memory.store import get_saved_week_plan
 
     prior = state.week_plan
     if not has_prior_week_plan(prior):
-        prior = get_saved_week_plan(state.user_id) if state.user_id else None
-    is_first = bool(plan_approval_framing(has_prior=has_prior_week_plan(prior))["is_first_plan"])
-    modes = [m for m in (state.profile.preferred_workout_modes or []) if m]
-    mode_bit = ", ".join(modes) if modes else "your preferred training"
-    goal = (state.profile.goal or "fitness").strip()
-    if is_first:
-        return (
-            f"I've built your first week around {mode_bit} for your {goal} goal, "
-            "with workouts and meals ready for you to review. "
-            "Here's your plan — take a look below."
-        )
-    return (
-        f"I've adjusted this week around {mode_bit} while keeping your {goal} goal "
-        "in mind. Here's the update — take a look below."
+        try:
+            prior = get_saved_week_plan(state.user_id) if state.user_id else None
+        except Exception:
+            # Unit tests / offline — fall through with whatever is on state.
+            prior = None
+    proposed = (state.proposals or {}).get("proposed_week_plan")
+    user_msg = as_text(state.messages[-1].content) if state.messages else ""
+    diff = compute_plan_diff(
+        prior,
+        proposed,
+        user_msg=user_msg,
+        citations=list(state.citations or []),
+    )
+    return format_plan_diff_reply(
+        diff,
+        modes=list(state.profile.preferred_workout_modes or []),
+        goal=state.profile.goal or "fitness",
     )
 
 
@@ -535,6 +565,12 @@ def coaching_team_node(state: CoachingTeamState) -> dict:
                 "Sorry your knee hurts — I've adjusted this week's sessions toward "
                 "knee-safer options (no deep loaded squats/lunges)."
             )
+            # Still append memory tags from the shared diff path when present.
+            from app.graph.plan_diff import memory_tags_from_citations
+
+            mem = memory_tags_from_citations(list(state.citations or []))
+            if mem and mem[0] not in body:
+                body = f"{body}\n\n{' '.join(mem[:2])}"
             reply_text = _compose_plan_changed_reply(state, body)
         else:
             reply_text = _compose_plan_changed_reply(
@@ -562,6 +598,18 @@ def coaching_team_node(state: CoachingTeamState) -> dict:
             "messages": [{"role": "assistant", "content": reply_text}],
             "proposals": {"micro_session": True},
             "quick_replies": [DONE_CHIP],
+            "coaching_team_transcript": list(state.coaching_team_transcript or []),
+            "critique_verdict": state.critique_verdict,
+            "critique_rounds": state.critique_rounds,
+        }
+
+    # Deterministic "what's my plan for tomorrow" — weekday from calendar math.
+    if state.proposals.get("relative_day_info"):
+        reply_text = str(state.proposals.get("scheduler") or "").strip()
+        return {
+            "messages": [{"role": "assistant", "content": reply_text}],
+            "proposals": {"relative_day_info": True},
+            "quick_replies": [],
             "coaching_team_transcript": list(state.coaching_team_transcript or []),
             "critique_verdict": state.critique_verdict,
             "critique_rounds": state.critique_rounds,

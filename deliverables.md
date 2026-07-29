@@ -96,15 +96,16 @@ invisible; drop-off is only discovered after it has already happened.
 SteadyFit is a proactive multi-agent fitness copilot — LangGraph Coach + specialists with
 **agentic tool calling**, a curated metadata-rich **knowledge base**, personal-doc RAG,
 **coaching memory**, live web search, **photo meal logging**, **diet-plan + TDEE**,
-**council critique**, multi-profile / try-yourself Postgres state, profile intake, and
-HITL plan approval — that re-plans training and nutrition around real life.
+**council critique**, deterministic **relative-day / plan_diff** replies,
+multi-profile / try-yourself Postgres state, profile intake, and HITL plan
+approval — that re-plans training and nutrition around real life.
 
 ### Infrastructure diagram
 
 ```mermaid
 flowchart TD
     subgraph CLIENT["🖥️  Client"]
-        U["📱 Browser UI<br/>Chat · Plan · Update tabs<br/>demo-veteran switcher · try-yourself (4h, self-serve)"]
+        U["📱 Browser UI<br/>Chat · Plan · Update tabs<br/>demo-veteran (John) · try-yourself (4h)"]
     end
 
     subgraph FRONTEND["▲  Vercel"]
@@ -139,7 +140,7 @@ flowchart TD
 
     subgraph OBS["📊  Observability"]
         LS["🔭 LangSmith"]
-        EV["🧪 Eval harness<br/>RAGAS + judge · 115 cases"]
+        EV["🧪 Eval harness<br/>RAGAS + judge · 120 cases"]
     end
 
     U --> FE --> API
@@ -196,7 +197,7 @@ Task 5/6 eval runs before being fixed this week (see Task 6 update below).
 | App memory | Postgres **`app_users` / profiles / week_plans / workout_log / weight_log`** | Multi-profile demo via `X-User-Id`; no SQLite. |
 | Coaching memory | `documents` `doc_type=memory` + recency-weighted retrieve | Scheduler/Adherence recall past travel / overload weeks with `[Memory: …]` citations. |
 | Monitoring | **LangSmith** | Traces of tool_calls and agent hops; optional `--experiment` runs. |
-| Evaluation | RAGAS + LLM-as-judge; **115** golden cases (Task 5/6 labeled runs were **80**; latest near-full suite **96**) | RAGAS for retrieval quality; LLM-as-judge for tone/safety/plan sanity; category suites for photo_meal, council_critique, diet_plan, try_profile_ux. |
+| Evaluation | RAGAS + LLM-as-judge; **120** golden cases (Task 5/6 labeled runs were **80**; latest near-full suite **96**) | RAGAS for retrieval quality; LLM-as-judge for tone/safety/plan sanity; category suites for photo_meal, council_critique, diet_plan, calendar_day, try_profile_ux. |
 | UI | **Next.js** — chat chips, citations, photo log, try-yourself, plan approve (workouts + diet), **profile dropdown** | Shareable `?profile=` links; header sends `X-User-Id` on every call. |
 | Deploy | Render API + Vercel `web/` | Cron weekly review loops **all** profiles. Next.js frontend is responsive and accessible at a public HTTPS URL on both mobile and desktop browsers — satisfying the phone + laptop browser requirement. |
 
@@ -208,12 +209,12 @@ flowchart TD
     UID[Resolve user_id from X-User-Id]
     SG{Scope gate fitness coaching?}
     REJ[Fitness-only refusal fixed template]
-    COACH[Coach: load profile + week plan<br/>+ weight/upload/diet gates]
+    COACH[Coach: load profile + week plan<br/>+ weight/upload/diet gates<br/>+ relative-day → schedule]
     INT[Intake: extract, persist one question<br/>+ diet/weight/upload gate]
     FIRST[First plan to Scheduler]
 
     subgraph SPECIALISTS[Specialist Agents]
-        SCH[Scheduler<br/>+ diet_plan.build_diet_week]
+        SCH[Scheduler<br/>+ diet_plan + calendar_truth / relative_day]
         NUT[Nutrition + vision + TDEE<br/>+ condition_food nudges]
         ADH[Adherence]
         KNOW[Knowledge]
@@ -226,8 +227,8 @@ flowchart TD
         WEB[Tavily web]
     end
 
-    CRIT[Critique-and-revise max 1 cycle<br/>skips meal-log-only / topic-interrupt turns]
-    TEAM[Coaching team merge citations risk]
+    CRIT[Critique-and-revise max 1 cycle<br/>skips meal-log / micro / relative-day-info]
+    TEAM[Coaching team + plan_diff concrete reply]
     MWRITE[memory_write weekly summary to pgvector]
     HITL[Approve interrupt — workouts + diet + macros]
     SAVE[Persist week_plan + diet_plan_days]
@@ -242,7 +243,7 @@ flowchart TD
     INT -->|confirmed| FIRST
     FIRST --> SCH
     COACH -->|profile update| INT
-    COACH -->|schedule| SCH
+    COACH -->|schedule / relative-day| SCH
     COACH -->|nutrition / photo| NUT
     COACH -->|adherence| ADH
     COACH -->|knowledge| KNOW
@@ -303,10 +304,15 @@ Try it yourself). Threads are namespaced `{user_id}:{conversation_id}`. Chat ent
 **scope gate**. The Coach loads that user's Postgres profile; incomplete onboarding or
 an open **diet-metrics gate** routes to **intake**. After confirmation and diet slots,
 **first_plan** runs the Scheduler with KB templates, **code TDEE macros**, and a
-**KB meal week**. Otherwise specialists call tools via `bind_tools` (including meal
-vision). Plan-changing drafts pass **critique** (≤1 revise) before the coaching team
-merges. Citations: `[KB: …]` / `[Memory: …]` / `[doc:…]` / `[web:…]`. Weekly-review
-turns upsert coaching memory. Plan changes hit HITL approve (workouts + diet + macros).
+**KB meal week**. Relative-day asks (`today` / `tomorrow`) route to schedule with a
+deterministic **`calendar_truth`** block (`plan_utils`) — informational day-plan
+lookups skip LLM weekday inference. Otherwise specialists call tools via
+`bind_tools` (including meal vision). Plan-changing drafts pass **critique**
+(≤1 revise; skipped for meal-log / micro-session / relative-day-info) before the
+coaching team merges. For `plan_changed`, chat copy comes from **`plan_diff`**
+(day + duration + memory tags); the approval card still shows the full week.
+Citations: `[KB: …]` / `[Memory: …]` / `[doc:…]` / `[web:…]`. Weekly-review turns
+upsert coaching memory. Plan changes hit HITL approve (workouts + diet + macros).
 
 **Demo personas:** `demo-veteran` (public profile switcher) plus **Try it
 yourself** ephemeral profiles for a new-user walkthrough. `demo-new` is an
@@ -370,16 +376,18 @@ behaviour and the non-judgmental copy tone throughout the app.
 8. **Coaching memory:** weekly summarizer + recency-weighted retrieve + memory evals.
 9. **Personal eval fixtures:** `data/eval_uploads/` ingested for `demo-veteran` (rag_personal).
 10. **Council critique-and-revise**, **photo meal logging**, **try-it-yourself** profiles,
-    **diet-metrics gate + TDEE + KB diet week** (see Task 7 shipped + `IMPROVEMENTS_LOG.md`).
+    **diet-metrics gate + TDEE + KB diet week**, **relative-day calendar truth**,
+    **diff-based plan_changed replies**, **condition-aware meal nudges**
+    (see Task 7 shipped + `IMPROVEMENTS_LOG.md`).
 
 ---
 
 ## Task 5: Evals
 
-- Golden set (**current HEAD**): **115 cases** across **22 categories**, including the
+- Golden set (**current HEAD**): **120 cases** across **23 categories**, including the
   original Task 5 set plus `council_critique`, `photo_meal`, `try_profile_ux`,
   `topic_interrupt`, `first_message`, `weight_gate`, `diet_plan`, `intake_chips`,
-  `approval_card`, and the RAG / gate categories.
+  `approval_card`, `calendar_day`, and the RAG / gate categories.
 - **Task 5 labeled baseline** was run on the then-current **80-case** set
   (`baseline_fixed`). That historical number is kept below for before/after Task 6.
 - **Latest near-full suite:** `try_profile_ux_full` — **96 cases**, **0** critical
@@ -587,6 +595,9 @@ and covered by golden-set categories. Full changelog: **IMPROVEMENTS_LOG.md**.
 | **Vision / photo meal logging** | Chat photo → vision food ID → USDA macros → `food_log` (image not retained); critique skipped on meal-log-only turns; non-food + adversarial-in-notes handled | `photo_meal` (**5**): groundedness/plan_sanity/tone/safety all **5.0**, **0** critical · `summary_photo_meal.md` |
 | **Try-it-yourself profiles** | `POST /api/profiles/try` ephemeral `try-*` users (4h TTL + cleanup cron); full onboarding without demo personas | `try_profile_ux_full` (**96** cases, **0** critical): groundedness 4.87 · plan_sanity 4.89 · tone 4.91 · safety 4.96 · `summary_try_profile_ux_full.md` |
 | **Diet gate + TDEE + KB diet week** | Hard-stop weight → target → height → activity; code Mifflin–St Jeor; KB Indian meals → `diet_plan_days`; approval + Plan page planned vs logged | `diet_plan` (4) + `weight_gate` (5): structural hard-stop / TDEE / veg-safe · `summary_diet_plan.md` |
+| **Relative-day + plan_diff replies** | Code resolves `today`/`tomorrow` (`plan_utils`); informational day-plan shortcut; `plan_changed` chat from `plan_diff` (day + duration + `[Memory:…]`) | `calendar_day` (2) + `tests/test_relative_day.py` + `tests/test_plan_diff_reply.py` |
+| **Condition-aware meal nudges** | Diabetes / hypertension flags on meal-log-only path (`condition_food.py`) | Meal-log path in nutrition; see `IMPROVEMENTS_LOG.md` |
+| **Hybrid retriever SQL fix** | Param-order bug caused silent `[kb:error]` for 13 days; fixed + re-compared | `evals/comparison_baseline_fixed_v2_vs_hybrid_retrieval_v2.md` |
 | **Live deploy** | Vercel app + Render API with CORS wired | https://steady-fit.vercel.app · https://steadyfit-api.onrender.com/health |
 
 **Keep for Demo Day:**
@@ -598,7 +609,7 @@ and covered by golden-set categories. Full changelog: **IMPROVEMENTS_LOG.md**.
 - **Coaching memory with citations** (`[Memory: week of …]`) on `demo-veteran`.
 - **KB citations and quick-reply chips** — RAG visible to non-technical viewers.
 - **LangSmith trace** of “traveling next week, knee sore” (tools + critique).
-- **Eval table** — Task 5/6 hybrid delta **plus** 96-case suite / 115-case golden set.
+- **Eval table** — Task 5/6 hybrid delta **plus** 96-case suite / 120-case golden set.
 
 **Change or improve post-cohort:**
 - **Real auth (Clerk/Auth0)** instead of `X-User-Id` / try-profile switcher —
@@ -618,8 +629,8 @@ and covered by golden-set categories. Full changelog: **IMPROVEMENTS_LOG.md**.
       demo-veteran hotel re-plan with Memory → KB cues → critique chip →
       LangSmith → eval table)
 - [x] deliverables.md updated with eval numbers (baseline_fixed +
-      hybrid_retrieval on 80; current golden **115**; latest suite **96**)
-- [x] Architecture docs (README + deliverables + IMPROVEMENTS_LOG) aligned
+      hybrid_retrieval on 80; current golden **120**; latest suite **96**)
+- [x] Architecture docs (README + deliverables + IMPROVEMENTS_LOG + CLAUDE.md) aligned
 - [x] Live URLs verified — https://steady-fit.vercel.app ·
       https://steadyfit-api.onrender.com
 - [x] All code (graph, KB, tools, onboarding, photo, diet plan, critique, UI)

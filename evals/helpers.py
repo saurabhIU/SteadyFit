@@ -1112,6 +1112,8 @@ def critique_structural_failure(row: dict, out: dict) -> str | None:
         return approval_card_structural_failure(row, out)
     if row.get("category") == "topic_interrupt":
         return topic_interrupt_structural_failure(row, out)
+    if row.get("category") == "calendar_day" or row.get("expect_weekday"):
+        return calendar_day_structural_failure(row, out)
     if row.get("category") != "council_critique":
         return None
     verdict = out.get("critique_verdict")
@@ -1479,6 +1481,145 @@ def approval_card_structural_failure(row: dict, out: dict) -> str | None:
             return f"expected tweak headline, got {pending.get('headline')!r}"
         if "first" in headline:
             return f"tweak card must not say first week: {pending.get('headline')!r}"
+    return None
+
+
+def calendar_day_structural_failure(row: dict, out: dict) -> str | None:
+    """Deterministic weekday / plan-day checks for relative-day resolution.
+
+    Prefer expect_relative_day ("tomorrow"|"today") so the expected weekday is
+    computed from date.today() — same source of truth as production — instead of
+    hardcoding a weekday that only matches one calendar day.
+
+    Optional fields:
+    expect_weekday / forbid_weekday: explicit overrides
+    expect_focus_substring: session focus text
+    expect_no_plan_changed: informational path — no HITL card
+    expect_plan_targets_day / expect_plan_duration_min: proposed plan checks
+    """
+    from datetime import date, timedelta
+
+    from app.graph.plan_utils import (
+        resolve_relative_day,
+        weekday_full_name,
+        workout_day_on_date,
+    )
+    from app.memory.store import get_saved_week_plan
+
+    reply = out.get("reply") or ""
+    reply_l = reply.lower()
+
+    weekday = row.get("expect_weekday")
+    focus = row.get("expect_focus_substring")
+    target_day = row.get("expect_plan_targets_day")
+    rel = row.get("expect_relative_day")
+    if rel:
+        resolved = resolve_relative_day(str(rel), as_of=date.today())
+        if resolved is None:
+            return f"could not resolve expect_relative_day={rel!r}"
+        weekday = weekday or resolved.weekday_full
+        target_day = target_day or resolved.weekday_abbr
+        if not focus:
+            uid = out.get("user_id") or row.get("eval_user") or "demo-veteran"
+            plan = get_saved_week_plan(str(uid))
+            session = workout_day_on_date(plan, resolved.target)
+            if session is not None:
+                focus = session.focus
+        # Forbid a clearly wrong nearby weekday (today when asking tomorrow, etc.)
+        if not row.get("forbid_weekday") and rel.lower() == "tomorrow":
+            row = {**row, "forbid_weekday": weekday_full_name(date.today())}
+
+    if weekday:
+        # Prefer the real API reply field — the recurring failure mode is
+        # "correct on the card, missing in chat".
+        if weekday.lower() not in reply_l:
+            pending = out.get("pending_approval") or {}
+            blob = json.dumps(pending).lower() if pending else ""
+            props = out.get("proposals") or {}
+            blob2 = json.dumps(props).lower() if props else ""
+            # For plan-changing turns that require an explicit reply mention,
+            # do NOT fall back to the card — fail if reply lacks the weekday.
+            if row.get("expect_reply_names_day"):
+                return f"API reply missing weekday {weekday!r}: {reply[:180]!r}"
+            hay = f"{reply_l}\n{blob}\n{blob2}"
+            if weekday.lower() not in hay:
+                return f"expected weekday {weekday!r} in reply or proposed plan"
+    if row.get("expect_reply_names_duration"):
+        dur = str(row["expect_reply_names_duration"])
+        if dur not in reply:
+            return f"API reply missing duration {dur!r}: {reply[:180]!r}"
+    if row.get("expect_reply_memory_citation"):
+        cites = out.get("citations") or []
+        has_mem = any(
+            isinstance(c, dict)
+            and (
+                str(c.get("kind") or "").lower() == "memory"
+                or str(c.get("tag") or "").startswith("[Memory:")
+            )
+            for c in cites
+        )
+        # Only assert when retrieval actually returned memory this turn —
+        # composition must surface it; empty retrieval is a separate concern.
+        if has_mem and "[memory:" not in reply_l:
+            return f"API reply missing [Memory:…] citation despite citations: {reply[:180]!r}"
+    forbid = row.get("forbid_weekday")
+    if forbid:
+        bad = re.compile(
+            rf"(?i)\b(?:tomorrow|today)\s+is\s+{re.escape(forbid)}\b"
+        )
+        if bad.search(reply):
+            return f"reply incorrectly names {forbid!r} for a relative day"
+    if focus:
+        pending = out.get("pending_approval") or {}
+        hay = f"{reply}\n{json.dumps(pending)}"
+        if focus.lower() not in hay.lower():
+            return f"expected focus substring {focus!r} in reply or proposed plan"
+    if row.get("expect_no_plan_changed"):
+        if out.get("pending_approval"):
+            return "informational day query must not open a plan-approval card"
+        props = out.get("proposals") or {}
+        if isinstance(props, dict) and props.get("plan_changed"):
+            return "informational day query must not set plan_changed"
+    if row.get("expect_plan_approval_card"):
+        pending = out.get("pending_approval")
+        if not pending or (
+            isinstance(pending, dict) and pending.get("type") != "plan_approval"
+        ):
+            return "expected a plan_approval card for relative-day plan change"
+    if target_day and row.get("expect_plan_duration_min") is not None:
+        pending = out.get("pending_approval") or {}
+        plan = pending.get("proposed_plan") if isinstance(pending, dict) else None
+        days = (plan or {}).get("days") if isinstance(plan, dict) else None
+        if not days:
+            return "expected proposed_plan.days for plan-changing relative-day case"
+        match = next(
+            (
+                d
+                for d in days
+                if str(d.get("day", "")).lower().startswith(str(target_day).lower()[:3])
+            ),
+            None,
+        )
+        if match is None:
+            return f"proposed_plan missing day {target_day!r}"
+        want_dur = int(row["expect_plan_duration_min"])
+        if int(match.get("duration_min") or 0) != want_dur:
+            return (
+                f"proposed {target_day} duration_min="
+                f"{match.get('duration_min')!r}, expected {want_dur!r}"
+            )
+    elif target_day and row.get("expect_plan_approval_card"):
+        # At minimum the proposed plan must include tomorrow's real weekday abbr.
+        pending = out.get("pending_approval") or {}
+        plan = pending.get("proposed_plan") if isinstance(pending, dict) else None
+        days = (plan or {}).get("days") if isinstance(plan, dict) else None
+        summary = str(pending.get("scheduler_summary") or "") if isinstance(pending, dict) else ""
+        hay = f"{json.dumps(days)}\n{summary}".lower()
+        if str(target_day).lower()[:3] not in hay and (weekday or "").lower() not in hay:
+            return (
+                f"proposed plan/summary missing target day "
+                f"{target_day!r}/{weekday!r}"
+            )
     return None
 
 

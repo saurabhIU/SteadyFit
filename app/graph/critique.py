@@ -101,6 +101,11 @@ def should_critique(state: CoachingTeamState) -> bool:
     """
     if state.proposals.get("meal_log_only"):
         return False
+    # Deterministic scheduler shortcuts — no draft to critique.
+    if state.proposals.get("micro_session") or state.proposals.get("relative_day_info"):
+        return False
+    if state.proposals.get("micro_session_log"):
+        return False
 
     user_msg = as_text(state.messages[-1].content) if state.messages else ""
     if looks_like_topic_interrupt(user_msg):

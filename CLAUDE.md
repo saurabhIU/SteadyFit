@@ -1,16 +1,27 @@
 # SteadyFit — Agent Context
 
-Multi-agent LangGraph fitness coaching copilot (capstone scaffold). A **Coach supervisor** routes user messages to specialist agents, merges their proposals in a **council** step, optionally **renegotiates** when adherence risk conflicts with plan density, and pauses for **human-in-the-loop approval** before persisting plan changes.
+Multi-agent LangGraph fitness coaching copilot. A **Coach supervisor** routes user
+messages (or Sunday weekly-review cron) to specialist agents, runs a **critique**
+pass on plan-changing drafts, merges proposals in **coaching_team**, optionally
+**renegotiates** when adherence risk conflicts with plan density, writes weekly
+**coaching memory**, and pauses for **HITL approval** before persisting plan changes.
 
-Full product/architecture rationale: **deliverables.md**. Quick start and deploy: **README.md**.
+Full product/architecture rationale: **deliverables.md**. Changelog + eval pointers:
+**IMPROVEMENTS_LOG.md**. Quick start and deploy: **README.md**.
 
 ---
 
 ## What this app does
 
-SteadyFit helps busy adults stay consistent by **adaptive re-planning** — rescheduling workouts around calendar conflicts, adjusting nutrition after real meals, flagging drop-off risk, and grounding answers in the user's **uploaded documents** (Agentic RAG) or **live web search** (Tavily).
+SteadyFit helps busy adults stay consistent by **adaptive re-planning** —
+rescheduling workouts around calendar conflicts, adjusting nutrition after real
+meals (including photo logs), flagging drop-off risk, building a first week of
+**workouts + KB meals** after a diet-metrics gate, and grounding answers in the
+user's **uploaded documents**, a curated **KB** (hybrid dense+FTS RRF),
+**coaching memory**, or **live web search** (Tavily).
 
-Every turn (user chat or Sunday weekly-review cron) enters at the Coach, loads profile/adherence context, routes to specialists, synthesizes a reply, and checkpoints state in Postgres.
+Every turn enters at the Coach, loads profile/adherence context, routes to
+specialists, synthesizes a reply, and checkpoints state in Postgres.
 
 ---
 
@@ -19,47 +30,67 @@ Every turn (user chat or Sunday weekly-review cron) enters at the Coach, loads p
 ### Graph topology (`app/graph/build.py`)
 
 ```
-entry → coach (supervisor: classify intent)
+entry → coach (supervisor: classify intent + gates)
+          ├─ intake     → (still asking → END) | first_plan → scheduler
           ├─ schedule   → scheduler
           ├─ nutrition  → nutrition
           ├─ adherence  → adherence
           └─ knowledge  → knowledge (agentic RAG)
-specialists → council (Coach merges proposals)
-council → coach      (if risk_flag && council_rounds < MAX; renegotiate / simplify)
-council → approve    (if proposals.plan_changed; LangGraph interrupt)
-council → END        (informational answer)
+specialists → critique (plan-changing only; ≤1 revise back to specialist)
+            → coaching_team → memory_write
+memory_write → coach   (if risk_flag && rounds < MAX; renegotiate / simplify)
+memory_write → approve (if proposals.plan_changed; LangGraph interrupt)
+memory_write → END     (informational answer)
 approve → END
 ```
 
 **Conditional edges:**
-- `route_from_coach`: reads `state.intent` → specialist node name
-- `route_from_council`: `risk_flag` loops back to Coach (max 2 rounds); `plan_changed` → HITL interrupt; else END
+- `route_from_coach`: reads `state.intent` → specialist / intake
+- `route_after_specialist` / `route_from_critique`: critique or skip → coaching_team
+- `route_from_coaching_team` (on `memory_write`): risk loop → coach; `plan_changed` → approve; else END
 
-**Human-in-the-loop:** `approve_node` in `app/graph/supervisor.py` calls `langgraph.types.interrupt()` with the proposed plan. The API resumes with `Command(resume=...)`.
+**Human-in-the-loop:** `approve_node` in `app/graph/supervisor.py` calls
+`langgraph.types.interrupt()` with the proposed plan (+ diet/macros when present).
+The API resumes with `Command(resume=...)`.
 
-**Checkpointer:** Postgres via `langgraph.checkpoint.postgres.PostgresSaver` (Neon in prod, local Postgres in dev). Schema created by `scripts/init_db.py` and idempotently on startup in `build_graph()`.
+**Checkpointer:** Postgres via `langgraph.checkpoint.postgres.PostgresSaver`
+(Neon in prod). Schema via `scripts/init_db.py` and on startup in `build_graph()`.
+
+### Deterministic helpers (not LLM)
+
+| Module | Role |
+|---|---|
+| `plan_utils.py` | `resolve_relative_day`, `calendar_truth_block`, informational day-plan reply |
+| `plan_diff.py` | Diff prior vs proposed week → concrete `plan_changed` chat body |
+| `condition_food.py` | Diabetes / hypertension nudges on meal-log-only path |
+| `tdee.py` / `diet_gate.py` / `diet_plan.py` | Metrics gate + Mifflin–St Jeor + KB meal week |
+| `personalization.py` | Code-level personal-doc RAG injected into scheduler/nutrition prompts |
+
+Relative-day asks (`today` / `tomorrow`) are routed to `schedule` with calendar
+truth — never LLM weekday inference. Critique skips `relative_day_info`,
+meal-log-only, and micro-session turns.
 
 ---
 
-## CouncilState schema (`app/graph/state.py`)
+## CoachingTeamState schema (`app/graph/state.py`)
 
-Shared Pydantic state every `app/` agent node reads/writes:
+Shared Pydantic state every agent node reads/writes (name may still appear as
+CouncilState in older notes — **code uses CoachingTeamState**):
 
 | Field | Type | Owner / purpose |
 |---|---|---|
 | `messages` | `Annotated[list, add_messages]` | Conversation history (LangGraph reducer) |
-| `profile` | `UserProfile` | Long-term user context (goal, injuries, prefs) |
+| `profile` | `UserProfile` | Long-term user context (goal, injuries, prefs, diet metrics) |
 | `week_plan` | `Optional[WeekPlan]` | Current weekly training + macro targets |
-| `intent` | `Optional[str]` | Coach sets: `schedule` \| `nutrition` \| `adherence` \| `knowledge` |
-| `proposals` | `dict` | Specialist name → proposal text/JSON; may include `plan_changed: True` |
-| `risk_flag` | `bool` | Adherence agent: drop-off risk → council loops to Coach |
-| `council_rounds` | `int` | Loop guard (incremented in `coach_node`) |
-| `retrieved_context` | `list[str]` | RAG chunks / Tavily results with `[doc:…]` / `[web:…]` source tags |
+| `intent` | `Optional[str]` | Coach sets: `schedule` \| `nutrition` \| `adherence` \| `knowledge` \| `intake` \| … |
+| `proposals` | `dict` | Specialist name → proposal; may include `plan_changed`, `relative_day_info` |
+| `risk_flag` | `bool` | Adherence: drop-off risk → loop to Coach |
+| `coaching_team_rounds` | `int` | Loop guard |
+| `retrieved_context` | `list[str]` | RAG / Tavily / Memory chunks with source tags |
 
-**Nested models:**
-- `UserProfile`: name, goal, sessions_per_week, injuries, food_preferences
-- `WeekPlan`: week_start, days (`WorkoutDay[]`), calorie_target, protein_target_g, notes
-- `WorkoutDay`: day, focus, duration_min, status (`planned` \| `done` \| `skipped` \| `moved`)
+**Nested models:** `UserProfile`, `WeekPlan`, `WorkoutDay` (status:
+`planned` \| `done` \| `skipped` \| `moved`), plus diet-plan / food-log shapes
+in memory store.
 
 ---
 
@@ -67,15 +98,18 @@ Shared Pydantic state every `app/` agent node reads/writes:
 
 | Agent | File | Intent trigger | Tools / data | Output |
 |---|---|---|---|---|
-| **Coach** (supervisor) | `app/graph/supervisor.py` | entry + renegotiation loop | LLM intent classification | Sets `intent`; council merges final reply |
-| **Scheduler** | `app/graph/agents/scheduler.py` | `schedule` | `calendar_tool` (mock JSON → Google Calendar stretch) | Re-planned week proposal; sets `plan_changed` |
-| **Nutrition** | `app/graph/agents/nutrition.py` | `nutrition` | RAG (recipes), `food_api` (USDA) | Macro adjustments, non-judgmental guidance |
-| **Adherence** | `app/graph/agents/adherence.py` | `adherence` | `memory/store` (SQLite adherence stats) | Drop-off check-in; sets `risk_flag` if reply starts with `RISK` |
-| **Knowledge** | `app/graph/agents/knowledge.py` | `knowledge` | Agentic RAG router → personal pgvector **or** Tavily **or** both | Populates `retrieved_context` |
+| **Coach** | `supervisor.py` | entry + renegotiation | LLM intent + gates | Sets `intent`; relative-day → schedule |
+| **Intake** | `agents/intake.py` | incomplete profile / diet gate | extract + persist slots | One question or handoff to first_plan |
+| **Scheduler** | `agents/scheduler.py` | `schedule` / first_plan | calendar, exercise_lookup, TDEE, personalization, calendar_truth | Week proposal; `plan_changed` or info day reply |
+| **Nutrition** | `agents/nutrition.py` | `nutrition` / photo | USDA, meal vision, totals, condition_food | Macros, meal log, nudges |
+| **Adherence** | `agents/adherence.py` | `adherence` | workout/weight logs, memory | Check-in; may set `risk_flag` |
+| **Knowledge** | `agents/knowledge.py` | `knowledge` | Agentic RAG: personal \| web \| both + KB | `retrieved_context` |
+| **Critique** | `critique.py` | after specialists | rules (knee / prefs / volume) | Pass or revise ≤1 |
+| **Coaching team** | `supervisor.py` | after critique | merge + **plan_diff** for plan_changed | Final user reply |
+| **Memory write** | `agents/memory_write.py` | weekly-review turns | pgvector `doc_type=memory` | Upsert weekly summary |
 
-**Agentic RAG routing** (`knowledge_node`): LLM chooses `personal` \| `web` \| `both` before retrieval — not blind RAG on every question.
-
-**Council** (`council_node`): Merges specialist proposals + retrieved context into one user-facing reply. If adherence risk and plan got harder, conditional edge sends flow back to Coach to simplify.
+**Agentic RAG routing** (`knowledge_node`): LLM chooses `personal` \| `web` \|
+`both` before retrieval — not blind RAG on every question.
 
 ---
 
@@ -84,60 +118,38 @@ Shared Pydantic state every `app/` agent node reads/writes:
 | Concern | Implementation |
 |---|---|
 | LLM gateway | Vercel AI Gateway (`app/config.py` → `get_llm()`); primary `anthropic/claude-sonnet-4.5`, judge `openai/gpt-4o-mini` |
-| Embeddings | OpenAI `text-embedding-3-small` (direct OpenAI key, not the gateway) |
-| Vector store | Postgres + pgvector (`documents` table); was Qdrant in deliverables.md — **code uses pgvector** |
-| Short-term memory | LangGraph Postgres checkpointer (thread_id per chat / weekly-review) |
-| Long-term memory | Postgres `app_users` / `user_profiles` / logs / `week_plans` (`app/memory/store.py`); request header `X-User-Id` |
-| Web search | Tavily (`app/tools/tavily_search.py`) — degrades with `[web:error]` |
-| Nutrition API | USDA FoodData Central (`app/tools/food_api.py`) |
-| Calendar | Mock JSON `data/mock_calendar.json` (`app/tools/calendar_tool.py`) |
-| Monitoring | LangSmith via `LANGCHAIN_*` env vars (optional) |
-| Weekly review | External cron → `POST /internal/weekly-review` with `X-Internal-Secret` (Render cron in `render.yaml`) |
+| Embeddings | OpenAI `text-embedding-3-small` (direct OpenAI key) |
+| Vector store | Postgres + pgvector (`documents`: personal / `kb_*` / memory) |
+| Short-term memory | LangGraph Postgres checkpointer (`thread = {user_id}:{conversation}`) |
+| Long-term memory | Postgres profiles / week_plans / diet_plan_days / food_log / workout_log (`app/memory/store.py`); header `X-User-Id` |
+| Ephemeral guests | `try-*` profiles, **4h TTL**, cleanup cron |
+| Web search | Tavily — degrades with `[web:error]` |
+| Nutrition API | USDA FoodData Central |
+| Calendar | Mock JSON `data/mock_calendar.json` |
+| Monitoring | LangSmith via `LANGCHAIN_*` (optional); see `TRACING.md` |
+| Weekly review | Cron → `POST /internal/weekly-review` + `X-Internal-Secret` |
 
 ---
 
 ## File layout
 
 ```
-app/                          # Primary runtime (README quick start: uvicorn app.main:app)
-  main.py                     # FastAPI: /api/chat, /api/upload, /health, /internal/weekly-review
-  config.py                   # Settings + Vercel AI Gateway LLM factory
+app/
+  main.py / chat_pipeline.py / security.py
+  config.py
   graph/
-    state.py                  # CouncilState, UserProfile, WeekPlan
-    build.py                    # StateGraph wiring + Postgres checkpointer
-    supervisor.py             # coach_node, council_node, approve_node
-    agents/
-      scheduler.py
-      nutrition.py
-      adherence.py
-      knowledge.py
-  rag/
-    ingest.py                 # Markdown-aware chunking → embed → pgvector
-    retriever.py              # Cosine similarity search (Task 6: hybrid BM25+RRF planned)
-  tools/
-    tavily_search.py
-    food_api.py
-    calendar_tool.py
-  memory/
-    store.py                  # SQLite profile + adherence stats
-    context.py                # Bootstrap graph state; persist approved plans
-
-web/                          # Next.js frontend (Vercel deploy; Root Directory = web)
-  app/chat/                   # Coaching chat page
-  app/plan/                   # Weekly plan + adherence view
-  app/upload/                 # Document upload for RAG
-  components/                 # ChatView, CouncilPanel, PlanApprovalCard, Header, ai-elements
-  lib/api.ts                  # Typed client → NEXT_PUBLIC_API_URL (chat + approve)
-
-scripts/init_db.py            # pgvector extension, documents table, checkpointer schema
-scripts/seed_memory.py        # Demo profile, week plan, workout logs (SQLite)
-evals/                        # golden_dataset.jsonl (20 cases), run_evals.py, summary.md output
-tests/test_graph.py           # Routing smoke tests (no LLM calls)
-tests/test_evals.py           # Eval helper unit tests
-data/                         # Runtime: uploads/, mock_calendar.json, knowledge_base/
-deliverables.md               # Capstone Tasks 1–7 (architecture diagrams, eval plan)
-render.yaml                   # Render web service + Sunday cron
-pyproject.toml                # uv project; ships `app` package
+    state.py · build.py · supervisor.py · critique.py
+    plan_utils.py · plan_diff.py · condition_food.py
+    diet_gate.py · tdee.py · diet_plan.py · personalization.py
+    tool_agent.py · agents/{scheduler,nutrition,adherence,knowledge,intake,memory_write}
+  rag/     ingest · ingest_kb · memory_store · retriever (hybrid RRF)
+  tools/   calendar · food_api · tavily · exercise_lookup · meal_vision · agent_tools
+  memory/  store.py · context.py
+web/       chat · plan · upload · ProfileSwitcher
+scripts/   init_db · seed_memory · migrate_*
+evals/     golden_dataset.jsonl (120) · run_evals.py · summaries
+tests/     routing + plan_diff + relative_day + …
+data/      knowledge_base/ · eval_uploads/ · mock_calendar.json
 ```
 
 ---
@@ -146,13 +158,16 @@ pyproject.toml                # uv project; ships `app` package
 
 | Endpoint | Purpose |
 |---|---|
-| `GET /health` | Health check (Render + Vercel smoke tests) |
-| `POST /api/chat` | `{message, thread_id?}` → invoke graph; returns `reply`, `council`, optional `pending_approval` |
-| `POST /api/approve` | `{thread_id, decision: accept\|reject}` → resume HITL interrupt; returns same shape as chat |
-| `GET /api/plan` | `?thread_id=` → profile, `week_plan`, adherence stats (checkpoint + SQLite fallback) |
-| `GET /api/chat/history` | `?thread_id=` → restored messages + pending approval |
-| `POST /api/upload` | Ingest user doc (program/recipes) into pgvector |
-| `POST /internal/weekly-review` | Autonomous Sunday review (cron + shared secret) |
+| `GET /health` | Health check |
+| `POST /api/chat` | Invoke graph; `reply`, council transcript, optional `pending_approval` |
+| `POST /api/approve` | Resume HITL (`accept` \| `reject`) |
+| `GET /api/plan` | Profile, week_plan, diet, adherence |
+| `GET /api/chat/history` | Restored messages + pending approval |
+| `GET /api/food_log/today` | Daily macro totals |
+| `POST /api/upload` | Ingest personal doc into pgvector |
+| `POST /api/profiles/try` | Create ephemeral `try-*` guest |
+| `POST /internal/weekly-review` | Autonomous Sunday review |
+| `POST /internal/cleanup-expired-profiles` | Expire `try-*` guests |
 
 ---
 
@@ -166,30 +181,33 @@ uv run uvicorn app.main:app --reload --port 8000
 
 # separate terminal
 cd web && cp .env.local.example .env.local && npm install && npm run dev
-# http://localhost:3000
+# http://localhost:3000  ·  /chat?profile=demo-veteran  ·  Try it yourself
 ```
 
-**Required env vars for basic chat:** `AI_GATEWAY_API_KEY`, `DATABASE_URL`  
-**Required for RAG/uploads:** `OPENAI_API_KEY` (embeddings)  
-**Optional (graceful degradation):** `TAVILY_API_KEY`, `USDA_API_KEY`, `LANGCHAIN_*`  
-**Production cron:** `INTERNAL_CRON_SECRET`, `FRONTEND_URL` (CORS)
+**Required:** `AI_GATEWAY_API_KEY`, `DATABASE_URL`  
+**RAG/uploads:** `OPENAI_API_KEY`  
+**Optional:** `TAVILY_API_KEY`, `USDA_API_KEY`, `LANGCHAIN_*`  
+**Prod cron:** `INTERNAL_CRON_SECRET`, `FRONTEND_URL`
 
-Do not commit `.env`. See `.env.example` for the full checklist.
+Do not commit `.env`. See `.env.example`.
 
 ---
 
 ## Conventions for contributors
 
-- **Tone:** Warm, concrete, never guilt-tripping — everyday people, not pro athletes.
-- **Grounding:** Cite sources via `[doc:…]` / `[web:…]` tags in retrieved context.
-- **Plan changes:** Always go through the `approve` interrupt before persisting.
-- **Chunking:** Structure-aware (~750 tokens / 3000 chars, 100-token overlap) in `app/rag/ingest.py`; split on markdown headers first to keep whole workout days/recipes.
-- **Tests:** `uv run pytest tests/` — routing only, no live LLM.
-- **Evals:** `uv run python evals/run_evals.py`
-- **Package manager:** `uv` (not pip directly). Python ≥ 3.12.
+- **Tone:** Warm, concrete, never guilt-tripping.
+- **Grounding:** Cite `[KB:…]` / `[Memory:…]` / `[doc:…]` / `[web:…]`.
+- **Plan changes:** Always through the `approve` interrupt before persisting.
+- **Calendar / diffs:** Prefer `plan_utils` / `plan_diff` over LLM weekday or vague merge copy.
+- **Tests:** `uv run pytest tests/` — no live LLM in unit/routing tests.
+- **Evals:** `uv run python evals/run_evals.py` (120 golden cases).
+- **Package manager:** `uv`. Python ≥ 3.12.
 
 ---
 
-## Build status (scaffold)
+## Build status
 
-Per deliverables.md Task 4–5, remaining work may include: hybrid retrieval (Task 6), council critique loop, Loom demo. **Phase 1** (upload UI, plan refresh, workout prefs) and **Phase 2** (20-case eval harness + RAGAS) are wired. Check git history and deliverables.md checklist for current completion state.
+Hybrid retrieval, council critique, photo meal log, try-yourself, diet gate +
+TDEE + diet week, relative-day + plan_diff, and condition-food nudges are
+shipped. Remaining Demo Day item: Loom video. See **deliverables.md** Task 7
+checklist and **IMPROVEMENTS_LOG.md**.

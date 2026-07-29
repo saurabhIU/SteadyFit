@@ -20,7 +20,12 @@ from app.graph.personalization import (
     scrub_diet_for_food_avoids,
     scrub_week_plan_for_avoids,
 )
-from app.graph.plan_utils import current_week_start_iso, parse_week_plan
+from app.graph.plan_utils import (
+    build_informational_day_plan_reply,
+    calendar_truth_block,
+    current_week_start_iso,
+    parse_week_plan,
+)
 from app.graph.state import CoachingTeamState, WeekPlan, WorkoutDay
 from app.graph.tdee import compute_macro_targets
 from app.graph.tool_agent import run_tool_agent
@@ -83,6 +88,13 @@ Write a short warm proposal, then end with a fenced JSON block for the updated p
 ```
 IMPORTANT: week_start will be overwritten in code to this calendar week's Monday —
 you may put any ISO date; do not invent a far-past or far-future week for display.
+
+CALENDAR / RELATIVE DAYS (CRITICAL):
+- A CALENDAR TRUTH block in the user prompt is computed in code from the real
+  server date (same math as Plan day tiles). Treat it as ground truth.
+- When the user says "today" / "tomorrow" / "yesterday", you MUST use the weekday
+  and plan session named in CALENDAR TRUTH — never invent a different weekday
+  (e.g. do not call tomorrow "Tuesday" if CALENDAR TRUTH says Thursday).
 
 When stating calorie_target / protein_target_g without profile weight_kg, treat them as
 starting estimates — put the provisional caveat INLINE next to any numbers you write
@@ -296,6 +308,26 @@ def scheduler_node(state: CoachingTeamState) -> dict:
             "citations": list(state.citations),
         }
 
+    # Informational "what's my plan for tomorrow/today" — resolve weekday in code
+    # (same calendar math as week_start / day tiles). Never leave "tomorrow →
+    # Tuesday?" to the model.
+    info_reply = build_informational_day_plan_reply(
+        profile_name=state.profile.name or "",
+        week_plan=state.week_plan,
+        user_msg=user_msg,
+    )
+    if info_reply:
+        return {
+            "proposals": {
+                **state.proposals,
+                "scheduler": info_reply,
+                "relative_day_info": True,
+                "plan_changed": False,
+            },
+            "retrieved_context": state.retrieved_context,
+            "citations": list(state.citations),
+        }
+
     first_plan = (
         state.intent == "first_plan"
         or state.proposals.get("intake_handoff") == "first_plan"
@@ -361,10 +393,12 @@ def scheduler_node(state: CoachingTeamState) -> dict:
     if personal_block:
         personal_block = f"\n{personal_block}\n"
 
+    cal_block = calendar_truth_block(state.week_plan, user_msg)
     user_prompt = (
         f"Profile: {state.profile.model_dump_json()}\n"
         f"Plan: {state.week_plan.model_dump_json() if state.week_plan else 'none'}\n"
         f"{wrap_untrusted(user_msg, source='user')}\n\n"
+        f"{cal_block}\n\n"
         f"{memory_block}\n"
         f"{personal_block}"
         f"{hint}"

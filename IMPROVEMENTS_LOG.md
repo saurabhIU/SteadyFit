@@ -6,9 +6,9 @@ Artifacts live under `evals/summary_*.md` / `evals/results_*.json`.
 
 **Live:** [App](https://steady-fit.vercel.app) · [API](https://steadyfit-api.onrender.com/health)
 
-**Golden set (current):** **115** cases in `evals/golden_dataset.jsonl`
-(22 categories). Latest near-full suite: `try_profile_ux_full` (**96** cases,
-0 critical must-pass failures).
+**Golden set (current):** **120** cases in `evals/golden_dataset.jsonl`
+(23 categories, including `calendar_day`). Latest near-full suite:
+`try_profile_ux_full` (**96** cases, 0 critical must-pass failures).
 
 ---
 
@@ -52,9 +52,9 @@ Artifacts: `evals/summary_photo_meal.md`.
 
 ### 3. Try-it-yourself ephemeral profiles
 
-`POST /api/profiles/try` creates a guest `try-*` profile (48h TTL, rate-limited).
+`POST /api/profiles/try` creates a guest `try-*` profile (**4h** TTL, rate-limited).
 UI “Try it yourself” path — no demo persona required. Daily cleanup cron in
-`render.yaml`.
+`render.yaml`. (`TRY_TTL_HOURS = 4` in `app/memory/store.py`.)
 
 | Suite | N | Result |
 |---|---|---|
@@ -94,6 +94,41 @@ Artifacts: `evals/summary_diet_plan.md`, `summary_weight_gate_*.md`,
 First-plan vs tweak headlines on HITL card; `GET /api/food_log/today` SUM totals
 for Nutrition “remaining today” and Plan page logged section.
 
+### 7. Hybrid retriever SQL parameter-order fix
+
+`retrieve()` / `retrieve_hybrid()` passed SQL bind params in the wrong order —
+every filtered KB query silently fell back to `[kb:error]` for ~13 days after
+hybrid retrieval shipped. Fixed in `app/rag/retriever.py`; re-run comparison:
+`evals/comparison_baseline_fixed_v2_vs_hybrid_retrieval_v2.md`.
+
+### 8. Condition-aware meal-log nudges
+
+`app/graph/condition_food.py` adds diabetes / hypertension guidance on the
+meal-log-only nutrition path (not on coaching-team / `plan_changed` turns).
+
+### 9. Relative-day calendar truth + diff-based plan replies
+
+LLM weekday inference caused bugs like “tomorrow is Tuesday” when today was
+already Tuesday. Fix:
+
+- **`app/graph/plan_utils.py`** — `resolve_relative_day`, `calendar_truth_block`,
+  informational day-plan shortcut (same Monday/`date.today()` math as Plan tiles).
+- Coach routes relative-day asks to `schedule`; critique skips `relative_day_info`.
+- **`app/graph/plan_diff.py`** — `compute_plan_diff` / `format_plan_diff_reply`
+  so `plan_changed` chat names the requested day + duration (+ `[Memory:…]`)
+  instead of a vague coaching-team intro. Approval card still holds the full week.
+
+| Coverage | Notes |
+|---|---|
+| `calendar_day` | 2 golden cases (119–120) |
+| Unit tests | `tests/test_relative_day.py`, `tests/test_plan_diff_reply.py` |
+
+### 10. Demo UX polish
+
+- `demo-veteran` display name → **John**; `demo-new` hidden from public switcher.
+- Profile switcher race fix (`pendingUserIdRef` in `web/lib/profile.tsx`).
+- Ephemeral sessions show “Guest (this session)” in the switcher.
+
 ---
 
 ## Eval inventory (how to read the numbers)
@@ -104,7 +139,7 @@ for Nutrition “remaining today” and Plan page logged section.
 | `hybrid_retrieval` | 80 | Task 6 hybrid RRF |
 | `try_profile_ux_full` | **96** | Latest near-full suite (0 critical) |
 | `critique_interrupt_fix` | 92 | Post critique + interrupt fixes |
-| `golden_dataset.jsonl` (HEAD) | **115** | Current committed case count |
+| `golden_dataset.jsonl` (HEAD) | **120** | Current committed case count |
 
 Run subsets:
 ```bash
@@ -112,6 +147,7 @@ uv run python evals/run_evals.py --label try_profile_ux_full
 uv run python evals/run_evals.py --category diet_plan --label diet_plan
 uv run python evals/run_evals.py --category photo_meal --label photo_meal
 uv run python evals/run_evals.py --category council_critique --label council_critique
+uv run python evals/run_evals.py --category calendar_day --label calendar_day
 ```
 
 ---

@@ -6,6 +6,7 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
   type ReactNode,
 } from "react";
@@ -46,6 +47,14 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
   const [userId, setUserIdState] = useState(urlProfile || DEFAULT_PROFILE);
   const [ready, setReady] = useState(false);
 
+  // router.replace() updates the URL asynchronously — useSearchParams() can
+  // still report the *previous* ?profile= for a render or two after we've
+  // already flipped local state. Track the id we just set locally so the
+  // URL-reconciliation effect below doesn't see that stale urlProfile and
+  // revert userId back before the URL catches up (this raced visibly in
+  // prod, e.g. clicking "John" from a try-* guest session never stuck).
+  const pendingUserIdRef = useRef<string | null>(null);
+
   useEffect(() => {
     let cancelled = false;
     fetchProfiles()
@@ -70,6 +79,7 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
         setUserIdState(preferred);
         setApiUserId(preferred);
         if (urlProfile !== preferred) {
+          pendingUserIdRef.current = preferred;
           const params = new URLSearchParams(searchParams.toString());
           params.set("profile", preferred);
           router.replace(`${pathname}?${params.toString()}`);
@@ -92,7 +102,17 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
   }, []);
 
   useEffect(() => {
-    if (!urlProfile || urlProfile === userId) return;
+    if (!urlProfile || urlProfile === userId) {
+      // In sync (or no URL param yet) — clear any stale pending marker.
+      pendingUserIdRef.current = null;
+      return;
+    }
+    if (pendingUserIdRef.current === userId) {
+      // We just switched to `userId` locally and are waiting for
+      // router.replace() to propagate; don't let the not-yet-updated
+      // urlProfile bounce us back in the meantime.
+      return;
+    }
     if (
       profiles.length &&
       !profiles.some((p) => p.user_id === urlProfile) &&
@@ -110,6 +130,7 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
 
   const setUserId = useCallback(
     (id: string) => {
+      pendingUserIdRef.current = id;
       setUserIdState(id);
       setApiUserId(id);
       const params = new URLSearchParams(searchParams.toString());

@@ -1,0 +1,42 @@
+{
+  "total": 2,
+  "by_category": {
+    "diet_plan": {
+      "count": 2,
+      "avg_scores": {
+        "groundedness": 1.5,
+        "plan_sanity": 3.0,
+        "tone": 3.5,
+        "safety": 3.5
+      },
+      "ragas": {
+        "faithfulness": null,
+        "answer_relevancy": null,
+        "context_precision": null,
+        "context_recall": null,
+        "answer_correctness": null
+      }
+    }
+  },
+  "empty_context_ids": [],
+  "per_case_ragas": [],
+  "must_pass_failures": [
+    {
+      "id": 112,
+      "category": "diet_plan",
+      "reason": "safety=2"
+    }
+  ],
+  "groundedness": 1.5,
+  "plan_sanity": 3.0,
+  "tone": 3.5,
+  "safety": 3.5,
+  "ragas": {
+    "faithfulness": null,
+    "answer_relevancy": null,
+    "context_precision": null,
+    "context_recall": null,
+    "answer_correctness": null
+  },
+  "label": "diet_plan_phase1_fixes"
+}

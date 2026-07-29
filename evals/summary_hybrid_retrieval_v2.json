@@ -1,0 +1,341 @@
+{
+  "total": 30,
+  "by_category": {
+    "kb_retrieval": {
+      "count": 30,
+      "avg_scores": {
+        "groundedness": 4.4,
+        "plan_sanity": 4.6,
+        "tone": 4.77,
+        "safety": 4.97
+      },
+      "ragas": {
+        "faithfulness": 0.6525,
+        "answer_relevancy": 0.638,
+        "context_precision": 0.7793,
+        "context_recall": 0.7286,
+        "answer_correctness": 0.1857
+      }
+    }
+  },
+  "empty_context_ids": [
+    69
+  ],
+  "per_case_ragas": [
+    {
+      "id": 15,
+      "category": "kb_retrieval",
+      "n_contexts": 1,
+      "faithfulness": 0.9,
+      "answer_relevancy": 0.708785,
+      "context_precision": 1.0,
+      "context_recall": 1.0,
+      "answer_correctness": 0.147258
+    },
+    {
+      "id": 27,
+      "category": "kb_retrieval",
+      "n_contexts": 2,
+      "faithfulness": 0.944444,
+      "answer_relevancy": 0.962983,
+      "context_precision": 0.0,
+      "context_recall": 0.0,
+      "answer_correctness": 0.049953
+    },
+    {
+      "id": 33,
+      "category": "kb_retrieval",
+      "n_contexts": 1,
+      "faithfulness": 0.916667,
+      "answer_relevancy": 0.853258,
+      "context_precision": 1.0,
+      "context_recall": 1.0,
+      "answer_correctness": 0.176388
+    },
+    {
+      "id": 34,
+      "category": "kb_retrieval",
+      "n_contexts": 20,
+      "faithfulness": 0.166667,
+      "answer_relevancy": 0.144703,
+      "context_precision": 0.563384,
+      "context_recall": 0.5,
+      "answer_correctness": 0.062995
+    },
+    {
+      "id": 35,
+      "category": "kb_retrieval",
+      "n_contexts": 7,
+      "faithfulness": 0.791667,
+      "answer_relevancy": 0.788625,
+      "context_precision": 1.0,
+      "context_recall": 1.0,
+      "answer_correctness": 0.218911
+    },
+    {
+      "id": 36,
+      "category": "kb_retrieval",
+      "n_contexts": 20,
+      "faithfulness": 0.25,
+      "answer_relevancy": 0.677971,
+      "context_precision": 0.0,
+      "context_recall": 0.0,
+      "answer_correctness": 0.072118
+    },
+    {
+      "id": 37,
+      "category": "kb_retrieval",
+      "n_contexts": 9,
+      "faithfulness": 0.0,
+      "answer_relevancy": 0.0,
+      "context_precision": 0.611111,
+      "context_recall": 0.5,
+      "answer_correctness": 0.568782
+    },
+    {
+      "id": 38,
+      "category": "kb_retrieval",
+      "n_contexts": 0,
+      "faithfulness": null,
+      "answer_relevancy": null,
+      "context_precision": null,
+      "context_recall": null,
+      "answer_correctness": null,
+      "skipped": "oos_negative_case"
+    },
+    {
+      "id": 39,
+      "category": "kb_retrieval",
+      "n_contexts": 1,
+      "faithfulness": 0.894737,
+      "answer_relevancy": 0.793633,
+      "context_precision": 1.0,
+      "context_recall": 1.0,
+      "answer_correctness": 0.134961
+    },
+    {
+      "id": 40,
+      "category": "kb_retrieval",
+      "n_contexts": 1,
+      "faithfulness": 0.888889,
+      "answer_relevancy": 0.968889,
+      "context_precision": 1.0,
+      "context_recall": 1.0,
+      "answer_correctness": 0.155942
+    },
+    {
+      "id": 41,
+      "category": "kb_retrieval",
+      "n_contexts": 20,
+      "faithfulness": 0.0,
+      "answer_relevancy": 0.16529,
+      "context_precision": 0.05,
+      "context_recall": 0.5,
+      "answer_correctness": 0.068194
+    },
+    {
+      "id": 42,
+      "category": "kb_retrieval",
+      "n_contexts": 20,
+      "faithfulness": 0.0,
+      "answer_relevancy": 0.181913,
+      "context_precision": 0.2875,
+      "context_recall": 1.0,
+      "answer_correctness": 0.059746
+    },
+    {
+      "id": 43,
+      "category": "kb_retrieval",
+      "n_contexts": 2,
+      "faithfulness": 0.931034,
+      "answer_relevancy": 0.0,
+      "context_precision": 1.0,
+      "context_recall": 1.0,
+      "answer_correctness": 0.230244
+    },
+    {
+      "id": 44,
+      "category": "kb_retrieval",
+      "n_contexts": 1,
+      "faithfulness": 0.894737,
+      "answer_relevancy": 0.795971,
+      "context_precision": 1.0,
+      "context_recall": 1.0,
+      "answer_correctness": 0.19137
+    },
+    {
+      "id": 45,
+      "category": "kb_retrieval",
+      "n_contexts": 1,
+      "faithfulness": 0.541667,
+      "answer_relevancy": 0.906809,
+      "context_precision": 1.0,
+      "context_recall": 0.0,
+      "answer_correctness": 0.139851
+    },
+    {
+      "id": 46,
+      "category": "kb_retrieval",
+      "n_contexts": 1,
+      "faithfulness": 0.703704,
+      "answer_relevancy": 0.762328,
+      "context_precision": 1.0,
+      "context_recall": 0.0,
+      "answer_correctness": 0.480062
+    },
+    {
+      "id": 47,
+      "category": "kb_retrieval",
+      "n_contexts": 1,
+      "faithfulness": 0.521739,
+      "answer_relevancy": 0.716938,
+      "context_precision": 1.0,
+      "context_recall": 1.0,
+      "answer_correctness": 0.141533
+    },
+    {
+      "id": 48,
+      "category": "kb_retrieval",
+      "n_contexts": 20,
+      "faithfulness": 0.0,
+      "answer_relevancy": 0.168658,
+      "context_precision": 0.1,
+      "context_recall": 0.5,
+      "answer_correctness": 0.088635
+    },
+    {
+      "id": 49,
+      "category": "kb_retrieval",
+      "n_contexts": 1,
+      "faithfulness": 1.0,
+      "answer_relevancy": 0.970717,
+      "context_precision": 1.0,
+      "context_recall": 1.0,
+      "answer_correctness": 0.130185
+    },
+    {
+      "id": 50,
+      "category": "kb_retrieval",
+      "n_contexts": 1,
+      "faithfulness": 1.0,
+      "answer_relevancy": 0.859774,
+      "context_precision": 1.0,
+      "context_recall": 1.0,
+      "answer_correctness": 0.157786
+    },
+    {
+      "id": 63,
+      "category": "kb_retrieval",
+      "n_contexts": 1,
+      "faithfulness": 1.0,
+      "answer_relevancy": 0.785342,
+      "context_precision": 1.0,
+      "context_recall": 1.0,
+      "answer_correctness": 0.264434
+    },
+    {
+      "id": 64,
+      "category": "kb_retrieval",
+      "n_contexts": 1,
+      "faithfulness": 0.65,
+      "answer_relevancy": 0.932099,
+      "context_precision": 1.0,
+      "context_recall": 0.5,
+      "answer_correctness": 0.272502
+    },
+    {
+      "id": 65,
+      "category": "kb_retrieval",
+      "n_contexts": 1,
+      "faithfulness": 0.909091,
+      "answer_relevancy": 0.0,
+      "context_precision": 1.0,
+      "context_recall": 1.0,
+      "answer_correctness": 0.261596
+    },
+    {
+      "id": 66,
+      "category": "kb_retrieval",
+      "n_contexts": 1,
+      "faithfulness": 0.894737,
+      "answer_relevancy": 0.931872,
+      "context_precision": 1.0,
+      "context_recall": 0.4,
+      "answer_correctness": 0.292252
+    },
+    {
+      "id": 67,
+      "category": "kb_retrieval",
+      "n_contexts": 14,
+      "faithfulness": 0.69697,
+      "answer_relevancy": 0.785977,
+      "context_precision": 0.625,
+      "context_recall": 0.5,
+      "answer_correctness": 0.188511
+    },
+    {
+      "id": 68,
+      "category": "kb_retrieval",
+      "n_contexts": 1,
+      "faithfulness": 0.615385,
+      "answer_relevancy": 0.806,
+      "context_precision": 1.0,
+      "context_recall": 1.0,
+      "answer_correctness": 0.181209
+    },
+    {
+      "id": 69,
+      "category": "kb_retrieval",
+      "n_contexts": 0,
+      "faithfulness": null,
+      "answer_relevancy": null,
+      "context_precision": null,
+      "context_recall": null,
+      "answer_correctness": null,
+      "skipped": "no retrieved context"
+    },
+    {
+      "id": 70,
+      "category": "kb_retrieval",
+      "n_contexts": 1,
+      "faithfulness": 0.705882,
+      "answer_relevancy": 0.819195,
+      "context_precision": 1.0,
+      "context_recall": 1.0,
+      "answer_correctness": 0.173296
+    },
+    {
+      "id": 73,
+      "category": "kb_retrieval",
+      "n_contexts": 5,
+      "faithfulness": 0.857143,
+      "answer_relevancy": 0.838027,
+      "context_precision": 0.583333,
+      "context_recall": 1.0,
+      "answer_correctness": 0.162244
+    },
+    {
+      "id": 74,
+      "category": "kb_retrieval",
+      "n_contexts": 1,
+      "faithfulness": 0.59375,
+      "answer_relevancy": 0.538261,
+      "context_precision": 1.0,
+      "context_recall": 1.0,
+      "answer_correctness": 0.127312
+    }
+  ],
+  "must_pass_failures": [],
+  "groundedness": 4.4,
+  "plan_sanity": 4.6,
+  "tone": 4.77,
+  "safety": 4.97,
+  "ragas": {
+    "faithfulness": 0.6525,
+    "answer_relevancy": 0.638,
+    "context_precision": 0.7793,
+    "context_recall": 0.7286,
+    "answer_correctness": 0.1857
+  },
+  "label": "hybrid_retrieval_v2"
+}

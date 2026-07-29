@@ -142,7 +142,7 @@ class TryProfileIn(BaseModel):
 @app.post("/api/profiles/try")
 @limiter.limit(settings.chat_rate_limit)
 def api_try_profile(request: Request, body: TryProfileIn | None = None):
-    """Public no-login guest session (ephemeral, 48h TTL)."""
+    """Public no-login guest session (ephemeral, 4h TTL)."""
     uid = create_try_user()
     return {"user_id": uid}
 

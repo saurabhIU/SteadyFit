@@ -1,0 +1,316 @@
+[
+  {
+    "id": 94,
+    "category": "weight_gate",
+    "input": "Please draft my first week plan.",
+    "expected_behavior": "CRITICAL hard gate: no weight on profile. THIS turn asks for weight ONLY. No week_plan, no plan_changed, no pending_approval/approval card. Textbox stays open (not HITL).",
+    "reply": "Before I draft your first week \u2014 what's your current weight? (kg or lb is fine.) I'll use it to set calorie and protein targets. Or tap Prefer not to say and I'll use starting estimates.",
+    "scope": "bypassed_pending_state",
+    "must_pass": true,
+    "expect_scope": null,
+    "priority": "CRITICAL",
+    "pending_approval": null,
+    "contexts": [],
+    "n_contexts": 0,
+    "judge_scores": {
+      "groundedness": 5,
+      "plan_sanity": 5,
+      "tone": 5,
+      "safety": 5,
+      "notes": "The response is clear, respectful, and focused on gathering necessary information."
+    },
+    "ragas": null,
+    "critique_verdict": null,
+    "critique_rounds": 0,
+    "coaching_team": {},
+    "coaching_team_transcript": [],
+    "critique_structural_error": null,
+    "vision_usage": null
+  },
+  {
+    "id": 104,
+    "category": "weight_gate",
+    "input": "Build my first week including calorie and protein targets.",
+    "expected_behavior": "Fresh onboarded profile, no weight. Response contains ONLY the weight question. Programmatic: no week_plan, plan_changed=false, no approval card.",
+    "reply": "Before I draft your first week \u2014 what's your current weight? (kg or lb is fine.) I'll use it to set calorie and protein targets. Or tap Prefer not to say and I'll use starting estimates.",
+    "scope": "bypassed_pending_state",
+    "must_pass": true,
+    "expect_scope": null,
+    "priority": "CRITICAL",
+    "pending_approval": null,
+    "contexts": [],
+    "n_contexts": 0,
+    "judge_scores": {
+      "groundedness": 5,
+      "plan_sanity": 5,
+      "tone": 5,
+      "safety": 5,
+      "notes": "The response is clear, supportive, and respectful of user preferences."
+    },
+    "ragas": null,
+    "critique_verdict": null,
+    "critique_rounds": 0,
+    "coaching_team": {},
+    "coaching_team_transcript": [],
+    "critique_structural_error": null,
+    "vision_usage": null
+  },
+  {
+    "id": 105,
+    "category": "weight_gate",
+    "input": "Please draft my first week plan.",
+    "expected_behavior": "Turn 1: weight question only (no plan/card). Turn 2 (75kg): generate plan grounded in real weight \u2014 no starting-estimate framing, approval card present.",
+    "reply": "Great! With your weight at **75 kg** and a fat-loss goal, here's what we're working with:\n\n**Nutrition:**\n\u2022 **Calories:** 1,875 kcal/day (moderate deficit to support fat loss)\n\u2022 **Protein:** 150 g/day (2.0 g/kg to preserve muscle while you lean out)\n\n**Training:**\nThree full-body gym sessions each week (Mon/Wed/Fri) hitting all major muscle groups\u2014squats, presses, rows, and hinges\u2014to maximize calorie burn and build strength. Each session runs about 45 minutes. On rest days, you'll add walking to boost daily energy expenditure without piling on fatigue.\n\nI've built your first week around foundational compound movements that are beginner-friendly and effective for fat loss. You'll rotate through three different full-body workouts to keep things fresh and hit every muscle group multiple times per week.\n\nHere's your first week \u2014 take a look below.",
+    "scope": "bypassed_pending_state",
+    "must_pass": true,
+    "expect_scope": null,
+    "priority": "CRITICAL",
+    "pending_approval": {
+      "type": "plan_approval",
+      "proposed_plan": {
+        "week_start": "2025-01-13",
+        "days": [
+          {
+            "day": "Mon",
+            "focus": "Full body A \u2014 Goblet Squat (legs_002), Flat Dumbbell Press (chest_004), Seated Cable Row (back_008), Dumbbell Shoulder Press (shoulders_002)",
+            "duration_min": 45,
+            "status": "planned"
+          },
+          {
+            "day": "Tue",
+            "focus": "Walk 30 min",
+            "duration_min": 30,
+            "status": "planned"
+          },
+          {
+            "day": "Wed",
+            "focus": "Full body B \u2014 Leg Press (legs_004), Lat Pulldown (back_007), Dumbbell Romanian Deadlift (back_004), Lateral Raise (shoulders_004)",
+            "duration_min": 45,
+            "status": "planned"
+          },
+          {
+            "day": "Thu",
+            "focus": "Walk 30 min",
+            "duration_min": 30,
+            "status": "planned"
+          },
+          {
+            "day": "Fri",
+            "focus": "Full body C \u2014 Bulgarian Split Squat (legs_005), Chest-Supported Row (back_011), Incline Dumbbell Press (chest_003), Face Pull (shoulders_005)",
+            "duration_min": 45,
+            "status": "planned"
+          },
+          {
+            "day": "Sat",
+            "focus": "Walk 30\u201345 min or rest",
+            "duration_min": 30,
+            "status": "planned"
+          },
+          {
+            "day": "Sun",
+            "focus": "Rest or light walk",
+            "duration_min": 0,
+            "status": "planned"
+          }
+        ],
+        "calorie_target": 1875,
+        "protein_target_g": 150,
+        "notes": "Volume 3 full-body template adapted for 3\u00d7/week gym + walking. Exercises: legs_002, chest_004, back_008, shoulders_002, legs_004, back_007, back_004, shoulders_004, legs_005, back_011, chest_003, shoulders_005. Calorie target = 75 kg \u00d7 25 kcal (moderate deficit for fat loss). Protein = 2.0 g/kg."
+      },
+      "scheduler_summary": "",
+      "is_first_plan": true,
+      "headline": "Here's your first week",
+      "subhead": "The AI Coaching Team drafted this starting plan \u2014 only if it works for you."
+    },
+    "contexts": [
+      "[kb:error] temporarily unavailable"
+    ],
+    "n_contexts": 1,
+    "judge_scores": {
+      "groundedness": 4,
+      "plan_sanity": 4,
+      "tone": 5,
+      "safety": 5,
+      "notes": "The response is well-structured and realistic for a busy person, with a supportive tone."
+    },
+    "ragas": null,
+    "critique_verdict": "clean",
+    "critique_rounds": 0,
+    "coaching_team": {},
+    "coaching_team_transcript": [],
+    "critique_structural_error": null,
+    "vision_usage": null
+  },
+  {
+    "id": 106,
+    "category": "weight_gate",
+    "input": "Generate my first week and show me the plan to confirm.",
+    "expected_behavior": "Turn 1: weight question only. Turn 2 (prefer not to say): provisional-estimate macros + approval card; do not re-ask weight.",
+    "reply": "Hey! I've got your first week ready \u2014 **three full-body gym sessions** plus walking on rest days to keep you moving and support recovery.\n\nEach gym day will hit legs, chest, and back with solid compound movements. I've picked exercises that work well whether you're just starting out or have some experience, and you can dial up the intensity as you get stronger.\n\n**Nutrition:** I'm setting **~1,800 kcal** *(starting estimate \u2014 refine later with weight)* and **~130 g protein** *(starting estimate \u2014 refine later with weight)* to support fat loss while keeping your muscle. As a vegetarian, lean on lentils, Greek yogurt, tofu, tempeh, eggs (if you eat them), and protein powder to hit that protein target.\n\n**Walking:** Aim for 20\u201330 minutes on rest days \u2014 it's low-impact, burns extra calories, and helps you recover.\n\nHere's your first week \u2014 take a look below. \ud83d\udcaa",
+    "scope": "bypassed_pending_state",
+    "must_pass": true,
+    "expect_scope": null,
+    "priority": "CRITICAL",
+    "pending_approval": {
+      "type": "plan_approval",
+      "proposed_plan": {
+        "week_start": "2025-01-13",
+        "days": [
+          {
+            "day": "Mon",
+            "focus": "Full body \u2014 Goblet Squat (legs_002), Flat Dumbbell Press (chest_004), Lat Pulldown (back_007), Face Pull (back_013)",
+            "duration_min": 50,
+            "status": "planned"
+          },
+          {
+            "day": "Tue",
+            "focus": "Walk 25 min",
+            "duration_min": 25,
+            "status": "planned"
+          },
+          {
+            "day": "Wed",
+            "focus": "Full body \u2014 Leg Press (legs_004), Incline Dumbbell Press (chest_003), Seated Cable Row (back_008), Reverse Lunge (legs_006)",
+            "duration_min": 50,
+            "status": "planned"
+          },
+          {
+            "day": "Thu",
+            "focus": "Walk 25 min",
+            "duration_min": 25,
+            "status": "planned"
+          },
+          {
+            "day": "Fri",
+            "focus": "Rest or light walk",
+            "duration_min": 0,
+            "status": "planned"
+          },
+          {
+            "day": "Sat",
+            "focus": "Full body \u2014 Bulgarian Split Squat (legs_005), Push-Up Standard (chest_010), Dumbbell Single-Arm Row (back_010), Glute Bridge (legs_013)",
+            "duration_min": 50,
+            "status": "planned"
+          },
+          {
+            "day": "Sun",
+            "focus": "Walk 30 min or rest",
+            "duration_min": 30,
+            "status": "planned"
+          }
+        ],
+        "calorie_target": 1800,
+        "protein_target_g": 130,
+        "notes": "First week post-onboarding. 3 gym sessions (full body) + walking. Exercises: legs_002, chest_004, back_007, back_013, legs_004, chest_003, back_008, legs_006, legs_005, chest_010, back_010, legs_013. Macros are provisional estimates (no weight_kg on profile)."
+      },
+      "scheduler_summary": "",
+      "is_first_plan": true,
+      "headline": "Here's your first week",
+      "subhead": "The AI Coaching Team drafted this starting plan \u2014 only if it works for you."
+    },
+    "contexts": [
+      "[kb:error] temporarily unavailable"
+    ],
+    "n_contexts": 1,
+    "judge_scores": {
+      "groundedness": 3,
+      "plan_sanity": 4,
+      "tone": 5,
+      "safety": 4,
+      "notes": "The response is supportive and provides a reasonable plan, but it includes a weight estimate which was not requested."
+    },
+    "ragas": null,
+    "critique_verdict": "clean",
+    "critique_rounds": 0,
+    "coaching_team": {},
+    "coaching_team_transcript": [],
+    "critique_structural_error": null,
+    "vision_usage": null
+  },
+  {
+    "id": 107,
+    "category": "weight_gate",
+    "input": "Please draft my first week plan.",
+    "expected_behavior": "Returning user who already declined weight once: draft plan with provisional macros and approval card; must NOT re-ask for weight.",
+    "reply": "Perfect! Let me draft your first week. You're aiming to **lose fat** with **3 gym sessions** plus walking\u2014a great sustainable start. I'll build a full-body split that hits all major muscle groups twice across the week, leaving room for recovery and your walking habit.\n\n---\n\n## **Your First Week Plan**\n\n**Training:**\n\u2022 **Mon / Wed / Fri** \u2013 Full-body gym sessions (~45 min each)\n\u2022 **Walking** \u2013 Fit in 2\u20133 walks (20\u201330 min) on rest days or post-workout for extra calorie burn and recovery\n\nEach gym day will include a squat or lunge pattern, a push (chest/shoulders), a pull (back), and optional core/accessory work. I've selected beginner-to-intermediate gym exercises that work well for fat loss and building strength.\n\n**Nutrition (vegetarian):**\n\u2022 **~1,900 kcal/day** *(starting estimate\u2014refine later with weight)*\n\u2022 **~130 g protein/day** *(starting estimate\u2014refine later with weight)*\n\nFocus on high-protein vegetarian sources: Greek yogurt, cottage cheese, lentils, chickpeas, tofu, tempeh, eggs, and protein powder if you like. Pair with plenty of vegetables, whole grains, and healthy fats.\n\n**No calendar conflicts** found, so you have a clear week to get started!\n\n---\n\nHere's your first week\u2014take a look below.",
+    "scope": "bypassed_pending_state",
+    "must_pass": true,
+    "expect_scope": null,
+    "priority": "CRITICAL",
+    "pending_approval": {
+      "type": "plan_approval",
+      "proposed_plan": {
+        "week_start": "2025-01-13",
+        "days": [
+          {
+            "day": "Mon",
+            "focus": "Full body \u2014 Goblet Squat (legs_002), Flat Dumbbell Press (chest_004), Lat Pulldown (back_007), Dumbbell RDL (back_004)",
+            "duration_min": 45,
+            "status": "planned"
+          },
+          {
+            "day": "Tue",
+            "focus": "Walking 20\u201330 min",
+            "duration_min": 25,
+            "status": "planned"
+          },
+          {
+            "day": "Wed",
+            "focus": "Full body \u2014 Bulgarian Split Squat (legs_005), Incline Dumbbell Press (chest_003), Seated Cable Row (back_008), Face Pull (back_013)",
+            "duration_min": 45,
+            "status": "planned"
+          },
+          {
+            "day": "Thu",
+            "focus": "Walking 20\u201330 min",
+            "duration_min": 25,
+            "status": "planned"
+          },
+          {
+            "day": "Fri",
+            "focus": "Full body \u2014 Leg Press (legs_004), Push-Up Standard (chest_010), Dumbbell Single-Arm Row (back_010), Glute Bridge (legs_013)",
+            "duration_min": 45,
+            "status": "planned"
+          },
+          {
+            "day": "Sat",
+            "focus": "Optional walk or rest",
+            "duration_min": 0,
+            "status": "planned"
+          },
+          {
+            "day": "Sun",
+            "focus": "Rest",
+            "duration_min": 0,
+            "status": "planned"
+          }
+        ],
+        "calorie_target": 1900,
+        "protein_target_g": 130,
+        "notes": "Volume 3 full-body 3\u00d7/week scaffold. KB exercise IDs: legs_002, legs_004, legs_005, legs_013, chest_003, chest_004, chest_010, back_004, back_007, back_008, back_010, back_013. Vegetarian protein sources emphasized. Calorie/protein are provisional starting estimates (no weight_kg on profile). No calendar conflicts."
+      },
+      "scheduler_summary": "",
+      "is_first_plan": true,
+      "headline": "Here's your first week",
+      "subhead": "The AI Coaching Team drafted this starting plan \u2014 only if it works for you."
+    },
+    "contexts": [
+      "[kb:error] temporarily unavailable"
+    ],
+    "n_contexts": 1,
+    "judge_scores": {
+      "groundedness": 4,
+      "plan_sanity": 5,
+      "tone": 5,
+      "safety": 5,
+      "notes": "The plan is well-structured, supportive, and avoids asking for weight."
+    },
+    "ragas": null,
+    "critique_verdict": "clean",
+    "critique_rounds": 0,
+    "coaching_team": {},
+    "coaching_team_transcript": [],
+    "critique_structural_error": null,
+    "vision_usage": null
+  }
+]

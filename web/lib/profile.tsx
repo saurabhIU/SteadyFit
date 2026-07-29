@@ -52,8 +52,13 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
       .then((list) => {
         if (cancelled) return;
         setProfiles(list);
-        const stable = list.filter((p) => !p.is_ephemeral);
+        // demo-new is an internal eval fixture, never a public fallback identity.
+        const stable = list.filter(
+          (p) => !p.is_ephemeral && p.user_id !== "demo-new",
+        );
         const ids = new Set(list.map((p) => p.user_id));
+        // Prefer URL profile (including try-*) before falling back to demo.
+        // Never silently rewrite a try-* URL to demo-veteran.
         const preferred =
           (urlProfile &&
             (ids.has(urlProfile) || isTryProfile(urlProfile)) &&
@@ -71,7 +76,10 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
         }
       })
       .catch(() => {
-        if (!cancelled) setApiUserId(urlProfile || DEFAULT_PROFILE);
+        if (cancelled) return;
+        const fallback = urlProfile || DEFAULT_PROFILE;
+        setUserIdState(fallback);
+        setApiUserId(fallback);
       })
       .finally(() => {
         if (!cancelled) setReady(true);

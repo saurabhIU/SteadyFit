@@ -29,7 +29,7 @@ EVAL_USER_VETERAN = "demo-veteran"
 EVAL_USER_NEW = "demo-new"
 
 PROTEIN_CREATINE_OFFER = (
-    "Hey Saurabh — creatine monohydrate (~3–5 g daily) is the main evidence-backed "
+    "Hey John — creatine monohydrate (~3–5 g daily) is the main evidence-backed "
     "supplement for most lifters; optional whey if you struggle to hit protein from food. "
     "Want me to help you hit 140g protein/day from vegetarian sources, or dial "
     "in your creatine timing?"
@@ -358,7 +358,7 @@ def _seed_knee_constraint(user_id: str) -> None:
     save_profile(
         user_id,
         UserProfile(
-            name=base.name or "Saurabh",
+            name=base.name or "John",
             goal=base.goal or "lose fat",
             age=base.age,
             sex=base.sex,
@@ -384,7 +384,7 @@ def _seed_clean_schedule_profile(user_id: str) -> None:
     save_profile(
         user_id,
         UserProfile(
-            name=base.name or "Saurabh",
+            name=base.name or "John",
             goal=base.goal or "lose fat",
             age=base.age,
             sex=base.sex,
@@ -605,7 +605,7 @@ def _seed_existing_week_for_tweak(user_id: str) -> None:
     save_profile(
         user_id,
         UserProfile(
-            name=base.name or "Saurabh",
+            name=base.name or "John",
             goal=base.goal or "lose fat",
             age=base.age,
             sex=base.sex,

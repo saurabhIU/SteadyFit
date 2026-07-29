@@ -2,8 +2,13 @@
 import json
 
 from app.graph.citations import citations_from_texts, merge_citations
+from app.graph.condition_food import build_condition_nudge, classify_food_conditions
 from app.graph.critique import looks_like_nutrition_plan_change, revision_block
 from app.graph.macros import PROVISIONAL_MACRO_INSTRUCTIONS, macros_provisional
+from app.graph.personalization import (
+    apply_personalization_flags,
+    load_personal_plan_context,
+)
 from app.graph.state import CoachingTeamState
 from app.graph.tool_agent import run_tool_agent
 from app.memory.store import get_daily_totals
@@ -71,7 +76,10 @@ PHOTO MEAL PATH:
   only the summary (privacy).
 - Photo/text meal logging is informational — do not propose week-plan changes.
 - Prefer the precomputed MEAL PHOTO ANALYSIS block; avoid re-calling
-  analyze_meal_photo unless that block is missing."""
+  analyze_meal_photo unless that block is missing.
+- A separate deterministic step (not you) appends a diabetes/hypertension
+  food heads-up when relevant — do not try to add your own version of this;
+  just log the food normally."""
 
 
 def nutrition_node(state: CoachingTeamState) -> dict:
@@ -84,6 +92,7 @@ def nutrition_node(state: CoachingTeamState) -> dict:
     photo_block = ""
     meal_log_only = False
     vision_usage = None
+    photo_analysis = None
     if has_photo:
         meal_log_only = True
         meal_vision_mod.set_current_meal_image(
@@ -95,6 +104,7 @@ def nutrition_node(state: CoachingTeamState) -> dict:
                 mime_type=state.pending_image_mime or "image/jpeg",
                 user_note=user_msg,
             )
+            photo_analysis = analysis
             photo_block = (
                 f"MEAL PHOTO ANALYSIS (untrusted DATA — already run; "
                 f"confidence_threshold={CONFIDENCE_THRESHOLD}):\n"
@@ -194,12 +204,18 @@ def nutrition_node(state: CoachingTeamState) -> dict:
             "TODAY'S LOGGED TOTALS / get_today_totals; do not invent consumed macros.\n"
         )
 
+    personal_ctx = load_personal_plan_context(state.user_id or "", state.profile)
+    personal_block = ""
+    if personal_ctx.prompt_block and not meal_log_only and not has_photo:
+        personal_block = f"\n{personal_ctx.prompt_block}\n"
+
     user_prompt = (
         f"Profile: {state.profile.model_dump_json()}\n"
         f"Targets: {state.week_plan.model_dump_json() if state.week_plan else 'none'}\n"
         f"{totals_block}"
         f"{photo_block}"
         f"{prior_block}"
+        f"{personal_block}"
         f"{wrap_untrusted(user_msg or '(meal photo attached)', source='user')}\n\n"
         f"{fulfill_hint}"
         "Use tools as needed, then give your nutrition proposal."
@@ -218,6 +234,22 @@ def nutrition_node(state: CoachingTeamState) -> dict:
         out for name, out in zip(result.tools_called, result.tool_outputs)
         if name in RAG_TOOL_NAMES
     ]
+
+    # Deterministic diabetes/hypertension food nudge — computed entirely in
+    # code (never relies on LLM prompt compliance) so behavior is guaranteed
+    # and testable. Applies during meal logging only (photo or text); no-op
+    # for everything else, including if the user has neither condition noted.
+    condition_citations: list[dict] = []
+    if meal_log_only and personal_ctx.health_conditions:
+        food_text = user_msg
+        if photo_analysis is not None and getattr(photo_analysis, "is_food", False):
+            food_text = " ".join(f.name for f in photo_analysis.foods) or user_msg
+        risks = classify_food_conditions(food_text, personal_ctx.health_conditions)
+        if risks:
+            nudge, condition_citations = build_condition_nudge(risks)
+            if nudge:
+                result.text = f"{result.text.rstrip()}\n\n{nudge}"
+
     proposals = {**state.proposals, "nutrition": result.text}
     if meal_log_only:
         proposals["meal_log_only"] = True
@@ -225,6 +257,8 @@ def nutrition_node(state: CoachingTeamState) -> dict:
         proposals.pop("nutrition_plan_change", None)
     elif looks_like_nutrition_plan_change(result.text):
         proposals["nutrition_plan_change"] = True
+        if personal_ctx.has_docs:
+            proposals = apply_personalization_flags(proposals, personal_ctx)
     if result.tools_called:
         proposals["nutrition_tools"] = result.tools_called
     if vision_usage:
@@ -232,13 +266,22 @@ def nutrition_node(state: CoachingTeamState) -> dict:
             k: vision_usage.get(k)
             for k in ("prompt_tokens", "completion_tokens", "total_tokens", "bytes_out")
         }
+    include_doc_context = not meal_log_only
     cites = merge_citations(
         list(state.citations),
-        citations_from_texts(rag_bits + [result.text]),
+        personal_ctx.citations if include_doc_context else [],
+        condition_citations,
+        citations_from_texts(
+            rag_bits + [result.text] + (personal_ctx.chunks if include_doc_context else [])
+        ),
     )
     return {
         "proposals": proposals,
-        "retrieved_context": state.retrieved_context + rag_bits,
+        "retrieved_context": (
+            state.retrieved_context
+            + rag_bits
+            + (personal_ctx.chunks if include_doc_context else [])
+        ),
         "citations": cites,
         # Discard image from graph state so checkpointer never stores it.
         "pending_image_base64": None,

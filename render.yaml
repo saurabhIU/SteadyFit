@@ -49,7 +49,7 @@ services:
           name: steadyfit-api
           property: host
 
-  # Delete expired try-* guest profiles (48h TTL)
+  # Delete expired try-* guest profiles (4h TTL)
   - type: cron
     name: steadyfit-cleanup-ephemeral
     runtime: python

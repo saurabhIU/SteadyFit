@@ -19,7 +19,7 @@ def test_chip_and_paraphrases_match():
 
 def test_reply_is_concrete_and_short():
     profile = UserProfile(
-        name="Saurabh",
+        name="John",
         goal="stay consistent",
         preferred_workout_modes=["home"],
         onboarding_complete=True,
@@ -27,7 +27,7 @@ def test_reply_is_concrete_and_short():
     reply = build_ten_minute_reply(profile)
     assert "10 minutes" in reply.lower() or "10 minute" in reply.lower()
     assert "0:00" in reply
-    assert "Saurabh" in reply
+    assert "John" in reply
     assert "plan_changed" not in reply
 
 

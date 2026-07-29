@@ -158,11 +158,11 @@ def seed_veteran(*, history_weeks: int, no_llm: bool) -> str:
     if user_exists(uid):
         reset_user(uid)
     else:
-        ensure_user(uid, "Saurabh")
+        ensure_user(uid, "John")
     save_profile(
         uid,
         UserProfile(
-            name="Saurabh",
+            name="John",
             goal="lose 8kg",
             age=34,
             sex="male",

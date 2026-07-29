@@ -1,4 +1,4 @@
-# Saurabh's 5-Day Upper/Lower + Conditioning Program
+# John's 5-Day Upper/Lower + Conditioning Program
 
 Personal uploaded training program for SteadyFit demo / evals.
 

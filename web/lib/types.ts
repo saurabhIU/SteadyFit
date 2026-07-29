@@ -50,6 +50,8 @@ export type PendingApproval = {
   is_first_plan?: boolean;
   headline?: string;
   subhead?: string;
+  /** Shown when personal uploads informed this draft. */
+  personalization_note?: string;
 };
 
 export type Citation = {

@@ -214,6 +214,7 @@ export function ChatView() {
           text,
           threadId,
           hasImage ? { base64: image!.base64, mime: image!.mime } : null,
+          { userId },
         );
         setThreadId(data.thread_id);
         sessionStorage.setItem(threadStorageKey(userId), data.thread_id);
@@ -486,6 +487,7 @@ export function ChatView() {
             <PlanApprovalCard
               approval={pendingApproval}
               threadId={threadId}
+              userId={userId}
               onResolved={handleApprovalResolved}
               onError={setError}
             />

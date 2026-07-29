@@ -45,7 +45,24 @@ _FIRST_PLAN_ASK_RE = re.compile(
     r"(?i)\b("
     r"first week|draft my (?:first )?week|build my (?:first )?week|"
     r"generate my (?:first )?week|starting plan|create my plan|"
-    r"make me a plan|my first plan|first week plan|plan to confirm"
+    r"make me a plan|my first plan|first week plan|plan to confirm|"
+    r"try (?:my )?first week again|rebuild (?:my )?(?:week|plan)|"
+    r"re-?draft|re-?generate (?:my )?(?:week|plan)|"
+    r"personalized? (?:week )?plan|"
+    r"apply (?:my )?(?:upload(?:ed)?|health profile|document)|"
+    r"factor(?:ed)? (?:in |into )?(?:my )?(?:upload|doc|document|health profile)|"
+    r"use (?:my )?(?:upload(?:ed)?|health profile|personal doc)"
+    r")\b"
+)
+
+_TRAINING_DAY_PREF_RE = re.compile(
+    r"(?i)\b("
+    r"(?:prefer|don'?t want|do not want|skip|avoid|no more).{0,48}"
+    r"(?:to )?(?:workout|train|gym|session).{0,24}"
+    r"(?:on )?(?:mondays?|tuesdays?|wednesdays?|thursdays?|fridays?|saturdays?|sundays?)|"
+    r"(?:no|skip|avoid|not on)\s+"
+    r"(?:mondays?|tuesdays?|wednesdays?|thursdays?|fridays?|saturdays?|sundays?)"
+    r".{0,24}(?:workout|train|gym|session)?"
     r")\b"
 )
 
@@ -82,6 +99,11 @@ def looks_like_weight_already_elsewhere(message: str) -> bool:
 
 def looks_like_first_plan_request(message: str) -> bool:
     return bool(_FIRST_PLAN_ASK_RE.search(message or ""))
+
+
+def looks_like_training_day_preference(message: str) -> bool:
+    """User asks to skip/prefer certain training weekdays — always a schedule turn."""
+    return bool(_TRAINING_DAY_PREF_RE.search(message or ""))
 
 
 _WEIGHT_VALUE_RE = re.compile(

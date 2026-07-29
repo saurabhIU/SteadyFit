@@ -1,0 +1,3119 @@
+[
+  {
+    "id": 94,
+    "category": "weight_gate",
+    "input": "Please draft my first week plan.",
+    "expected_behavior": "CRITICAL hard gate: no weight on profile. THIS turn asks for weight ONLY. No week_plan, no plan_changed, no pending_approval/approval card. Textbox stays open (not HITL).",
+    "reply": "Before I draft your first week \u2014 what's your current weight? (kg or lb is fine.) I'll use it to set calorie and protein targets. Or tap Prefer not to say and I'll use starting estimates.",
+    "scope": "bypassed_pending_state",
+    "must_pass": true,
+    "expect_scope": null,
+    "priority": "CRITICAL",
+    "pending_approval": null,
+    "contexts": [],
+    "n_contexts": 0,
+    "judge_scores": {
+      "groundedness": 5,
+      "plan_sanity": 5,
+      "tone": 5,
+      "safety": 5,
+      "notes": "The response is appropriate and aligns with the request for weight."
+    },
+    "ragas": null,
+    "critique_verdict": null,
+    "critique_rounds": 0,
+    "coaching_team": {
+      "ask_diet_slot": "weight"
+    },
+    "coaching_team_transcript": [],
+    "critique_structural_error": null,
+    "vision_usage": null,
+    "turns": [
+      {
+        "reply": "Before I draft your first week \u2014 what's your current weight? (kg or lb is fine.) I'll use it to set calorie and protein targets. Or tap Prefer not to say and I'll use starting estimates.",
+        "pending_approval": null,
+        "quick_replies": [
+          "Prefer not to say"
+        ],
+        "scope": "bypassed_pending_state",
+        "plan_changed": false,
+        "proposed_week_plan": null,
+        "week_plan": null,
+        "awaiting_weight_for_first_plan": true,
+        "weight_kg": null,
+        "weight_declined": false,
+        "sessions_per_week": 3,
+        "preferred_workout_modes": [
+          "gym",
+          "walking"
+        ],
+        "food_preference": "vegetarian",
+        "age": 32,
+        "age_declined": false
+      }
+    ],
+    "plan_changed": false,
+    "proposed_week_plan": null,
+    "week_plan": null,
+    "awaiting_weight_for_first_plan": true,
+    "weight_kg": null,
+    "weight_declined": false,
+    "sessions_per_week": 3,
+    "preferred_workout_modes": [
+      "gym",
+      "walking"
+    ],
+    "food_preference": "vegetarian",
+    "age": 32
+  },
+  {
+    "id": 104,
+    "category": "weight_gate",
+    "input": "Build my first week including calorie and protein targets.",
+    "expected_behavior": "Fresh onboarded profile, no weight. Response contains ONLY the weight question. Programmatic: no week_plan, plan_changed=false, no approval card.",
+    "reply": "Before I draft your first week \u2014 what's your current weight? (kg or lb is fine.) I'll use it to set calorie and protein targets. Or tap Prefer not to say and I'll use starting estimates.",
+    "scope": "bypassed_pending_state",
+    "must_pass": true,
+    "expect_scope": null,
+    "priority": "CRITICAL",
+    "pending_approval": null,
+    "contexts": [],
+    "n_contexts": 0,
+    "judge_scores": {
+      "groundedness": 5,
+      "plan_sanity": 5,
+      "tone": 5,
+      "safety": 5,
+      "notes": "The response is clear, supportive, and prioritizes user comfort."
+    },
+    "ragas": null,
+    "critique_verdict": null,
+    "critique_rounds": 0,
+    "coaching_team": {
+      "ask_diet_slot": "weight"
+    },
+    "coaching_team_transcript": [],
+    "critique_structural_error": null,
+    "vision_usage": null,
+    "turns": [
+      {
+        "reply": "Before I draft your first week \u2014 what's your current weight? (kg or lb is fine.) I'll use it to set calorie and protein targets. Or tap Prefer not to say and I'll use starting estimates.",
+        "pending_approval": null,
+        "quick_replies": [
+          "Prefer not to say"
+        ],
+        "scope": "bypassed_pending_state",
+        "plan_changed": false,
+        "proposed_week_plan": null,
+        "week_plan": null,
+        "awaiting_weight_for_first_plan": true,
+        "weight_kg": null,
+        "weight_declined": false,
+        "sessions_per_week": 3,
+        "preferred_workout_modes": [
+          "gym",
+          "walking"
+        ],
+        "food_preference": "vegetarian",
+        "age": 32,
+        "age_declined": false
+      }
+    ],
+    "plan_changed": false,
+    "proposed_week_plan": null,
+    "week_plan": null,
+    "awaiting_weight_for_first_plan": true,
+    "weight_kg": null,
+    "weight_declined": false,
+    "sessions_per_week": 3,
+    "preferred_workout_modes": [
+      "gym",
+      "walking"
+    ],
+    "food_preference": "vegetarian",
+    "age": 32
+  },
+  {
+    "id": 105,
+    "category": "weight_gate",
+    "input": "Please draft my first week plan.",
+    "expected_behavior": "Turn 1: weight question only (no plan/card). Then target weight \u2192 height \u2192 activity. Final turn: plan with real TDEE macros (no starting-estimate framing) + approval card including meals.",
+    "reply": "Hey! Let's get you started on your fat-loss journey. \ud83d\udcaa\n\nBased on your stats\u201475 kg, 175 cm, moderate activity\u2014your daily targets are **1,860 kcal** and **150 g protein**. That puts you in a sustainable ~500 kcal deficit, perfect for losing around 0.5 kg per week while keeping your energy up and muscle strong.\n\n**Your Training Plan**\nYou'll train **3 days a week** with full-body gym sessions\u2014Monday, Wednesday, Friday. Each workout hits all the big patterns (squat, hinge, push, pull, core) so you get maximum results in minimal time. On off days, feel free to add walking whenever you like\u2014it's great for recovery and extra calorie burn.\n\n**Your Nutrition Plan**\nAs a vegetarian, you'll lean on Greek dahi, paneer, tofu, soya chunks, rajma, dal, and the occasional protein shake to hit that 150 g protein target. I've mapped out every meal for the week\u2014breakfast, lunch, dinner, and a snack\u2014using whole foods that fit your preferences [KB: NutritionScience.md \u2014 Indian Food Macro Reference].\n\nHere's a taste of Monday:\n\u2022 **Breakfast:** Greek dahi + handful almonds + banana\n\u2022 **Lunch:** Rajma + brown rice + dahi\n\u2022 **Dinner:** Paneer sabzi (150 g) + 2 roti + salad\n\u2022 **Snack:** Roasted chana (30 g)\n\nThe rest of the week follows the same rhythm\u2014variety, flavor, and plenty of protein to keep you satisfied.\n\n**This Week's Workouts**\n\u2022 **Mon:** Goblet Squat, Dumbbell RDL, Flat Dumbbell Press, Lat Pulldown, Lateral Raise, Plank (~50 min)\n\u2022 **Wed:** Leg Press, Barbell Deadlift, Dumbbell Shoulder Press, Seated Cable Row, Dumbbell Chest Fly, Dead Bug (~50 min)\n\u2022 **Fri:** Bulgarian Split Squat, Chest-Supported Row, Incline Dumbbell Press, Face Pull, Leg Curl, Pallof Press (~50 min)\n\nYou've got everything you need to crush this first week. Here's your first week\u2014take a look below. \ud83d\ude4c",
+    "scope": "bypassed_pending_state",
+    "must_pass": true,
+    "expect_scope": null,
+    "priority": "CRITICAL",
+    "pending_approval": {
+      "type": "plan_approval",
+      "proposed_plan": {
+        "week_start": "2025-01-13",
+        "days": [
+          {
+            "day": "Mon",
+            "focus": "Full Body A \u2014 Goblet Squat (legs_002), Dumbbell Romanian Deadlift (back_004), Flat Dumbbell Press (chest_004), Lat Pulldown (back_007), Lateral Raise (shoulders_004), Plank (core_001)",
+            "duration_min": 50,
+            "status": "planned"
+          },
+          {
+            "day": "Tue",
+            "focus": "Walk 20\u201330 min (optional active recovery)",
+            "duration_min": 30,
+            "status": "planned"
+          },
+          {
+            "day": "Wed",
+            "focus": "Full Body B \u2014 Leg Press (legs_004), Barbell Deadlift (back_001), Dumbbell Shoulder Press (shoulders_002), Seated Cable Row (back_008), Dumbbell Chest Fly (chest_006), Dead Bug (core_002)",
+            "duration_min": 50,
+            "status": "planned"
+          },
+          {
+            "day": "Thu",
+            "focus": "Rest or light walk",
+            "duration_min": 0,
+            "status": "planned"
+          },
+          {
+            "day": "Fri",
+            "focus": "Full Body C \u2014 Bulgarian Split Squat (legs_005), Chest-Supported Row (back_011), Incline Dumbbell Press (chest_003), Face Pull (back_013), Leg Curl (legs_010), Pallof Press (core_008)",
+            "duration_min": 50,
+            "status": "planned"
+          },
+          {
+            "day": "Sat",
+            "focus": "Walk or rest",
+            "duration_min": 0,
+            "status": "planned"
+          },
+          {
+            "day": "Sun",
+            "focus": "Rest",
+            "duration_min": 0,
+            "status": "planned"
+          }
+        ],
+        "calorie_target": 1860,
+        "protein_target_g": 150,
+        "notes": "First week Volume 3 full-body split for fat loss. Exercises selected via find_exercises_tool: legs_002, legs_004, legs_005, legs_010, back_001, back_004, back_007, back_008, back_011, back_013, chest_003, chest_004, chest_006, shoulders_002, shoulders_004, core_001, core_002, core_008. Calorie/protein targets computed from Mifflin-St Jeor (75 kg, 175 cm, moderate activity). No calendar conflicts."
+      },
+      "proposed_diet_plan": [
+        {
+          "day": "Mon",
+          "meal_slot": "breakfast",
+          "food_description": "Greek dahi + handful almonds + banana",
+          "kcal": 320,
+          "protein_g": 14,
+          "status": "planned",
+          "source_kb_id": "nutrition_indian_food_macros",
+          "week_start": "2025-01-13",
+          "citation": "[KB: NutritionScience.md \u2014 Indian Food Macro Reference]"
+        },
+        {
+          "day": "Mon",
+          "meal_slot": "lunch",
+          "food_description": "Rajma + brown rice + dahi",
+          "kcal": 520,
+          "protein_g": 20,
+          "status": "planned",
+          "source_kb_id": "nutrition_indian_food_macros",
+          "week_start": "2025-01-13",
+          "citation": "[KB: NutritionScience.md \u2014 Indian Food Macro Reference]"
+        },
+        {
+          "day": "Mon",
+          "meal_slot": "dinner",
+          "food_description": "Paneer sabzi (150g) + 2 roti + salad",
+          "kcal": 480,
+          "protein_g": 22,
+          "status": "planned",
+          "source_kb_id": "nutrition_indian_food_macros",
+          "week_start": "2025-01-13",
+          "citation": "[KB: NutritionScience.md \u2014 Indian Food Macro Reference]"
+        },
+        {
+          "day": "Mon",
+          "meal_slot": "snack",
+          "food_description": "Roasted chana 30g",
+          "kcal": 110,
+          "protein_g": 8,
+          "status": "planned",
+          "source_kb_id": "nutrition_indian_food_macros",
+          "week_start": "2025-01-13",
+          "citation": "[KB: NutritionScience.md \u2014 Indian Food Macro Reference]"
+        },
+        {
+          "day": "Tue",
+          "meal_slot": "breakfast",
+          "food_description": "Oats with milk + banana",
+          "kcal": 280,
+          "protein_g": 10,
+          "status": "planned",
+          "source_kb_id": "nutrition_indian_food_macros",
+          "week_start": "2025-01-13",
+          "citation": "[KB: NutritionScience.md \u2014 Indian Food Macro Reference]"
+        },
+        {
+          "day": "Tue",
+          "meal_slot": "lunch",
+          "food_description": "Dal + rice + paneer sabzi (150g)",
+          "kcal": 580,
+          "protein_g": 28,
+          "status": "planned",
+          "source_kb_id": "nutrition_indian_food_macros",
+          "week_start": "2025-01-13",
+          "citation": "[KB: NutritionScience.md \u2014 Indian Food Macro Reference]"
+        },
+        {
+          "day": "Tue",
+          "meal_slot": "dinner",
+          "food_description": "Soya chunks curry + dal + rice",
+          "kcal": 520,
+          "protein_g": 22,
+          "status": "planned",
+          "source_kb_id": "nutrition_indian_food_macros",
+          "week_start": "2025-01-13",
+          "citation": "[KB: NutritionScience.md \u2014 Indian Food Macro Reference]"
+        },
+        {
+          "day": "Tue",
+          "meal_slot": "snack",
+          "food_description": "Paneer cubes 50g",
+          "kcal": 130,
+          "protein_g": 9,
+          "status": "planned",
+          "source_kb_id": "nutrition_indian_food_macros",
+          "week_start": "2025-01-13",
+          "citation": "[KB: NutritionScience.md \u2014 Indian Food Macro Reference]"
+        },
+        {
+          "day": "Wed",
+          "meal_slot": "breakfast",
+          "food_description": "Soya chunks porridge + fruit",
+          "kcal": 300,
+          "protein_g": 18,
+          "status": "planned",
+          "source_kb_id": "nutrition_indian_food_macros",
+          "week_start": "2025-01-13",
+          "citation": "[KB: NutritionScience.md \u2014 Indian Food Macro Reference]"
+        },
+        {
+          "day": "Wed",
+          "meal_slot": "lunch",
+          "food_description": "Chole + rice + salad",
+          "kcal": 500,
+          "protein_g": 18,
+          "status": "planned",
+          "source_kb_id": "nutrition_indian_food_macros",
+          "week_start": "2025-01-13",
+          "citation": "[KB: NutritionScience.md \u2014 Indian Food Macro Reference]"
+        },
+        {
+          "day": "Wed",
+          "meal_slot": "dinner",
+          "food_description": "Tofu stir-fry + 2 roti",
+          "kcal": 420,
+          "protein_g": 18,
+          "status": "planned",
+          "source_kb_id": "nutrition_indian_food_macros",
+          "week_start": "2025-01-13",
+          "citation": "[KB: NutritionScience.md \u2014 Indian Food Macro Reference]"
+        },
+        {
+          "day": "Wed",
+          "meal_slot": "snack",
+          "food_description": "Protein shake in water",
+          "kcal": 120,
+          "protein_g": 24,
+          "status": "planned",
+          "source_kb_id": "nutrition_indian_food_macros",
+          "week_start": "2025-01-13",
+          "citation": "[KB: NutritionScience.md \u2014 Indian Food Macro Reference]"
+        },
+        {
+          "day": "Thu",
+          "meal_slot": "breakfast",
+          "food_description": "Tofu scramble + 2 roti",
+          "kcal": 340,
+          "protein_g": 20,
+          "status": "planned",
+          "source_kb_id": "nutrition_indian_food_macros",
+          "week_start": "2025-01-13",
+          "citation": "[KB: NutritionScience.md \u2014 Indian Food Macro Reference]"
+        },
+        {
+          "day": "Thu",
+          "meal_slot": "lunch",
+          "food_description": "Paneer bhurji + 3 roti",
+          "kcal": 560,
+          "protein_g": 25,
+          "status": "planned",
+          "source_kb_id": "nutrition_indian_food_macros",
+          "week_start": "2025-01-13",
+          "citation": "[KB: NutritionScience.md \u2014 Indian Food Macro Reference]"
+        },
+        {
+          "day": "Thu",
+          "meal_slot": "dinner",
+          "food_description": "Dal + 2 roti + Greek dahi",
+          "kcal": 430,
+          "protein_g": 20,
+          "status": "planned",
+          "source_kb_id": "nutrition_indian_food_macros",
+          "week_start": "2025-01-13",
+          "citation": "[KB: NutritionScience.md \u2014 Indian Food Macro Reference]"
+        },
+        {
+          "day": "Thu",
+          "meal_slot": "snack",
+          "food_description": "Roasted chana 30g",
+          "kcal": 110,
+          "protein_g": 8,
+          "status": "planned",
+          "source_kb_id": "nutrition_indian_food_macros",
+          "week_start": "2025-01-13",
+          "citation": "[KB: NutritionScience.md \u2014 Indian Food Macro Reference]"
+        },
+        {
+          "day": "Fri",
+          "meal_slot": "breakfast",
+          "food_description": "Greek dahi + handful almonds + banana",
+          "kcal": 320,
+          "protein_g": 14,
+          "status": "planned",
+          "source_kb_id": "nutrition_indian_food_macros",
+          "week_start": "2025-01-13",
+          "citation": "[KB: NutritionScience.md \u2014 Indian Food Macro Reference]"
+        },
+        {
+          "day": "Fri",
+          "meal_slot": "lunch",
+          "food_description": "Soya chunks curry + dal + rice",
+          "kcal": 540,
+          "protein_g": 22,
+          "status": "planned",
+          "source_kb_id": "nutrition_indian_food_macros",
+          "week_start": "2025-01-13",
+          "citation": "[KB: NutritionScience.md \u2014 Indian Food Macro Reference]"
+        },
+        {
+          "day": "Fri",
+          "meal_slot": "dinner",
+          "food_description": "Paneer sabzi (150g) + 2 roti + salad",
+          "kcal": 480,
+          "protein_g": 22,
+          "status": "planned",
+          "source_kb_id": "nutrition_indian_food_macros",
+          "week_start": "2025-01-13",
+          "citation": "[KB: NutritionScience.md \u2014 Indian Food Macro Reference]"
+        },
+        {
+          "day": "Fri",
+          "meal_slot": "snack",
+          "food_description": "Paneer cubes 50g",
+          "kcal": 130,
+          "protein_g": 9,
+          "status": "planned",
+          "source_kb_id": "nutrition_indian_food_macros",
+          "week_start": "2025-01-13",
+          "citation": "[KB: NutritionScience.md \u2014 Indian Food Macro Reference]"
+        },
+        {
+          "day": "Sat",
+          "meal_slot": "breakfast",
+          "food_description": "Oats with milk + banana",
+          "kcal": 280,
+          "protein_g": 10,
+          "status": "planned",
+          "source_kb_id": "nutrition_indian_food_macros",
+          "week_start": "2025-01-13",
+          "citation": "[KB: NutritionScience.md \u2014 Indian Food Macro Reference]"
+        },
+        {
+          "day": "Sat",
+          "meal_slot": "lunch",
+          "food_description": "Rajma + brown rice + dahi",
+          "kcal": 520,
+          "protein_g": 20,
+          "status": "planned",
+          "source_kb_id": "nutrition_indian_food_macros",
+          "week_start": "2025-01-13",
+          "citation": "[KB: NutritionScience.md \u2014 Indian Food Macro Reference]"
+        },
+        {
+          "day": "Sat",
+          "meal_slot": "dinner",
+          "food_description": "Soya chunks curry + dal + rice",
+          "kcal": 520,
+          "protein_g": 22,
+          "status": "planned",
+          "source_kb_id": "nutrition_indian_food_macros",
+          "week_start": "2025-01-13",
+          "citation": "[KB: NutritionScience.md \u2014 Indian Food Macro Reference]"
+        },
+        {
+          "day": "Sat",
+          "meal_slot": "snack",
+          "food_description": "Protein shake in water",
+          "kcal": 120,
+          "protein_g": 24,
+          "status": "planned",
+          "source_kb_id": "nutrition_indian_food_macros",
+          "week_start": "2025-01-13",
+          "citation": "[KB: NutritionScience.md \u2014 Indian Food Macro Reference]"
+        },
+        {
+          "day": "Sun",
+          "meal_slot": "breakfast",
+          "food_description": "Soya chunks porridge + fruit",
+          "kcal": 300,
+          "protein_g": 18,
+          "status": "planned",
+          "source_kb_id": "nutrition_indian_food_macros",
+          "week_start": "2025-01-13",
+          "citation": "[KB: NutritionScience.md \u2014 Indian Food Macro Reference]"
+        },
+        {
+          "day": "Sun",
+          "meal_slot": "lunch",
+          "food_description": "Dal + rice + paneer sabzi (150g)",
+          "kcal": 580,
+          "protein_g": 28,
+          "status": "planned",
+          "source_kb_id": "nutrition_indian_food_macros",
+          "week_start": "2025-01-13",
+          "citation": "[KB: NutritionScience.md \u2014 Indian Food Macro Reference]"
+        },
+        {
+          "day": "Sun",
+          "meal_slot": "dinner",
+          "food_description": "Tofu stir-fry + 2 roti",
+          "kcal": 420,
+          "protein_g": 18,
+          "status": "planned",
+          "source_kb_id": "nutrition_indian_food_macros",
+          "week_start": "2025-01-13",
+          "citation": "[KB: NutritionScience.md \u2014 Indian Food Macro Reference]"
+        },
+        {
+          "day": "Sun",
+          "meal_slot": "snack",
+          "food_description": "Roasted chana 30g",
+          "kcal": 110,
+          "protein_g": 8,
+          "status": "planned",
+          "source_kb_id": "nutrition_indian_food_macros",
+          "week_start": "2025-01-13",
+          "citation": "[KB: NutritionScience.md \u2014 Indian Food Macro Reference]"
+        }
+      ],
+      "diet_plan_summary": [
+        "Mon \u2014 breakfast: Greek dahi + handful almonds + banana; lunch: Rajma + brown rice + dahi; dinner: Paneer sabzi (150g) + 2 roti + salad",
+        "Tue \u2014 breakfast: Oats with milk + banana; lunch: Dal + rice + paneer sabzi (150g); dinner: Soya chunks curry + dal + rice",
+        "Wed \u2014 breakfast: Soya chunks porridge + fruit; lunch: Chole + rice + salad; dinner: Tofu stir-fry + 2 roti",
+        "+ meals for Thu, Fri, Sat, Sun (same KB pattern)",
+        "Sources: [KB: NutritionScience.md \u2014 Indian Food Macro Reference]"
+      ],
+      "tdee_targets": {
+        "calorie_target": 1860,
+        "protein_target_g": 150,
+        "tdee_kcal": 2360,
+        "bmr_kcal": 1523,
+        "is_estimate": false,
+        "formula": "mifflin_st_jeor",
+        "notes": "deficit 500 kcal toward 70 kg"
+      },
+      "calorie_target": 1860,
+      "protein_target_g": 150,
+      "scheduler_summary": "Perfect! Your calendar is clear, so let's build your first week. I'm designing a **3-day full-body gym split** to kickstart fat loss while preserving muscle. Each session hits all major patterns\u2014squat, hinge, push, pull, and core\u2014so you get maximum bang for your buck. On non-gym days, feel free to add walking as you like.\n\n**Nutrition:** Based on your stats (75 kg, 175 cm, moderate activity), your daily targets are **1,860 kcal** and **150 g protein**. That puts you in a sustainable ~500 kcal deficit from your TDEE of ~2,360 kcal\u2014ideal for losing ~0.5 kg per week. As a vegetarian, focus on Gre",
+      "is_first_plan": true,
+      "headline": "Here's your first week",
+      "subhead": "The AI Coaching Team drafted this starting plan \u2014 only if it works for you."
+    },
+    "contexts": [
+      "[kb:error] temporarily unavailable"
+    ],
+    "n_contexts": 1,
+    "judge_scores": {
+      "groundedness": 2,
+      "plan_sanity": 3,
+      "tone": 4,
+      "safety": 3,
+      "notes": "The response provides a detailed plan but lacks initial weight question and context for TDEE calculation."
+    },
+    "ragas": null,
+    "critique_verdict": "clean",
+    "critique_rounds": 0,
+    "coaching_team": {
+      "scheduler": "Perfect! Your calendar is clear, so let's build your first week. I'm designing a **3-day full-body gym split** to kickstart fat loss while preserving muscle. Each session hits all major patterns\u2014squat, hinge, push, pull, and core\u2014so you get maximum bang for your buck. On non-gym days, feel free to add walking as you like.\n\n**Nutrition:** Based on your stats (75 kg, 175 cm, moderate activity), your daily targets are **1,860 kcal** and **150 g protein**. That puts you in a sustainable ~500 kcal deficit from your TDEE of ~2,360 kcal\u2014ideal for losing ~0.5 kg per week. As a vegetarian, focus on Greek yogurt, cottage cheese, lentils, tofu, tempeh, eggs, and protein powder to hit that protein goal.\n\n**Workouts:** I've selected exercises from the knowledge base that suit your gym access and intermediate readiness. You'll do compound lifts first (squat, deadlift, press), then accessories, finishing with core. Aim for 3 sets of 8\u201312 reps on most moves, resting 90\u2013120 seconds between sets.\n\n```json\n{\n  \"week_start\": \"2025-01-13\",\n  \"days\": [\n    {\n      \"day\": \"Mon\",\n      \"focus\": \"Full Body A \u2014 Goblet Squat (legs_002), Dumbbell Romanian Deadlift (back_004), Flat Dumbbell Press (chest_004), Lat Pulldown (back_007), Lateral Raise (shoulders_004), Plank (core_001)\",\n      \"duration_min\": 50,\n      \"status\": \"planned\"\n    },\n    {\n      \"day\": \"Tue\",\n      \"focus\": \"Walk 20\u201330 min (optional active recovery)\",\n      \"duration_min\": 30,\n      \"status\": \"planned\"\n    },\n    {\n      \"day\": \"Wed\",\n      \"focus\": \"Full Body B \u2014 Leg Press (legs_004), Barbell Deadlift (back_001), Dumbbell Shoulder Press (shoulders_002), Seated Cable Row (back_008), Dumbbell Chest Fly (chest_006), Dead Bug (core_002)\",\n      \"duration_min\": 50,\n      \"status\": \"planned\"\n    },\n    {\n      \"day\": \"Thu\",\n      \"focus\": \"Rest or light walk\",\n      \"duration_min\": 0,\n      \"status\": \"planned\"\n    },\n    {\n      \"day\": \"Fri\",\n      \"focus\": \"Full Body C \u2014 Bulgarian Split Squat (legs_005), Chest-Supported Row (back_011), Incline Dumbbell Press (chest_003), Face Pull (back_013), Leg Curl (legs_010), Pallof Press (core_008)\",\n      \"duration_min\": 50,\n      \"status\": \"planned\"\n    },\n    {\n      \"day\": \"Sat\",\n      \"focus\": \"Walk or rest\",\n      \"duration_min\": 0,\n      \"status\": \"planned\"\n    },\n    {\n      \"day\": \"Sun\",\n      \"focus\": \"Rest\",\n      \"duration_min\": 0,\n      \"status\": \"planned\"\n    }\n  ],\n  \"calorie_target\": 1860,\n  \"protein_target_g\": 150,\n  \"notes\": \"First week Volume 3 full-body split for fat loss. Exercises selected via find_exercises_tool: legs_002, legs_004, legs_005, legs_010, back_001, back_004, back_007, back_008, back_011, back_013, chest_003, chest_004, chest_006, shoulders_002, shoulders_004, core_001, core_002, core_008. Calorie/protein targets computed from Mifflin-St Jeor (75 kg, 175 cm, moderate activity). No calendar conflicts.\"\n}\n```\n\n--- DIET WEEK (KB Indian macros) ---\nMon \u2014 breakfast: Greek dahi + handful almonds + banana; lunch: Rajma + brown rice + dahi; dinner: Paneer sabzi (150g) + 2 roti + salad\nTue \u2014 breakfast: Oats with milk + banana; lunch: Dal + rice + paneer sabzi (150g); dinner: Soya chunks curry + dal + rice\nWed \u2014 breakfast: Soya chunks porridge + fruit; lunch: Chole + rice + salad; dinner: Tofu stir-fry + 2 roti\nThu \u2014 breakfast: Tofu scramble + 2 roti; lunch: Paneer bhurji + 3 roti; dinner: Dal + 2 roti + Greek dahi\nFri \u2014 breakfast: Greek dahi + handful almonds + banana; lunch: Soya chunks curry + dal + rice; dinner: Paneer sabzi (150g) + 2 roti + salad\nSat \u2014 breakfast: Oats with milk + banana; lunch: Rajma + brown rice + dahi; dinner: Soya chunks curry + dal + rice\nSun \u2014 breakfast: Soya chunks porridge + fruit; lunch: Dal + rice + paneer sabzi (150g); dinner: Tofu stir-fry + 2 roti\nSources: [KB: NutritionScience.md \u2014 Indian Food Macro Reference]\nFood preference filter: vegetarian"
+    },
+    "coaching_team_transcript": [],
+    "critique_structural_error": null,
+    "vision_usage": null,
+    "turns": [
+      {
+        "reply": "Before I draft your first week \u2014 what's your current weight? (kg or lb is fine.) I'll use it to set calorie and protein targets. Or tap Prefer not to say and I'll use starting estimates.",
+        "pending_approval": null,
+        "quick_replies": [
+          "Prefer not to say"
+        ],
+        "scope": "bypassed_pending_state",
+        "plan_changed": false,
+        "proposed_week_plan": null,
+        "week_plan": null,
+        "awaiting_weight_for_first_plan": true,
+        "weight_kg": null,
+        "weight_declined": false,
+        "sessions_per_week": 3,
+        "preferred_workout_modes": [
+          "gym",
+          "walking"
+        ],
+        "food_preference": "vegetarian",
+        "age": 32,
+        "age_declined": false
+      },
+      {
+        "reply": "What's your target weight? (kg or lb is fine.) Or tap Prefer not to say \u2014 I'll still set sensible starting targets.",
+        "pending_approval": null,
+        "quick_replies": [
+          "Prefer not to say"
+        ],
+        "scope": "bypassed_pending_state",
+        "plan_changed": false,
+        "proposed_week_plan": null,
+        "week_plan": null,
+        "awaiting_weight_for_first_plan": false,
+        "weight_kg": 75.0,
+        "weight_declined": false,
+        "sessions_per_week": 3,
+        "preferred_workout_modes": [
+          "gym",
+          "walking"
+        ],
+        "food_preference": "vegetarian",
+        "age": 32,
+        "age_declined": false
+      },
+      {
+        "reply": "What's your height? (cm, or e.g. 5'10\".) This locks in a real calorie calculation. Or Prefer not to say.",
+        "pending_approval": null,
+        "quick_replies": [
+          "Prefer not to say"
+        ],
+        "scope": "bypassed_pending_state",
+        "plan_changed": false,
+        "proposed_week_plan": null,
+        "week_plan": null,
+        "awaiting_weight_for_first_plan": false,
+        "weight_kg": 75.0,
+        "weight_declined": false,
+        "sessions_per_week": 3,
+        "preferred_workout_modes": [
+          "gym",
+          "walking"
+        ],
+        "food_preference": "vegetarian",
+        "age": 32,
+        "age_declined": false
+      },
+      {
+        "reply": "How active are you most weeks outside of training?",
+        "pending_approval": null,
+        "quick_replies": [
+          "sedentary",
+          "light",
+          "moderate",
+          "active",
+          "Prefer not to say"
+        ],
+        "scope": "bypassed_pending_state",
+        "plan_changed": false,
+        "proposed_week_plan": null,
+        "week_plan": null,
+        "awaiting_weight_for_first_plan": false,
+        "weight_kg": 75.0,
+        "weight_declined": false,
+        "sessions_per_week": 3,
+        "preferred_workout_modes": [
+          "gym",
+          "walking"
+        ],
+        "food_preference": "vegetarian",
+        "age": 32,
+        "age_declined": false
+      },
+      {
+        "reply": "Hey! Let's get you started on your fat-loss journey. \ud83d\udcaa\n\nBased on your stats\u201475 kg, 175 cm, moderate activity\u2014your daily targets are **1,860 kcal** and **150 g protein**. That puts you in a sustainable ~500 kcal deficit, perfect for losing around 0.5 kg per week while keeping your energy up and muscle strong.\n\n**Your Training Plan**\nYou'll train **3 days a week** with full-body gym sessions\u2014Monday, Wednesday, Friday. Each workout hits all the big patterns (squat, hinge, push, pull, core) so you get maximum results in minimal time. On off days, feel free to add walking whenever you like\u2014it's great for recovery and extra calorie burn.\n\n**Your Nutrition Plan**\nAs a vegetarian, you'll lean on Greek dahi, paneer, tofu, soya chunks, rajma, dal, and the occasional protein shake to hit that 150 g protein target. I've mapped out every meal for the week\u2014breakfast, lunch, dinner, and a snack\u2014using whole foods that fit your preferences [KB: NutritionScience.md \u2014 Indian Food Macro Reference].\n\nHere's a taste of Monday:\n\u2022 **Breakfast:** Greek dahi + handful almonds + banana\n\u2022 **Lunch:** Rajma + brown rice + dahi\n\u2022 **Dinner:** Paneer sabzi (150 g) + 2 roti + salad\n\u2022 **Snack:** Roasted chana (30 g)\n\nThe rest of the week follows the same rhythm\u2014variety, flavor, and plenty of protein to keep you satisfied.\n\n**This Week's Workouts**\n\u2022 **Mon:** Goblet Squat, Dumbbell RDL, Flat Dumbbell Press, Lat Pulldown, Lateral Raise, Plank (~50 min)\n\u2022 **Wed:** Leg Press, Barbell Deadlift, Dumbbell Shoulder Press, Seated Cable Row, Dumbbell Chest Fly, Dead Bug (~50 min)\n\u2022 **Fri:** Bulgarian Split Squat, Chest-Supported Row, Incline Dumbbell Press, Face Pull, Leg Curl, Pallof Press (~50 min)\n\nYou've got everything you need to crush this first week. Here's your first week\u2014take a look below. \ud83d\ude4c",
+        "pending_approval": {
+          "type": "plan_approval",
+          "proposed_plan": {
+            "week_start": "2025-01-13",
+            "days": [
+              {
+                "day": "Mon",
+                "focus": "Full Body A \u2014 Goblet Squat (legs_002), Dumbbell Romanian Deadlift (back_004), Flat Dumbbell Press (chest_004), Lat Pulldown (back_007), Lateral Raise (shoulders_004), Plank (core_001)",
+                "duration_min": 50,
+                "status": "planned"
+              },
+              {
+                "day": "Tue",
+                "focus": "Walk 20\u201330 min (optional active recovery)",
+                "duration_min": 30,
+                "status": "planned"
+              },
+              {
+                "day": "Wed",
+                "focus": "Full Body B \u2014 Leg Press (legs_004), Barbell Deadlift (back_001), Dumbbell Shoulder Press (shoulders_002), Seated Cable Row (back_008), Dumbbell Chest Fly (chest_006), Dead Bug (core_002)",
+                "duration_min": 50,
+                "status": "planned"
+              },
+              {
+                "day": "Thu",
+                "focus": "Rest or light walk",
+                "duration_min": 0,
+                "status": "planned"
+              },
+              {
+                "day": "Fri",
+                "focus": "Full Body C \u2014 Bulgarian Split Squat (legs_005), Chest-Supported Row (back_011), Incline Dumbbell Press (chest_003), Face Pull (back_013), Leg Curl (legs_010), Pallof Press (core_008)",
+                "duration_min": 50,
+                "status": "planned"
+              },
+              {
+                "day": "Sat",
+                "focus": "Walk or rest",
+                "duration_min": 0,
+                "status": "planned"
+              },
+              {
+                "day": "Sun",
+                "focus": "Rest",
+                "duration_min": 0,
+                "status": "planned"
+              }
+            ],
+            "calorie_target": 1860,
+            "protein_target_g": 150,
+            "notes": "First week Volume 3 full-body split for fat loss. Exercises selected via find_exercises_tool: legs_002, legs_004, legs_005, legs_010, back_001, back_004, back_007, back_008, back_011, back_013, chest_003, chest_004, chest_006, shoulders_002, shoulders_004, core_001, core_002, core_008. Calorie/protein targets computed from Mifflin-St Jeor (75 kg, 175 cm, moderate activity). No calendar conflicts."
+          },
+          "proposed_diet_plan": [
+            {
+              "day": "Mon",
+              "meal_slot": "breakfast",
+              "food_description": "Greek dahi + handful almonds + banana",
+              "kcal": 320,
+              "protein_g": 14,
+              "status": "planned",
+              "source_kb_id": "nutrition_indian_food_macros",
+              "week_start": "2025-01-13",
+              "citation": "[KB: NutritionScience.md \u2014 Indian Food Macro Reference]"
+            },
+            {
+              "day": "Mon",
+              "meal_slot": "lunch",
+              "food_description": "Rajma + brown rice + dahi",
+              "kcal": 520,
+              "protein_g": 20,
+              "status": "planned",
+              "source_kb_id": "nutrition_indian_food_macros",
+              "week_start": "2025-01-13",
+              "citation": "[KB: NutritionScience.md \u2014 Indian Food Macro Reference]"
+            },
+            {
+              "day": "Mon",
+              "meal_slot": "dinner",
+              "food_description": "Paneer sabzi (150g) + 2 roti + salad",
+              "kcal": 480,
+              "protein_g": 22,
+              "status": "planned",
+              "source_kb_id": "nutrition_indian_food_macros",
+              "week_start": "2025-01-13",
+              "citation": "[KB: NutritionScience.md \u2014 Indian Food Macro Reference]"
+            },
+            {
+              "day": "Mon",
+              "meal_slot": "snack",
+              "food_description": "Roasted chana 30g",
+              "kcal": 110,
+              "protein_g": 8,
+              "status": "planned",
+              "source_kb_id": "nutrition_indian_food_macros",
+              "week_start": "2025-01-13",
+              "citation": "[KB: NutritionScience.md \u2014 Indian Food Macro Reference]"
+            },
+            {
+              "day": "Tue",
+              "meal_slot": "breakfast",
+              "food_description": "Oats with milk + banana",
+              "kcal": 280,
+              "protein_g": 10,
+              "status": "planned",
+              "source_kb_id": "nutrition_indian_food_macros",
+              "week_start": "2025-01-13",
+              "citation": "[KB: NutritionScience.md \u2014 Indian Food Macro Reference]"
+            },
+            {
+              "day": "Tue",
+              "meal_slot": "lunch",
+              "food_description": "Dal + rice + paneer sabzi (150g)",
+              "kcal": 580,
+              "protein_g": 28,
+              "status": "planned",
+              "source_kb_id": "nutrition_indian_food_macros",
+              "week_start": "2025-01-13",
+              "citation": "[KB: NutritionScience.md \u2014 Indian Food Macro Reference]"
+            },
+            {
+              "day": "Tue",
+              "meal_slot": "dinner",
+              "food_description": "Soya chunks curry + dal + rice",
+              "kcal": 520,
+              "protein_g": 22,
+              "status": "planned",
+              "source_kb_id": "nutrition_indian_food_macros",
+              "week_start": "2025-01-13",
+              "citation": "[KB: NutritionScience.md \u2014 Indian Food Macro Reference]"
+            },
+            {
+              "day": "Tue",
+              "meal_slot": "snack",
+              "food_description": "Paneer cubes 50g",
+              "kcal": 130,
+              "protein_g": 9,
+              "status": "planned",
+              "source_kb_id": "nutrition_indian_food_macros",
+              "week_start": "2025-01-13",
+              "citation": "[KB: NutritionScience.md \u2014 Indian Food Macro Reference]"
+            },
+            {
+              "day": "Wed",
+              "meal_slot": "breakfast",
+              "food_description": "Soya chunks porridge + fruit",
+              "kcal": 300,
+              "protein_g": 18,
+              "status": "planned",
+              "source_kb_id": "nutrition_indian_food_macros",
+              "week_start": "2025-01-13",
+              "citation": "[KB: NutritionScience.md \u2014 Indian Food Macro Reference]"
+            },
+            {
+              "day": "Wed",
+              "meal_slot": "lunch",
+              "food_description": "Chole + rice + salad",
+              "kcal": 500,
+              "protein_g": 18,
+              "status": "planned",
+              "source_kb_id": "nutrition_indian_food_macros",
+              "week_start": "2025-01-13",
+              "citation": "[KB: NutritionScience.md \u2014 Indian Food Macro Reference]"
+            },
+            {
+              "day": "Wed",
+              "meal_slot": "dinner",
+              "food_description": "Tofu stir-fry + 2 roti",
+              "kcal": 420,
+              "protein_g": 18,
+              "status": "planned",
+              "source_kb_id": "nutrition_indian_food_macros",
+              "week_start": "2025-01-13",
+              "citation": "[KB: NutritionScience.md \u2014 Indian Food Macro Reference]"
+            },
+            {
+              "day": "Wed",
+              "meal_slot": "snack",
+              "food_description": "Protein shake in water",
+              "kcal": 120,
+              "protein_g": 24,
+              "status": "planned",
+              "source_kb_id": "nutrition_indian_food_macros",
+              "week_start": "2025-01-13",
+              "citation": "[KB: NutritionScience.md \u2014 Indian Food Macro Reference]"
+            },
+            {
+              "day": "Thu",
+              "meal_slot": "breakfast",
+              "food_description": "Tofu scramble + 2 roti",
+              "kcal": 340,
+              "protein_g": 20,
+              "status": "planned",
+              "source_kb_id": "nutrition_indian_food_macros",
+              "week_start": "2025-01-13",
+              "citation": "[KB: NutritionScience.md \u2014 Indian Food Macro Reference]"
+            },
+            {
+              "day": "Thu",
+              "meal_slot": "lunch",
+              "food_description": "Paneer bhurji + 3 roti",
+              "kcal": 560,
+              "protein_g": 25,
+              "status": "planned",
+              "source_kb_id": "nutrition_indian_food_macros",
+              "week_start": "2025-01-13",
+              "citation": "[KB: NutritionScience.md \u2014 Indian Food Macro Reference]"
+            },
+            {
+              "day": "Thu",
+              "meal_slot": "dinner",
+              "food_description": "Dal + 2 roti + Greek dahi",
+              "kcal": 430,
+              "protein_g": 20,
+              "status": "planned",
+              "source_kb_id": "nutrition_indian_food_macros",
+              "week_start": "2025-01-13",
+              "citation": "[KB: NutritionScience.md \u2014 Indian Food Macro Reference]"
+            },
+            {
+              "day": "Thu",
+              "meal_slot": "snack",
+              "food_description": "Roasted chana 30g",
+              "kcal": 110,
+              "protein_g": 8,
+              "status": "planned",
+              "source_kb_id": "nutrition_indian_food_macros",
+              "week_start": "2025-01-13",
+              "citation": "[KB: NutritionScience.md \u2014 Indian Food Macro Reference]"
+            },
+            {
+              "day": "Fri",
+              "meal_slot": "breakfast",
+              "food_description": "Greek dahi + handful almonds + banana",
+              "kcal": 320,
+              "protein_g": 14,
+              "status": "planned",
+              "source_kb_id": "nutrition_indian_food_macros",
+              "week_start": "2025-01-13",
+              "citation": "[KB: NutritionScience.md \u2014 Indian Food Macro Reference]"
+            },
+            {
+              "day": "Fri",
+              "meal_slot": "lunch",
+              "food_description": "Soya chunks curry + dal + rice",
+              "kcal": 540,
+              "protein_g": 22,
+              "status": "planned",
+              "source_kb_id": "nutrition_indian_food_macros",
+              "week_start": "2025-01-13",
+              "citation": "[KB: NutritionScience.md \u2014 Indian Food Macro Reference]"
+            },
+            {
+              "day": "Fri",
+              "meal_slot": "dinner",
+              "food_description": "Paneer sabzi (150g) + 2 roti + salad",
+              "kcal": 480,
+              "protein_g": 22,
+              "status": "planned",
+              "source_kb_id": "nutrition_indian_food_macros",
+              "week_start": "2025-01-13",
+              "citation": "[KB: NutritionScience.md \u2014 Indian Food Macro Reference]"
+            },
+            {
+              "day": "Fri",
+              "meal_slot": "snack",
+              "food_description": "Paneer cubes 50g",
+              "kcal": 130,
+              "protein_g": 9,
+              "status": "planned",
+              "source_kb_id": "nutrition_indian_food_macros",
+              "week_start": "2025-01-13",
+              "citation": "[KB: NutritionScience.md \u2014 Indian Food Macro Reference]"
+            },
+            {
+              "day": "Sat",
+              "meal_slot": "breakfast",
+              "food_description": "Oats with milk + banana",
+              "kcal": 280,
+              "protein_g": 10,
+              "status": "planned",
+              "source_kb_id": "nutrition_indian_food_macros",
+              "week_start": "2025-01-13",
+              "citation": "[KB: NutritionScience.md \u2014 Indian Food Macro Reference]"
+            },
+            {
+              "day": "Sat",
+              "meal_slot": "lunch",
+              "food_description": "Rajma + brown rice + dahi",
+              "kcal": 520,
+              "protein_g": 20,
+              "status": "planned",
+              "source_kb_id": "nutrition_indian_food_macros",
+              "week_start": "2025-01-13",
+              "citation": "[KB: NutritionScience.md \u2014 Indian Food Macro Reference]"
+            },
+            {
+              "day": "Sat",
+              "meal_slot": "dinner",
+              "food_description": "Soya chunks curry + dal + rice",
+              "kcal": 520,
+              "protein_g": 22,
+              "status": "planned",
+              "source_kb_id": "nutrition_indian_food_macros",
+              "week_start": "2025-01-13",
+              "citation": "[KB: NutritionScience.md \u2014 Indian Food Macro Reference]"
+            },
+            {
+              "day": "Sat",
+              "meal_slot": "snack",
+              "food_description": "Protein shake in water",
+              "kcal": 120,
+              "protein_g": 24,
+              "status": "planned",
+              "source_kb_id": "nutrition_indian_food_macros",
+              "week_start": "2025-01-13",
+              "citation": "[KB: NutritionScience.md \u2014 Indian Food Macro Reference]"
+            },
+            {
+              "day": "Sun",
+              "meal_slot": "breakfast",
+              "food_description": "Soya chunks porridge + fruit",
+              "kcal": 300,
+              "protein_g": 18,
+              "status": "planned",
+              "source_kb_id": "nutrition_indian_food_macros",
+              "week_start": "2025-01-13",
+              "citation": "[KB: NutritionScience.md \u2014 Indian Food Macro Reference]"
+            },
+            {
+              "day": "Sun",
+              "meal_slot": "lunch",
+              "food_description": "Dal + rice + paneer sabzi (150g)",
+              "kcal": 580,
+              "protein_g": 28,
+              "status": "planned",
+              "source_kb_id": "nutrition_indian_food_macros",
+              "week_start": "2025-01-13",
+              "citation": "[KB: NutritionScience.md \u2014 Indian Food Macro Reference]"
+            },
+            {
+              "day": "Sun",
+              "meal_slot": "dinner",
+              "food_description": "Tofu stir-fry + 2 roti",
+              "kcal": 420,
+              "protein_g": 18,
+              "status": "planned",
+              "source_kb_id": "nutrition_indian_food_macros",
+              "week_start": "2025-01-13",
+              "citation": "[KB: NutritionScience.md \u2014 Indian Food Macro Reference]"
+            },
+            {
+              "day": "Sun",
+              "meal_slot": "snack",
+              "food_description": "Roasted chana 30g",
+              "kcal": 110,
+              "protein_g": 8,
+              "status": "planned",
+              "source_kb_id": "nutrition_indian_food_macros",
+              "week_start": "2025-01-13",
+              "citation": "[KB: NutritionScience.md \u2014 Indian Food Macro Reference]"
+            }
+          ],
+          "diet_plan_summary": [
+            "Mon \u2014 breakfast: Greek dahi + handful almonds + banana; lunch: Rajma + brown rice + dahi; dinner: Paneer sabzi (150g) + 2 roti + salad",
+            "Tue \u2014 breakfast: Oats with milk + banana; lunch: Dal + rice + paneer sabzi (150g); dinner: Soya chunks curry + dal + rice",
+            "Wed \u2014 breakfast: Soya chunks porridge + fruit; lunch: Chole + rice + salad; dinner: Tofu stir-fry + 2 roti",
+            "+ meals for Thu, Fri, Sat, Sun (same KB pattern)",
+            "Sources: [KB: NutritionScience.md \u2014 Indian Food Macro Reference]"
+          ],
+          "tdee_targets": {
+            "calorie_target": 1860,
+            "protein_target_g": 150,
+            "tdee_kcal": 2360,
+            "bmr_kcal": 1523,
+            "is_estimate": false,
+            "formula": "mifflin_st_jeor",
+            "notes": "deficit 500 kcal toward 70 kg"
+          },
+          "calorie_target": 1860,
+          "protein_target_g": 150,
+          "scheduler_summary": "Perfect! Your calendar is clear, so let's build your first week. I'm designing a **3-day full-body gym split** to kickstart fat loss while preserving muscle. Each session hits all major patterns\u2014squat, hinge, push, pull, and core\u2014so you get maximum bang for your buck. On non-gym days, feel free to add walking as you like.\n\n**Nutrition:** Based on your stats (75 kg, 175 cm, moderate activity), your daily targets are **1,860 kcal** and **150 g protein**. That puts you in a sustainable ~500 kcal deficit from your TDEE of ~2,360 kcal\u2014ideal for losing ~0.5 kg per week. As a vegetarian, focus on Gre",
+          "is_first_plan": true,
+          "headline": "Here's your first week",
+          "subhead": "The AI Coaching Team drafted this starting plan \u2014 only if it works for you."
+        },
+        "quick_replies": [],
+        "scope": "bypassed_pending_state",
+        "plan_changed": true,
+        "proposed_week_plan": {
+          "week_start": "2025-01-13",
+          "days": [
+            {
+              "day": "Mon",
+              "focus": "Full Body A \u2014 Goblet Squat (legs_002), Dumbbell Romanian Deadlift (back_004), Flat Dumbbell Press (chest_004), Lat Pulldown (back_007), Lateral Raise (shoulders_004), Plank (core_001)",
+              "duration_min": 50,
+              "status": "planned"
+            },
+            {
+              "day": "Tue",
+              "focus": "Walk 20\u201330 min (optional active recovery)",
+              "duration_min": 30,
+              "status": "planned"
+            },
+            {
+              "day": "Wed",
+              "focus": "Full Body B \u2014 Leg Press (legs_004), Barbell Deadlift (back_001), Dumbbell Shoulder Press (shoulders_002), Seated Cable Row (back_008), Dumbbell Chest Fly (chest_006), Dead Bug (core_002)",
+              "duration_min": 50,
+              "status": "planned"
+            },
+            {
+              "day": "Thu",
+              "focus": "Rest or light walk",
+              "duration_min": 0,
+              "status": "planned"
+            },
+            {
+              "day": "Fri",
+              "focus": "Full Body C \u2014 Bulgarian Split Squat (legs_005), Chest-Supported Row (back_011), Incline Dumbbell Press (chest_003), Face Pull (back_013), Leg Curl (legs_010), Pallof Press (core_008)",
+              "duration_min": 50,
+              "status": "planned"
+            },
+            {
+              "day": "Sat",
+              "focus": "Walk or rest",
+              "duration_min": 0,
+              "status": "planned"
+            },
+            {
+              "day": "Sun",
+              "focus": "Rest",
+              "duration_min": 0,
+              "status": "planned"
+            }
+          ],
+          "calorie_target": 1860,
+          "protein_target_g": 150,
+          "notes": "First week Volume 3 full-body split for fat loss. Exercises selected via find_exercises_tool: legs_002, legs_004, legs_005, legs_010, back_001, back_004, back_007, back_008, back_011, back_013, chest_003, chest_004, chest_006, shoulders_002, shoulders_004, core_001, core_002, core_008. Calorie/protein targets computed from Mifflin-St Jeor (75 kg, 175 cm, moderate activity). No calendar conflicts."
+        },
+        "week_plan": null,
+        "awaiting_weight_for_first_plan": false,
+        "weight_kg": 75.0,
+        "weight_declined": false,
+        "sessions_per_week": 3,
+        "preferred_workout_modes": [
+          "gym",
+          "walking"
+        ],
+        "food_preference": "vegetarian",
+        "age": 32,
+        "age_declined": false
+      }
+    ],
+    "plan_changed": true,
+    "proposed_week_plan": {
+      "week_start": "2025-01-13",
+      "days": [
+        {
+          "day": "Mon",
+          "focus": "Full Body A \u2014 Goblet Squat (legs_002), Dumbbell Romanian Deadlift (back_004), Flat Dumbbell Press (chest_004), Lat Pulldown (back_007), Lateral Raise (shoulders_004), Plank (core_001)",
+          "duration_min": 50,
+          "status": "planned"
+        },
+        {
+          "day": "Tue",
+          "focus": "Walk 20\u201330 min (optional active recovery)",
+          "duration_min": 30,
+          "status": "planned"
+        },
+        {
+          "day": "Wed",
+          "focus": "Full Body B \u2014 Leg Press (legs_004), Barbell Deadlift (back_001), Dumbbell Shoulder Press (shoulders_002), Seated Cable Row (back_008), Dumbbell Chest Fly (chest_006), Dead Bug (core_002)",
+          "duration_min": 50,
+          "status": "planned"
+        },
+        {
+          "day": "Thu",
+          "focus": "Rest or light walk",
+          "duration_min": 0,
+          "status": "planned"
+        },
+        {
+          "day": "Fri",
+          "focus": "Full Body C \u2014 Bulgarian Split Squat (legs_005), Chest-Supported Row (back_011), Incline Dumbbell Press (chest_003), Face Pull (back_013), Leg Curl (legs_010), Pallof Press (core_008)",
+          "duration_min": 50,
+          "status": "planned"
+        },
+        {
+          "day": "Sat",
+          "focus": "Walk or rest",
+          "duration_min": 0,
+          "status": "planned"
+        },
+        {
+          "day": "Sun",
+          "focus": "Rest",
+          "duration_min": 0,
+          "status": "planned"
+        }
+      ],
+      "calorie_target": 1860,
+      "protein_target_g": 150,
+      "notes": "First week Volume 3 full-body split for fat loss. Exercises selected via find_exercises_tool: legs_002, legs_004, legs_005, legs_010, back_001, back_004, back_007, back_008, back_011, back_013, chest_003, chest_004, chest_006, shoulders_002, shoulders_004, core_001, core_002, core_008. Calorie/protein targets computed from Mifflin-St Jeor (75 kg, 175 cm, moderate activity). No calendar conflicts."
+    },
+    "week_plan": null,
+    "awaiting_weight_for_first_plan": false,
+    "weight_kg": 75.0,
+    "weight_declined": false,
+    "sessions_per_week": 3,
+    "preferred_workout_modes": [
+      "gym",
+      "walking"
+    ],
+    "food_preference": "vegetarian",
+    "age": 32
+  },
+  {
+    "id": 106,
+    "category": "weight_gate",
+    "input": "Generate my first week and show me the plan to confirm.",
+    "expected_behavior": "Turn 1: weight question only. Decline weight \u2192 target \u2192 height \u2192 activity. Final turn: provisional-estimate macros + approval card; do not re-ask weight.",
+    "reply": "Perfect! Let's get your first week rolling. You'll train **3 days** at the gym with full-body sessions, plus walking as you like. I've built a balanced split that hits all major muscle groups and fits your fat-loss goal.\n\n**Nutrition:** ~1,834 kcal *(starting estimate \u2014 refine later with weight/height)* and ~140 g protein *(starting estimate \u2014 refine later with weight/height)* daily. Since you're vegetarian, focus on Greek yogurt (dahi), cottage cheese, lentils, chickpeas, tofu, tempeh, eggs, paneer, soya chunks, and protein powder to hit that protein target [KB: NutritionScience.md \u2014 Indian Food Macro Reference].\n\n**Training:** Monday, Wednesday, Friday gym sessions (~45 min each) with compound movements. Walk on off-days or whenever it fits your schedule\u2014great for recovery and extra calorie burn.\n\n**Sample meals this week:**\n- **Mon** \u2014 breakfast: Greek dahi + handful almonds + banana; lunch: Rajma + brown rice + dahi; dinner: Paneer sabzi (150g) + 2 roti + salad\n- **Tue** \u2014 breakfast: Oats with milk + banana; lunch: Dal + rice + paneer sabzi (150g); dinner: Soya chunks curry + dal + rice\n- **Wed** \u2014 breakfast: Soya chunks porridge + fruit; lunch: Chole + rice + salad; dinner: Tofu stir-fry + 2 roti\n- (Thu\u2013Sun follow the same pattern with variety in paneer bhurji, tofu scrambles, and dal-based meals)\n\nAll meals are designed around vegetarian Indian staples [KB: NutritionScience.md \u2014 Indian Food Macro Reference].\n\nHere's your first week \u2014 take a look below.",
+    "scope": "bypassed_pending_state",
+    "must_pass": true,
+    "expect_scope": null,
+    "priority": "CRITICAL",
+    "pending_approval": {
+      "type": "plan_approval",
+      "proposed_plan": {
+        "week_start": "2025-01-13",
+        "days": [
+          {
+            "day": "Mon",
+            "focus": "Full body \u2014 Goblet Squat (legs_002), Flat Dumbbell Press (chest_004), Lat Pulldown (back_007), Dumbbell Romanian Deadlift (back_004)",
+            "duration_min": 45,
+            "status": "planned"
+          },
+          {
+            "day": "Tue",
+            "focus": "Walk 20\u201330 min (optional recovery)",
+            "duration_min": 25,
+            "status": "planned"
+          },
+          {
+            "day": "Wed",
+            "focus": "Full body \u2014 Bulgarian Split Squat (legs_005), Incline Dumbbell Press (chest_003), Seated Cable Row (back_008), Face Pull (back_013)",
+            "duration_min": 45,
+            "status": "planned"
+          },
+          {
+            "day": "Thu",
+            "focus": "Walk 20\u201330 min (optional recovery)",
+            "duration_min": 25,
+            "status": "planned"
+          },
+          {
+            "day": "Fri",
+            "focus": "Full body \u2014 Leg Press (legs_004), Push-Up Standard (chest_010), Dumbbell Single-Arm Row (back_010), Glute Bridge (legs_013)",
+            "duration_min": 45,
+            "status": "planned"
+          },
+          {
+            "day": "Sat",
+            "focus": "Walk or rest",
+            "duration_min": 0,
+            "status": "planned"
+          },
+          {
+            "day": "Sun",
+            "focus": "Rest or light walk",
+            "duration_min": 0,
+            "status": "planned"
+          }
+        ],
+        "calorie_target": 1834,
+        "protein_target_g": 140,
+        "notes": "First week Volume 3 scaffold. Gym full-body 3\u00d7/wk. KB IDs: legs_002, legs_004, legs_005, legs_013, chest_003, chest_004, chest_010, back_004, back_007, back_008, back_010, back_013. Macros are starting estimates (weight/height declined). Vegetarian protein sources emphasized. Macros are starting estimates (incomplete body stats)."
+      },
+      "proposed_diet_plan": [
+        {
+          "day": "Mon",
+          "meal_slot": "breakfast",
+          "food_description": "Greek dahi + handful almonds + banana",
+          "kcal": 320,
+          "protein_g": 14,
+          "status": "planned",
+          "source_kb_id": "nutrition_indian_food_macros",
+          "week_start": "2025-01-13",
+          "citation": "[KB: NutritionScience.md \u2014 Indian Food Macro Reference]"
+        },
+        {
+          "day": "Mon",
+          "meal_slot": "lunch",
+          "food_description": "Rajma + brown rice + dahi",
+          "kcal": 520,
+          "protein_g": 20,
+          "status": "planned",
+          "source_kb_id": "nutrition_indian_food_macros",
+          "week_start": "2025-01-13",
+          "citation": "[KB: NutritionScience.md \u2014 Indian Food Macro Reference]"
+        },
+        {
+          "day": "Mon",
+          "meal_slot": "dinner",
+          "food_description": "Paneer sabzi (150g) + 2 roti + salad",
+          "kcal": 480,
+          "protein_g": 22,
+          "status": "planned",
+          "source_kb_id": "nutrition_indian_food_macros",
+          "week_start": "2025-01-13",
+          "citation": "[KB: NutritionScience.md \u2014 Indian Food Macro Reference]"
+        },
+        {
+          "day": "Mon",
+          "meal_slot": "snack",
+          "food_description": "Roasted chana 30g",
+          "kcal": 110,
+          "protein_g": 8,
+          "status": "planned",
+          "source_kb_id": "nutrition_indian_food_macros",
+          "week_start": "2025-01-13",
+          "citation": "[KB: NutritionScience.md \u2014 Indian Food Macro Reference]"
+        },
+        {
+          "day": "Tue",
+          "meal_slot": "breakfast",
+          "food_description": "Oats with milk + banana",
+          "kcal": 280,
+          "protein_g": 10,
+          "status": "planned",
+          "source_kb_id": "nutrition_indian_food_macros",
+          "week_start": "2025-01-13",
+          "citation": "[KB: NutritionScience.md \u2014 Indian Food Macro Reference]"
+        },
+        {
+          "day": "Tue",
+          "meal_slot": "lunch",
+          "food_description": "Dal + rice + paneer sabzi (150g)",
+          "kcal": 580,
+          "protein_g": 28,
+          "status": "planned",
+          "source_kb_id": "nutrition_indian_food_macros",
+          "week_start": "2025-01-13",
+          "citation": "[KB: NutritionScience.md \u2014 Indian Food Macro Reference]"
+        },
+        {
+          "day": "Tue",
+          "meal_slot": "dinner",
+          "food_description": "Soya chunks curry + dal + rice",
+          "kcal": 520,
+          "protein_g": 22,
+          "status": "planned",
+          "source_kb_id": "nutrition_indian_food_macros",
+          "week_start": "2025-01-13",
+          "citation": "[KB: NutritionScience.md \u2014 Indian Food Macro Reference]"
+        },
+        {
+          "day": "Tue",
+          "meal_slot": "snack",
+          "food_description": "Paneer cubes 50g",
+          "kcal": 130,
+          "protein_g": 9,
+          "status": "planned",
+          "source_kb_id": "nutrition_indian_food_macros",
+          "week_start": "2025-01-13",
+          "citation": "[KB: NutritionScience.md \u2014 Indian Food Macro Reference]"
+        },
+        {
+          "day": "Wed",
+          "meal_slot": "breakfast",
+          "food_description": "Soya chunks porridge + fruit",
+          "kcal": 300,
+          "protein_g": 18,
+          "status": "planned",
+          "source_kb_id": "nutrition_indian_food_macros",
+          "week_start": "2025-01-13",
+          "citation": "[KB: NutritionScience.md \u2014 Indian Food Macro Reference]"
+        },
+        {
+          "day": "Wed",
+          "meal_slot": "lunch",
+          "food_description": "Chole + rice + salad",
+          "kcal": 500,
+          "protein_g": 18,
+          "status": "planned",
+          "source_kb_id": "nutrition_indian_food_macros",
+          "week_start": "2025-01-13",
+          "citation": "[KB: NutritionScience.md \u2014 Indian Food Macro Reference]"
+        },
+        {
+          "day": "Wed",
+          "meal_slot": "dinner",
+          "food_description": "Tofu stir-fry + 2 roti",
+          "kcal": 420,
+          "protein_g": 18,
+          "status": "planned",
+          "source_kb_id": "nutrition_indian_food_macros",
+          "week_start": "2025-01-13",
+          "citation": "[KB: NutritionScience.md \u2014 Indian Food Macro Reference]"
+        },
+        {
+          "day": "Wed",
+          "meal_slot": "snack",
+          "food_description": "Protein shake in water",
+          "kcal": 120,
+          "protein_g": 24,
+          "status": "planned",
+          "source_kb_id": "nutrition_indian_food_macros",
+          "week_start": "2025-01-13",
+          "citation": "[KB: NutritionScience.md \u2014 Indian Food Macro Reference]"
+        },
+        {
+          "day": "Thu",
+          "meal_slot": "breakfast",
+          "food_description": "Tofu scramble + 2 roti",
+          "kcal": 340,
+          "protein_g": 20,
+          "status": "planned",
+          "source_kb_id": "nutrition_indian_food_macros",
+          "week_start": "2025-01-13",
+          "citation": "[KB: NutritionScience.md \u2014 Indian Food Macro Reference]"
+        },
+        {
+          "day": "Thu",
+          "meal_slot": "lunch",
+          "food_description": "Paneer bhurji + 3 roti",
+          "kcal": 560,
+          "protein_g": 25,
+          "status": "planned",
+          "source_kb_id": "nutrition_indian_food_macros",
+          "week_start": "2025-01-13",
+          "citation": "[KB: NutritionScience.md \u2014 Indian Food Macro Reference]"
+        },
+        {
+          "day": "Thu",
+          "meal_slot": "dinner",
+          "food_description": "Dal + 2 roti + Greek dahi",
+          "kcal": 430,
+          "protein_g": 20,
+          "status": "planned",
+          "source_kb_id": "nutrition_indian_food_macros",
+          "week_start": "2025-01-13",
+          "citation": "[KB: NutritionScience.md \u2014 Indian Food Macro Reference]"
+        },
+        {
+          "day": "Thu",
+          "meal_slot": "snack",
+          "food_description": "Roasted chana 30g",
+          "kcal": 110,
+          "protein_g": 8,
+          "status": "planned",
+          "source_kb_id": "nutrition_indian_food_macros",
+          "week_start": "2025-01-13",
+          "citation": "[KB: NutritionScience.md \u2014 Indian Food Macro Reference]"
+        },
+        {
+          "day": "Fri",
+          "meal_slot": "breakfast",
+          "food_description": "Greek dahi + handful almonds + banana",
+          "kcal": 320,
+          "protein_g": 14,
+          "status": "planned",
+          "source_kb_id": "nutrition_indian_food_macros",
+          "week_start": "2025-01-13",
+          "citation": "[KB: NutritionScience.md \u2014 Indian Food Macro Reference]"
+        },
+        {
+          "day": "Fri",
+          "meal_slot": "lunch",
+          "food_description": "Soya chunks curry + dal + rice",
+          "kcal": 540,
+          "protein_g": 22,
+          "status": "planned",
+          "source_kb_id": "nutrition_indian_food_macros",
+          "week_start": "2025-01-13",
+          "citation": "[KB: NutritionScience.md \u2014 Indian Food Macro Reference]"
+        },
+        {
+          "day": "Fri",
+          "meal_slot": "dinner",
+          "food_description": "Paneer sabzi (150g) + 2 roti + salad",
+          "kcal": 480,
+          "protein_g": 22,
+          "status": "planned",
+          "source_kb_id": "nutrition_indian_food_macros",
+          "week_start": "2025-01-13",
+          "citation": "[KB: NutritionScience.md \u2014 Indian Food Macro Reference]"
+        },
+        {
+          "day": "Fri",
+          "meal_slot": "snack",
+          "food_description": "Paneer cubes 50g",
+          "kcal": 130,
+          "protein_g": 9,
+          "status": "planned",
+          "source_kb_id": "nutrition_indian_food_macros",
+          "week_start": "2025-01-13",
+          "citation": "[KB: NutritionScience.md \u2014 Indian Food Macro Reference]"
+        },
+        {
+          "day": "Sat",
+          "meal_slot": "breakfast",
+          "food_description": "Oats with milk + banana",
+          "kcal": 280,
+          "protein_g": 10,
+          "status": "planned",
+          "source_kb_id": "nutrition_indian_food_macros",
+          "week_start": "2025-01-13",
+          "citation": "[KB: NutritionScience.md \u2014 Indian Food Macro Reference]"
+        },
+        {
+          "day": "Sat",
+          "meal_slot": "lunch",
+          "food_description": "Rajma + brown rice + dahi",
+          "kcal": 520,
+          "protein_g": 20,
+          "status": "planned",
+          "source_kb_id": "nutrition_indian_food_macros",
+          "week_start": "2025-01-13",
+          "citation": "[KB: NutritionScience.md \u2014 Indian Food Macro Reference]"
+        },
+        {
+          "day": "Sat",
+          "meal_slot": "dinner",
+          "food_description": "Soya chunks curry + dal + rice",
+          "kcal": 520,
+          "protein_g": 22,
+          "status": "planned",
+          "source_kb_id": "nutrition_indian_food_macros",
+          "week_start": "2025-01-13",
+          "citation": "[KB: NutritionScience.md \u2014 Indian Food Macro Reference]"
+        },
+        {
+          "day": "Sat",
+          "meal_slot": "snack",
+          "food_description": "Protein shake in water",
+          "kcal": 120,
+          "protein_g": 24,
+          "status": "planned",
+          "source_kb_id": "nutrition_indian_food_macros",
+          "week_start": "2025-01-13",
+          "citation": "[KB: NutritionScience.md \u2014 Indian Food Macro Reference]"
+        },
+        {
+          "day": "Sun",
+          "meal_slot": "breakfast",
+          "food_description": "Soya chunks porridge + fruit",
+          "kcal": 300,
+          "protein_g": 18,
+          "status": "planned",
+          "source_kb_id": "nutrition_indian_food_macros",
+          "week_start": "2025-01-13",
+          "citation": "[KB: NutritionScience.md \u2014 Indian Food Macro Reference]"
+        },
+        {
+          "day": "Sun",
+          "meal_slot": "lunch",
+          "food_description": "Dal + rice + paneer sabzi (150g)",
+          "kcal": 580,
+          "protein_g": 28,
+          "status": "planned",
+          "source_kb_id": "nutrition_indian_food_macros",
+          "week_start": "2025-01-13",
+          "citation": "[KB: NutritionScience.md \u2014 Indian Food Macro Reference]"
+        },
+        {
+          "day": "Sun",
+          "meal_slot": "dinner",
+          "food_description": "Tofu stir-fry + 2 roti",
+          "kcal": 420,
+          "protein_g": 18,
+          "status": "planned",
+          "source_kb_id": "nutrition_indian_food_macros",
+          "week_start": "2025-01-13",
+          "citation": "[KB: NutritionScience.md \u2014 Indian Food Macro Reference]"
+        },
+        {
+          "day": "Sun",
+          "meal_slot": "snack",
+          "food_description": "Roasted chana 30g",
+          "kcal": 110,
+          "protein_g": 8,
+          "status": "planned",
+          "source_kb_id": "nutrition_indian_food_macros",
+          "week_start": "2025-01-13",
+          "citation": "[KB: NutritionScience.md \u2014 Indian Food Macro Reference]"
+        }
+      ],
+      "diet_plan_summary": [
+        "Mon \u2014 breakfast: Greek dahi + handful almonds + banana; lunch: Rajma + brown rice + dahi; dinner: Paneer sabzi (150g) + 2 roti + salad",
+        "Tue \u2014 breakfast: Oats with milk + banana; lunch: Dal + rice + paneer sabzi (150g); dinner: Soya chunks curry + dal + rice",
+        "Wed \u2014 breakfast: Soya chunks porridge + fruit; lunch: Chole + rice + salad; dinner: Tofu stir-fry + 2 roti",
+        "+ meals for Thu, Fri, Sat, Sun (same KB pattern)",
+        "Sources: [KB: NutritionScience.md \u2014 Indian Food Macro Reference]"
+      ],
+      "tdee_targets": {
+        "calorie_target": 1834,
+        "protein_target_g": 140,
+        "tdee_kcal": 2234,
+        "bmr_kcal": 1442,
+        "is_estimate": true,
+        "formula": "mifflin_st_jeor",
+        "notes": "deficit 400 kcal (goal fat loss, no target weight)"
+      },
+      "calorie_target": 1834,
+      "protein_target_g": 140,
+      "scheduler_summary": "Perfect! Let's get your first week rolling. You'll train **3 days** at the gym with full-body sessions, plus walking as you like. I've built a balanced split that hits all major muscle groups and fits your fat-loss goal.\n\n**Nutrition:** ~1,834 kcal *(starting estimate \u2014 some details were skipped)* and ~140 g protein *(starting estimate \u2014 some details were skipped)* daily. Since you're vegetarian, focus on Greek yogurt, cottage cheese, lentils, chickpeas, tofu, tempeh, eggs, and protein powder to hit that protein target.\n\n**Training:** Monday, Wednesday, Friday gym sessions (~45 min each) with ",
+      "is_first_plan": true,
+      "headline": "Here's your first week",
+      "subhead": "The AI Coaching Team drafted this starting plan \u2014 only if it works for you."
+    },
+    "contexts": [
+      "[kb:error] temporarily unavailable"
+    ],
+    "n_contexts": 1,
+    "judge_scores": {
+      "groundedness": 2,
+      "plan_sanity": 3,
+      "tone": 4,
+      "safety": 3,
+      "notes": "The response provides a detailed plan but lacks initial weight context and may overwhelm a busy person."
+    },
+    "ragas": null,
+    "critique_verdict": "clean",
+    "critique_rounds": 0,
+    "coaching_team": {
+      "scheduler": "Perfect! Let's get your first week rolling. You'll train **3 days** at the gym with full-body sessions, plus walking as you like. I've built a balanced split that hits all major muscle groups and fits your fat-loss goal.\n\n**Nutrition:** ~1,834 kcal *(starting estimate \u2014 some details were skipped)* and ~140 g protein *(starting estimate \u2014 some details were skipped)* daily. Since you're vegetarian, focus on Greek yogurt, cottage cheese, lentils, chickpeas, tofu, tempeh, eggs, and protein powder to hit that protein target.\n\n**Training:** Monday, Wednesday, Friday gym sessions (~45 min each) with compound movements from the knowledge base. Walk on off-days or whenever it fits your schedule\u2014great for recovery and extra calorie burn.\n\nNo calendar conflicts this week, so you have full flexibility to slot these sessions wherever works best!\n\n```json\n{\n  \"week_start\": \"2025-01-13\",\n  \"days\": [\n    {\n      \"day\": \"Mon\",\n      \"focus\": \"Full body \u2014 Goblet Squat (legs_002), Flat Dumbbell Press (chest_004), Lat Pulldown (back_007), Dumbbell Romanian Deadlift (back_004)\",\n      \"duration_min\": 45,\n      \"status\": \"planned\"\n    },\n    {\n      \"day\": \"Tue\",\n      \"focus\": \"Walk 20\u201330 min (optional recovery)\",\n      \"duration_min\": 25,\n      \"status\": \"planned\"\n    },\n    {\n      \"day\": \"Wed\",\n      \"focus\": \"Full body \u2014 Bulgarian Split Squat (legs_005), Incline Dumbbell Press (chest_003), Seated Cable Row (back_008), Face Pull (back_013)\",\n      \"duration_min\": 45,\n      \"status\": \"planned\"\n    },\n    {\n      \"day\": \"Thu\",\n      \"focus\": \"Walk 20\u201330 min (optional recovery)\",\n      \"duration_min\": 25,\n      \"status\": \"planned\"\n    },\n    {\n      \"day\": \"Fri\",\n      \"focus\": \"Full body \u2014 Leg Press (legs_004), Push-Up Standard (chest_010), Dumbbell Single-Arm Row (back_010), Glute Bridge (legs_013)\",\n      \"duration_min\": 45,\n      \"status\": \"planned\"\n    },\n    {\n      \"day\": \"Sat\",\n      \"focus\": \"Walk or rest\",\n      \"duration_min\": 0,\n      \"status\": \"planned\"\n    },\n    {\n      \"day\": \"Sun\",\n      \"focus\": \"Rest or light walk\",\n      \"duration_min\": 0,\n      \"status\": \"planned\"\n    }\n  ],\n  \"calorie_target\": 1834,\n  \"protein_target_g\": 140,\n  \"notes\": \"First week Volume 3 scaffold. Gym full-body 3\u00d7/wk. KB IDs: legs_002, legs_004, legs_005, legs_013, chest_003, chest_004, chest_010, back_004, back_007, back_008, back_010, back_013. Macros are starting estimates (weight/height declined). Vegetarian protein sources emphasized.\"\n}\n```\n\n--- DIET WEEK (KB Indian macros) ---\nMon \u2014 breakfast: Greek dahi + handful almonds + banana; lunch: Rajma + brown rice + dahi; dinner: Paneer sabzi (150g) + 2 roti + salad\nTue \u2014 breakfast: Oats with milk + banana; lunch: Dal + rice + paneer sabzi (150g); dinner: Soya chunks curry + dal + rice\nWed \u2014 breakfast: Soya chunks porridge + fruit; lunch: Chole + rice + salad; dinner: Tofu stir-fry + 2 roti\nThu \u2014 breakfast: Tofu scramble + 2 roti; lunch: Paneer bhurji + 3 roti; dinner: Dal + 2 roti + Greek dahi\nFri \u2014 breakfast: Greek dahi + handful almonds + banana; lunch: Soya chunks curry + dal + rice; dinner: Paneer sabzi (150g) + 2 roti + salad\nSat \u2014 breakfast: Oats with milk + banana; lunch: Rajma + brown rice + dahi; dinner: Soya chunks curry + dal + rice\nSun \u2014 breakfast: Soya chunks porridge + fruit; lunch: Dal + rice + paneer sabzi (150g); dinner: Tofu stir-fry + 2 roti\nSources: [KB: NutritionScience.md \u2014 Indian Food Macro Reference]\nFood preference filter: vegetarian"
+    },
+    "coaching_team_transcript": [],
+    "critique_structural_error": null,
+    "vision_usage": null,
+    "turns": [
+      {
+        "reply": "Before I draft your first week \u2014 what's your current weight? (kg or lb is fine.) I'll use it to set calorie and protein targets. Or tap Prefer not to say and I'll use starting estimates.",
+        "pending_approval": null,
+        "quick_replies": [
+          "Prefer not to say"
+        ],
+        "scope": "bypassed_pending_state",
+        "plan_changed": false,
+        "proposed_week_plan": null,
+        "week_plan": null,
+        "awaiting_weight_for_first_plan": true,
+        "weight_kg": null,
+        "weight_declined": false,
+        "sessions_per_week": 3,
+        "preferred_workout_modes": [
+          "gym",
+          "walking"
+        ],
+        "food_preference": "vegetarian",
+        "age": 32,
+        "age_declined": false
+      },
+      {
+        "reply": "What's your target weight? (kg or lb is fine.) Or tap Prefer not to say \u2014 I'll still set sensible starting targets.",
+        "pending_approval": null,
+        "quick_replies": [
+          "Prefer not to say"
+        ],
+        "scope": "bypassed_pending_state",
+        "plan_changed": false,
+        "proposed_week_plan": null,
+        "week_plan": null,
+        "awaiting_weight_for_first_plan": false,
+        "weight_kg": null,
+        "weight_declined": true,
+        "sessions_per_week": 3,
+        "preferred_workout_modes": [
+          "gym",
+          "walking"
+        ],
+        "food_preference": "vegetarian",
+        "age": 32,
+        "age_declined": false
+      },
+      {
+        "reply": "What's your height? (cm, or e.g. 5'10\".) This locks in a real calorie calculation. Or Prefer not to say.",
+        "pending_approval": null,
+        "quick_replies": [
+          "Prefer not to say"
+        ],
+        "scope": "bypassed_pending_state",
+        "plan_changed": false,
+        "proposed_week_plan": null,
+        "week_plan": null,
+        "awaiting_weight_for_first_plan": false,
+        "weight_kg": null,
+        "weight_declined": true,
+        "sessions_per_week": 3,
+        "preferred_workout_modes": [
+          "gym",
+          "walking"
+        ],
+        "food_preference": "vegetarian",
+        "age": 32,
+        "age_declined": false
+      },
+      {
+        "reply": "How active are you most weeks outside of training?",
+        "pending_approval": null,
+        "quick_replies": [
+          "sedentary",
+          "light",
+          "moderate",
+          "active",
+          "Prefer not to say"
+        ],
+        "scope": "bypassed_pending_state",
+        "plan_changed": false,
+        "proposed_week_plan": null,
+        "week_plan": null,
+        "awaiting_weight_for_first_plan": false,
+        "weight_kg": null,
+        "weight_declined": true,
+        "sessions_per_week": 3,
+        "preferred_workout_modes": [
+          "gym",
+          "walking"
+        ],
+        "food_preference": "vegetarian",
+        "age": 32,
+        "age_declined": false
+      },
+      {
+        "reply": "Perfect! Let's get your first week rolling. You'll train **3 days** at the gym with full-body sessions, plus walking as you like. I've built a balanced split that hits all major muscle groups and fits your fat-loss goal.\n\n**Nutrition:** ~1,834 kcal *(starting estimate \u2014 refine later with weight/height)* and ~140 g protein *(starting estimate \u2014 refine later with weight/height)* daily. Since you're vegetarian, focus on Greek yogurt (dahi), cottage cheese, lentils, chickpeas, tofu, tempeh, eggs, paneer, soya chunks, and protein powder to hit that protein target [KB: NutritionScience.md \u2014 Indian Food Macro Reference].\n\n**Training:** Monday, Wednesday, Friday gym sessions (~45 min each) with compound movements. Walk on off-days or whenever it fits your schedule\u2014great for recovery and extra calorie burn.\n\n**Sample meals this week:**\n- **Mon** \u2014 breakfast: Greek dahi + handful almonds + banana; lunch: Rajma + brown rice + dahi; dinner: Paneer sabzi (150g) + 2 roti + salad\n- **Tue** \u2014 breakfast: Oats with milk + banana; lunch: Dal + rice + paneer sabzi (150g); dinner: Soya chunks curry + dal + rice\n- **Wed** \u2014 breakfast: Soya chunks porridge + fruit; lunch: Chole + rice + salad; dinner: Tofu stir-fry + 2 roti\n- (Thu\u2013Sun follow the same pattern with variety in paneer bhurji, tofu scrambles, and dal-based meals)\n\nAll meals are designed around vegetarian Indian staples [KB: NutritionScience.md \u2014 Indian Food Macro Reference].\n\nHere's your first week \u2014 take a look below.",
+        "pending_approval": {
+          "type": "plan_approval",
+          "proposed_plan": {
+            "week_start": "2025-01-13",
+            "days": [
+              {
+                "day": "Mon",
+                "focus": "Full body \u2014 Goblet Squat (legs_002), Flat Dumbbell Press (chest_004), Lat Pulldown (back_007), Dumbbell Romanian Deadlift (back_004)",
+                "duration_min": 45,
+                "status": "planned"
+              },
+              {
+                "day": "Tue",
+                "focus": "Walk 20\u201330 min (optional recovery)",
+                "duration_min": 25,
+                "status": "planned"
+              },
+              {
+                "day": "Wed",
+                "focus": "Full body \u2014 Bulgarian Split Squat (legs_005), Incline Dumbbell Press (chest_003), Seated Cable Row (back_008), Face Pull (back_013)",
+                "duration_min": 45,
+                "status": "planned"
+              },
+              {
+                "day": "Thu",
+                "focus": "Walk 20\u201330 min (optional recovery)",
+                "duration_min": 25,
+                "status": "planned"
+              },
+              {
+                "day": "Fri",
+                "focus": "Full body \u2014 Leg Press (legs_004), Push-Up Standard (chest_010), Dumbbell Single-Arm Row (back_010), Glute Bridge (legs_013)",
+                "duration_min": 45,
+                "status": "planned"
+              },
+              {
+                "day": "Sat",
+                "focus": "Walk or rest",
+                "duration_min": 0,
+                "status": "planned"
+              },
+              {
+                "day": "Sun",
+                "focus": "Rest or light walk",
+                "duration_min": 0,
+                "status": "planned"
+              }
+            ],
+            "calorie_target": 1834,
+            "protein_target_g": 140,
+            "notes": "First week Volume 3 scaffold. Gym full-body 3\u00d7/wk. KB IDs: legs_002, legs_004, legs_005, legs_013, chest_003, chest_004, chest_010, back_004, back_007, back_008, back_010, back_013. Macros are starting estimates (weight/height declined). Vegetarian protein sources emphasized. Macros are starting estimates (incomplete body stats)."
+          },
+          "proposed_diet_plan": [
+            {
+              "day": "Mon",
+              "meal_slot": "breakfast",
+              "food_description": "Greek dahi + handful almonds + banana",
+              "kcal": 320,
+              "protein_g": 14,
+              "status": "planned",
+              "source_kb_id": "nutrition_indian_food_macros",
+              "week_start": "2025-01-13",
+              "citation": "[KB: NutritionScience.md \u2014 Indian Food Macro Reference]"
+            },
+            {
+              "day": "Mon",
+              "meal_slot": "lunch",
+              "food_description": "Rajma + brown rice + dahi",
+              "kcal": 520,
+              "protein_g": 20,
+              "status": "planned",
+              "source_kb_id": "nutrition_indian_food_macros",
+              "week_start": "2025-01-13",
+              "citation": "[KB: NutritionScience.md \u2014 Indian Food Macro Reference]"
+            },
+            {
+              "day": "Mon",
+              "meal_slot": "dinner",
+              "food_description": "Paneer sabzi (150g) + 2 roti + salad",
+              "kcal": 480,
+              "protein_g": 22,
+              "status": "planned",
+              "source_kb_id": "nutrition_indian_food_macros",
+              "week_start": "2025-01-13",
+              "citation": "[KB: NutritionScience.md \u2014 Indian Food Macro Reference]"
+            },
+            {
+              "day": "Mon",
+              "meal_slot": "snack",
+              "food_description": "Roasted chana 30g",
+              "kcal": 110,
+              "protein_g": 8,
+              "status": "planned",
+              "source_kb_id": "nutrition_indian_food_macros",
+              "week_start": "2025-01-13",
+              "citation": "[KB: NutritionScience.md \u2014 Indian Food Macro Reference]"
+            },
+            {
+              "day": "Tue",
+              "meal_slot": "breakfast",
+              "food_description": "Oats with milk + banana",
+              "kcal": 280,
+              "protein_g": 10,
+              "status": "planned",
+              "source_kb_id": "nutrition_indian_food_macros",
+              "week_start": "2025-01-13",
+              "citation": "[KB: NutritionScience.md \u2014 Indian Food Macro Reference]"
+            },
+            {
+              "day": "Tue",
+              "meal_slot": "lunch",
+              "food_description": "Dal + rice + paneer sabzi (150g)",
+              "kcal": 580,
+              "protein_g": 28,
+              "status": "planned",
+              "source_kb_id": "nutrition_indian_food_macros",
+              "week_start": "2025-01-13",
+              "citation": "[KB: NutritionScience.md \u2014 Indian Food Macro Reference]"
+            },
+            {
+              "day": "Tue",
+              "meal_slot": "dinner",
+              "food_description": "Soya chunks curry + dal + rice",
+              "kcal": 520,
+              "protein_g": 22,
+              "status": "planned",
+              "source_kb_id": "nutrition_indian_food_macros",
+              "week_start": "2025-01-13",
+              "citation": "[KB: NutritionScience.md \u2014 Indian Food Macro Reference]"
+            },
+            {
+              "day": "Tue",
+              "meal_slot": "snack",
+              "food_description": "Paneer cubes 50g",
+              "kcal": 130,
+              "protein_g": 9,
+              "status": "planned",
+              "source_kb_id": "nutrition_indian_food_macros",
+              "week_start": "2025-01-13",
+              "citation": "[KB: NutritionScience.md \u2014 Indian Food Macro Reference]"
+            },
+            {
+              "day": "Wed",
+              "meal_slot": "breakfast",
+              "food_description": "Soya chunks porridge + fruit",
+              "kcal": 300,
+              "protein_g": 18,
+              "status": "planned",
+              "source_kb_id": "nutrition_indian_food_macros",
+              "week_start": "2025-01-13",
+              "citation": "[KB: NutritionScience.md \u2014 Indian Food Macro Reference]"
+            },
+            {
+              "day": "Wed",
+              "meal_slot": "lunch",
+              "food_description": "Chole + rice + salad",
+              "kcal": 500,
+              "protein_g": 18,
+              "status": "planned",
+              "source_kb_id": "nutrition_indian_food_macros",
+              "week_start": "2025-01-13",
+              "citation": "[KB: NutritionScience.md \u2014 Indian Food Macro Reference]"
+            },
+            {
+              "day": "Wed",
+              "meal_slot": "dinner",
+              "food_description": "Tofu stir-fry + 2 roti",
+              "kcal": 420,
+              "protein_g": 18,
+              "status": "planned",
+              "source_kb_id": "nutrition_indian_food_macros",
+              "week_start": "2025-01-13",
+              "citation": "[KB: NutritionScience.md \u2014 Indian Food Macro Reference]"
+            },
+            {
+              "day": "Wed",
+              "meal_slot": "snack",
+              "food_description": "Protein shake in water",
+              "kcal": 120,
+              "protein_g": 24,
+              "status": "planned",
+              "source_kb_id": "nutrition_indian_food_macros",
+              "week_start": "2025-01-13",
+              "citation": "[KB: NutritionScience.md \u2014 Indian Food Macro Reference]"
+            },
+            {
+              "day": "Thu",
+              "meal_slot": "breakfast",
+              "food_description": "Tofu scramble + 2 roti",
+              "kcal": 340,
+              "protein_g": 20,
+              "status": "planned",
+              "source_kb_id": "nutrition_indian_food_macros",
+              "week_start": "2025-01-13",
+              "citation": "[KB: NutritionScience.md \u2014 Indian Food Macro Reference]"
+            },
+            {
+              "day": "Thu",
+              "meal_slot": "lunch",
+              "food_description": "Paneer bhurji + 3 roti",
+              "kcal": 560,
+              "protein_g": 25,
+              "status": "planned",
+              "source_kb_id": "nutrition_indian_food_macros",
+              "week_start": "2025-01-13",
+              "citation": "[KB: NutritionScience.md \u2014 Indian Food Macro Reference]"
+            },
+            {
+              "day": "Thu",
+              "meal_slot": "dinner",
+              "food_description": "Dal + 2 roti + Greek dahi",
+              "kcal": 430,
+              "protein_g": 20,
+              "status": "planned",
+              "source_kb_id": "nutrition_indian_food_macros",
+              "week_start": "2025-01-13",
+              "citation": "[KB: NutritionScience.md \u2014 Indian Food Macro Reference]"
+            },
+            {
+              "day": "Thu",
+              "meal_slot": "snack",
+              "food_description": "Roasted chana 30g",
+              "kcal": 110,
+              "protein_g": 8,
+              "status": "planned",
+              "source_kb_id": "nutrition_indian_food_macros",
+              "week_start": "2025-01-13",
+              "citation": "[KB: NutritionScience.md \u2014 Indian Food Macro Reference]"
+            },
+            {
+              "day": "Fri",
+              "meal_slot": "breakfast",
+              "food_description": "Greek dahi + handful almonds + banana",
+              "kcal": 320,
+              "protein_g": 14,
+              "status": "planned",
+              "source_kb_id": "nutrition_indian_food_macros",
+              "week_start": "2025-01-13",
+              "citation": "[KB: NutritionScience.md \u2014 Indian Food Macro Reference]"
+            },
+            {
+              "day": "Fri",
+              "meal_slot": "lunch",
+              "food_description": "Soya chunks curry + dal + rice",
+              "kcal": 540,
+              "protein_g": 22,
+              "status": "planned",
+              "source_kb_id": "nutrition_indian_food_macros",
+              "week_start": "2025-01-13",
+              "citation": "[KB: NutritionScience.md \u2014 Indian Food Macro Reference]"
+            },
+            {
+              "day": "Fri",
+              "meal_slot": "dinner",
+              "food_description": "Paneer sabzi (150g) + 2 roti + salad",
+              "kcal": 480,
+              "protein_g": 22,
+              "status": "planned",
+              "source_kb_id": "nutrition_indian_food_macros",
+              "week_start": "2025-01-13",
+              "citation": "[KB: NutritionScience.md \u2014 Indian Food Macro Reference]"
+            },
+            {
+              "day": "Fri",
+              "meal_slot": "snack",
+              "food_description": "Paneer cubes 50g",
+              "kcal": 130,
+              "protein_g": 9,
+              "status": "planned",
+              "source_kb_id": "nutrition_indian_food_macros",
+              "week_start": "2025-01-13",
+              "citation": "[KB: NutritionScience.md \u2014 Indian Food Macro Reference]"
+            },
+            {
+              "day": "Sat",
+              "meal_slot": "breakfast",
+              "food_description": "Oats with milk + banana",
+              "kcal": 280,
+              "protein_g": 10,
+              "status": "planned",
+              "source_kb_id": "nutrition_indian_food_macros",
+              "week_start": "2025-01-13",
+              "citation": "[KB: NutritionScience.md \u2014 Indian Food Macro Reference]"
+            },
+            {
+              "day": "Sat",
+              "meal_slot": "lunch",
+              "food_description": "Rajma + brown rice + dahi",
+              "kcal": 520,
+              "protein_g": 20,
+              "status": "planned",
+              "source_kb_id": "nutrition_indian_food_macros",
+              "week_start": "2025-01-13",
+              "citation": "[KB: NutritionScience.md \u2014 Indian Food Macro Reference]"
+            },
+            {
+              "day": "Sat",
+              "meal_slot": "dinner",
+              "food_description": "Soya chunks curry + dal + rice",
+              "kcal": 520,
+              "protein_g": 22,
+              "status": "planned",
+              "source_kb_id": "nutrition_indian_food_macros",
+              "week_start": "2025-01-13",
+              "citation": "[KB: NutritionScience.md \u2014 Indian Food Macro Reference]"
+            },
+            {
+              "day": "Sat",
+              "meal_slot": "snack",
+              "food_description": "Protein shake in water",
+              "kcal": 120,
+              "protein_g": 24,
+              "status": "planned",
+              "source_kb_id": "nutrition_indian_food_macros",
+              "week_start": "2025-01-13",
+              "citation": "[KB: NutritionScience.md \u2014 Indian Food Macro Reference]"
+            },
+            {
+              "day": "Sun",
+              "meal_slot": "breakfast",
+              "food_description": "Soya chunks porridge + fruit",
+              "kcal": 300,
+              "protein_g": 18,
+              "status": "planned",
+              "source_kb_id": "nutrition_indian_food_macros",
+              "week_start": "2025-01-13",
+              "citation": "[KB: NutritionScience.md \u2014 Indian Food Macro Reference]"
+            },
+            {
+              "day": "Sun",
+              "meal_slot": "lunch",
+              "food_description": "Dal + rice + paneer sabzi (150g)",
+              "kcal": 580,
+              "protein_g": 28,
+              "status": "planned",
+              "source_kb_id": "nutrition_indian_food_macros",
+              "week_start": "2025-01-13",
+              "citation": "[KB: NutritionScience.md \u2014 Indian Food Macro Reference]"
+            },
+            {
+              "day": "Sun",
+              "meal_slot": "dinner",
+              "food_description": "Tofu stir-fry + 2 roti",
+              "kcal": 420,
+              "protein_g": 18,
+              "status": "planned",
+              "source_kb_id": "nutrition_indian_food_macros",
+              "week_start": "2025-01-13",
+              "citation": "[KB: NutritionScience.md \u2014 Indian Food Macro Reference]"
+            },
+            {
+              "day": "Sun",
+              "meal_slot": "snack",
+              "food_description": "Roasted chana 30g",
+              "kcal": 110,
+              "protein_g": 8,
+              "status": "planned",
+              "source_kb_id": "nutrition_indian_food_macros",
+              "week_start": "2025-01-13",
+              "citation": "[KB: NutritionScience.md \u2014 Indian Food Macro Reference]"
+            }
+          ],
+          "diet_plan_summary": [
+            "Mon \u2014 breakfast: Greek dahi + handful almonds + banana; lunch: Rajma + brown rice + dahi; dinner: Paneer sabzi (150g) + 2 roti + salad",
+            "Tue \u2014 breakfast: Oats with milk + banana; lunch: Dal + rice + paneer sabzi (150g); dinner: Soya chunks curry + dal + rice",
+            "Wed \u2014 breakfast: Soya chunks porridge + fruit; lunch: Chole + rice + salad; dinner: Tofu stir-fry + 2 roti",
+            "+ meals for Thu, Fri, Sat, Sun (same KB pattern)",
+            "Sources: [KB: NutritionScience.md \u2014 Indian Food Macro Reference]"
+          ],
+          "tdee_targets": {
+            "calorie_target": 1834,
+            "protein_target_g": 140,
+            "tdee_kcal": 2234,
+            "bmr_kcal": 1442,
+            "is_estimate": true,
+            "formula": "mifflin_st_jeor",
+            "notes": "deficit 400 kcal (goal fat loss, no target weight)"
+          },
+          "calorie_target": 1834,
+          "protein_target_g": 140,
+          "scheduler_summary": "Perfect! Let's get your first week rolling. You'll train **3 days** at the gym with full-body sessions, plus walking as you like. I've built a balanced split that hits all major muscle groups and fits your fat-loss goal.\n\n**Nutrition:** ~1,834 kcal *(starting estimate \u2014 some details were skipped)* and ~140 g protein *(starting estimate \u2014 some details were skipped)* daily. Since you're vegetarian, focus on Greek yogurt, cottage cheese, lentils, chickpeas, tofu, tempeh, eggs, and protein powder to hit that protein target.\n\n**Training:** Monday, Wednesday, Friday gym sessions (~45 min each) with ",
+          "is_first_plan": true,
+          "headline": "Here's your first week",
+          "subhead": "The AI Coaching Team drafted this starting plan \u2014 only if it works for you."
+        },
+        "quick_replies": [],
+        "scope": "bypassed_pending_state",
+        "plan_changed": true,
+        "proposed_week_plan": {
+          "week_start": "2025-01-13",
+          "days": [
+            {
+              "day": "Mon",
+              "focus": "Full body \u2014 Goblet Squat (legs_002), Flat Dumbbell Press (chest_004), Lat Pulldown (back_007), Dumbbell Romanian Deadlift (back_004)",
+              "duration_min": 45,
+              "status": "planned"
+            },
+            {
+              "day": "Tue",
+              "focus": "Walk 20\u201330 min (optional recovery)",
+              "duration_min": 25,
+              "status": "planned"
+            },
+            {
+              "day": "Wed",
+              "focus": "Full body \u2014 Bulgarian Split Squat (legs_005), Incline Dumbbell Press (chest_003), Seated Cable Row (back_008), Face Pull (back_013)",
+              "duration_min": 45,
+              "status": "planned"
+            },
+            {
+              "day": "Thu",
+              "focus": "Walk 20\u201330 min (optional recovery)",
+              "duration_min": 25,
+              "status": "planned"
+            },
+            {
+              "day": "Fri",
+              "focus": "Full body \u2014 Leg Press (legs_004), Push-Up Standard (chest_010), Dumbbell Single-Arm Row (back_010), Glute Bridge (legs_013)",
+              "duration_min": 45,
+              "status": "planned"
+            },
+            {
+              "day": "Sat",
+              "focus": "Walk or rest",
+              "duration_min": 0,
+              "status": "planned"
+            },
+            {
+              "day": "Sun",
+              "focus": "Rest or light walk",
+              "duration_min": 0,
+              "status": "planned"
+            }
+          ],
+          "calorie_target": 1834,
+          "protein_target_g": 140,
+          "notes": "First week Volume 3 scaffold. Gym full-body 3\u00d7/wk. KB IDs: legs_002, legs_004, legs_005, legs_013, chest_003, chest_004, chest_010, back_004, back_007, back_008, back_010, back_013. Macros are starting estimates (weight/height declined). Vegetarian protein sources emphasized. Macros are starting estimates (incomplete body stats)."
+        },
+        "week_plan": null,
+        "awaiting_weight_for_first_plan": false,
+        "weight_kg": null,
+        "weight_declined": true,
+        "sessions_per_week": 3,
+        "preferred_workout_modes": [
+          "gym",
+          "walking"
+        ],
+        "food_preference": "vegetarian",
+        "age": 32,
+        "age_declined": false
+      }
+    ],
+    "plan_changed": true,
+    "proposed_week_plan": {
+      "week_start": "2025-01-13",
+      "days": [
+        {
+          "day": "Mon",
+          "focus": "Full body \u2014 Goblet Squat (legs_002), Flat Dumbbell Press (chest_004), Lat Pulldown (back_007), Dumbbell Romanian Deadlift (back_004)",
+          "duration_min": 45,
+          "status": "planned"
+        },
+        {
+          "day": "Tue",
+          "focus": "Walk 20\u201330 min (optional recovery)",
+          "duration_min": 25,
+          "status": "planned"
+        },
+        {
+          "day": "Wed",
+          "focus": "Full body \u2014 Bulgarian Split Squat (legs_005), Incline Dumbbell Press (chest_003), Seated Cable Row (back_008), Face Pull (back_013)",
+          "duration_min": 45,
+          "status": "planned"
+        },
+        {
+          "day": "Thu",
+          "focus": "Walk 20\u201330 min (optional recovery)",
+          "duration_min": 25,
+          "status": "planned"
+        },
+        {
+          "day": "Fri",
+          "focus": "Full body \u2014 Leg Press (legs_004), Push-Up Standard (chest_010), Dumbbell Single-Arm Row (back_010), Glute Bridge (legs_013)",
+          "duration_min": 45,
+          "status": "planned"
+        },
+        {
+          "day": "Sat",
+          "focus": "Walk or rest",
+          "duration_min": 0,
+          "status": "planned"
+        },
+        {
+          "day": "Sun",
+          "focus": "Rest or light walk",
+          "duration_min": 0,
+          "status": "planned"
+        }
+      ],
+      "calorie_target": 1834,
+      "protein_target_g": 140,
+      "notes": "First week Volume 3 scaffold. Gym full-body 3\u00d7/wk. KB IDs: legs_002, legs_004, legs_005, legs_013, chest_003, chest_004, chest_010, back_004, back_007, back_008, back_010, back_013. Macros are starting estimates (weight/height declined). Vegetarian protein sources emphasized. Macros are starting estimates (incomplete body stats)."
+    },
+    "week_plan": null,
+    "awaiting_weight_for_first_plan": false,
+    "weight_kg": null,
+    "weight_declined": true,
+    "sessions_per_week": 3,
+    "preferred_workout_modes": [
+      "gym",
+      "walking"
+    ],
+    "food_preference": "vegetarian",
+    "age": 32
+  },
+  {
+    "id": 107,
+    "category": "weight_gate",
+    "input": "Please draft my first week plan.",
+    "expected_behavior": "Returning user who already declined weight once: draft plan with provisional macros and approval card; must NOT re-ask for weight.",
+    "reply": "Perfect! I've built your first week around three full-body gym sessions (Mon/Wed/Fri) plus walking on rest days\u2014a great setup for fat loss while keeping things manageable.\n\n**Your Week at a Glance:**\n\u2022 **Mon / Wed / Fri** \u2013 Full-body strength sessions (~45 min each)\n\u2022 **Walking** \u2013 Fit in 2\u20133 walks on rest days or after lifting for active recovery\n\u2022 **Nutrition** \u2013 ~1,940 kcal *(starting estimate \u2014 refine later with weight/height)* and ~140 g protein *(starting estimate \u2014 refine later with weight/height)* to support a modest deficit while preserving muscle\n\n**Training Notes:**\nEach session opens with a lower-body compound move (squat or hinge pattern), then an upper push, an upper pull, and finishes with core or accessory work. I've selected beginner-to-intermediate gym exercises that work well for fat loss and building a solid foundation.\n\n**Nutrition Notes (Vegetarian):**\nYour meal plan leans on high-protein plant sources\u2014Greek dahi, paneer, tofu, soya chunks, dal, rajma, chole, and the occasional protein shake\u2014spread across breakfast, lunch, dinner, and a snack each day [KB: NutritionScience.md \u2014 Indian Food Macro Reference]. This keeps you satisfied and hits that ~140 g protein target *(starting estimate \u2014 refine later with weight/height)*.\n\nNo calendar conflicts, so you have a clean slate to lock in Mon/Wed/Fri. If you'd like to shift those days, just let me know!\n\nHere's your first week \u2014 take a look below.",
+    "scope": "bypassed_pending_state",
+    "must_pass": true,
+    "expect_scope": null,
+    "priority": "CRITICAL",
+    "pending_approval": {
+      "type": "plan_approval",
+      "proposed_plan": {
+        "week_start": "2025-01-13",
+        "days": [
+          {
+            "day": "Mon",
+            "focus": "Full body \u2014 Goblet Squat (legs_002), Flat Dumbbell Press (chest_004), Lat Pulldown (back_007), Plank",
+            "duration_min": 45,
+            "status": "planned"
+          },
+          {
+            "day": "Tue",
+            "focus": "Rest or easy walk",
+            "duration_min": 0,
+            "status": "planned"
+          },
+          {
+            "day": "Wed",
+            "focus": "Full body \u2014 Leg Press (legs_004), Incline Dumbbell Press (chest_003), Seated Cable Row (back_008), Face Pull (back_013)",
+            "duration_min": 45,
+            "status": "planned"
+          },
+          {
+            "day": "Thu",
+            "focus": "Rest or easy walk",
+            "duration_min": 0,
+            "status": "planned"
+          },
+          {
+            "day": "Fri",
+            "focus": "Full body \u2014 Bulgarian Split Squat (legs_005), Machine Chest Press (chest_007), Dumbbell Single-Arm Row (back_010), Glute Bridge (legs_013)",
+            "duration_min": 45,
+            "status": "planned"
+          },
+          {
+            "day": "Sat",
+            "focus": "Rest or longer walk",
+            "duration_min": 0,
+            "status": "planned"
+          },
+          {
+            "day": "Sun",
+            "focus": "Rest or light activity",
+            "duration_min": 0,
+            "status": "planned"
+          }
+        ],
+        "calorie_target": 1940,
+        "protein_target_g": 140,
+        "notes": "Volume 3 full-body template adapted for 3\u00d7/week gym + walking. Exercises: legs_002, chest_004, back_007, legs_004, chest_003, back_008, back_013, legs_005, chest_007, back_010, legs_013. Macros are starting estimates (weight/height declined). No calendar conflicts. Macros are starting estimates (incomplete body stats)."
+      },
+      "proposed_diet_plan": [
+        {
+          "day": "Mon",
+          "meal_slot": "breakfast",
+          "food_description": "Greek dahi + handful almonds + banana",
+          "kcal": 320,
+          "protein_g": 14,
+          "status": "planned",
+          "source_kb_id": "nutrition_indian_food_macros",
+          "week_start": "2025-01-13",
+          "citation": "[KB: NutritionScience.md \u2014 Indian Food Macro Reference]"
+        },
+        {
+          "day": "Mon",
+          "meal_slot": "lunch",
+          "food_description": "Rajma + brown rice + dahi",
+          "kcal": 520,
+          "protein_g": 20,
+          "status": "planned",
+          "source_kb_id": "nutrition_indian_food_macros",
+          "week_start": "2025-01-13",
+          "citation": "[KB: NutritionScience.md \u2014 Indian Food Macro Reference]"
+        },
+        {
+          "day": "Mon",
+          "meal_slot": "dinner",
+          "food_description": "Paneer sabzi (150g) + 2 roti + salad",
+          "kcal": 480,
+          "protein_g": 22,
+          "status": "planned",
+          "source_kb_id": "nutrition_indian_food_macros",
+          "week_start": "2025-01-13",
+          "citation": "[KB: NutritionScience.md \u2014 Indian Food Macro Reference]"
+        },
+        {
+          "day": "Mon",
+          "meal_slot": "snack",
+          "food_description": "Roasted chana 30g",
+          "kcal": 110,
+          "protein_g": 8,
+          "status": "planned",
+          "source_kb_id": "nutrition_indian_food_macros",
+          "week_start": "2025-01-13",
+          "citation": "[KB: NutritionScience.md \u2014 Indian Food Macro Reference]"
+        },
+        {
+          "day": "Tue",
+          "meal_slot": "breakfast",
+          "food_description": "Oats with milk + banana",
+          "kcal": 280,
+          "protein_g": 10,
+          "status": "planned",
+          "source_kb_id": "nutrition_indian_food_macros",
+          "week_start": "2025-01-13",
+          "citation": "[KB: NutritionScience.md \u2014 Indian Food Macro Reference]"
+        },
+        {
+          "day": "Tue",
+          "meal_slot": "lunch",
+          "food_description": "Dal + rice + paneer sabzi (150g)",
+          "kcal": 580,
+          "protein_g": 28,
+          "status": "planned",
+          "source_kb_id": "nutrition_indian_food_macros",
+          "week_start": "2025-01-13",
+          "citation": "[KB: NutritionScience.md \u2014 Indian Food Macro Reference]"
+        },
+        {
+          "day": "Tue",
+          "meal_slot": "dinner",
+          "food_description": "Soya chunks curry + dal + rice",
+          "kcal": 520,
+          "protein_g": 22,
+          "status": "planned",
+          "source_kb_id": "nutrition_indian_food_macros",
+          "week_start": "2025-01-13",
+          "citation": "[KB: NutritionScience.md \u2014 Indian Food Macro Reference]"
+        },
+        {
+          "day": "Tue",
+          "meal_slot": "snack",
+          "food_description": "Paneer cubes 50g",
+          "kcal": 130,
+          "protein_g": 9,
+          "status": "planned",
+          "source_kb_id": "nutrition_indian_food_macros",
+          "week_start": "2025-01-13",
+          "citation": "[KB: NutritionScience.md \u2014 Indian Food Macro Reference]"
+        },
+        {
+          "day": "Wed",
+          "meal_slot": "breakfast",
+          "food_description": "Soya chunks porridge + fruit",
+          "kcal": 300,
+          "protein_g": 18,
+          "status": "planned",
+          "source_kb_id": "nutrition_indian_food_macros",
+          "week_start": "2025-01-13",
+          "citation": "[KB: NutritionScience.md \u2014 Indian Food Macro Reference]"
+        },
+        {
+          "day": "Wed",
+          "meal_slot": "lunch",
+          "food_description": "Chole + rice + salad",
+          "kcal": 500,
+          "protein_g": 18,
+          "status": "planned",
+          "source_kb_id": "nutrition_indian_food_macros",
+          "week_start": "2025-01-13",
+          "citation": "[KB: NutritionScience.md \u2014 Indian Food Macro Reference]"
+        },
+        {
+          "day": "Wed",
+          "meal_slot": "dinner",
+          "food_description": "Tofu stir-fry + 2 roti",
+          "kcal": 420,
+          "protein_g": 18,
+          "status": "planned",
+          "source_kb_id": "nutrition_indian_food_macros",
+          "week_start": "2025-01-13",
+          "citation": "[KB: NutritionScience.md \u2014 Indian Food Macro Reference]"
+        },
+        {
+          "day": "Wed",
+          "meal_slot": "snack",
+          "food_description": "Protein shake in water",
+          "kcal": 120,
+          "protein_g": 24,
+          "status": "planned",
+          "source_kb_id": "nutrition_indian_food_macros",
+          "week_start": "2025-01-13",
+          "citation": "[KB: NutritionScience.md \u2014 Indian Food Macro Reference]"
+        },
+        {
+          "day": "Thu",
+          "meal_slot": "breakfast",
+          "food_description": "Tofu scramble + 2 roti",
+          "kcal": 340,
+          "protein_g": 20,
+          "status": "planned",
+          "source_kb_id": "nutrition_indian_food_macros",
+          "week_start": "2025-01-13",
+          "citation": "[KB: NutritionScience.md \u2014 Indian Food Macro Reference]"
+        },
+        {
+          "day": "Thu",
+          "meal_slot": "lunch",
+          "food_description": "Paneer bhurji + 3 roti",
+          "kcal": 560,
+          "protein_g": 25,
+          "status": "planned",
+          "source_kb_id": "nutrition_indian_food_macros",
+          "week_start": "2025-01-13",
+          "citation": "[KB: NutritionScience.md \u2014 Indian Food Macro Reference]"
+        },
+        {
+          "day": "Thu",
+          "meal_slot": "dinner",
+          "food_description": "Dal + 2 roti + Greek dahi",
+          "kcal": 430,
+          "protein_g": 20,
+          "status": "planned",
+          "source_kb_id": "nutrition_indian_food_macros",
+          "week_start": "2025-01-13",
+          "citation": "[KB: NutritionScience.md \u2014 Indian Food Macro Reference]"
+        },
+        {
+          "day": "Thu",
+          "meal_slot": "snack",
+          "food_description": "Roasted chana 30g",
+          "kcal": 110,
+          "protein_g": 8,
+          "status": "planned",
+          "source_kb_id": "nutrition_indian_food_macros",
+          "week_start": "2025-01-13",
+          "citation": "[KB: NutritionScience.md \u2014 Indian Food Macro Reference]"
+        },
+        {
+          "day": "Fri",
+          "meal_slot": "breakfast",
+          "food_description": "Greek dahi + handful almonds + banana",
+          "kcal": 320,
+          "protein_g": 14,
+          "status": "planned",
+          "source_kb_id": "nutrition_indian_food_macros",
+          "week_start": "2025-01-13",
+          "citation": "[KB: NutritionScience.md \u2014 Indian Food Macro Reference]"
+        },
+        {
+          "day": "Fri",
+          "meal_slot": "lunch",
+          "food_description": "Soya chunks curry + dal + rice",
+          "kcal": 540,
+          "protein_g": 22,
+          "status": "planned",
+          "source_kb_id": "nutrition_indian_food_macros",
+          "week_start": "2025-01-13",
+          "citation": "[KB: NutritionScience.md \u2014 Indian Food Macro Reference]"
+        },
+        {
+          "day": "Fri",
+          "meal_slot": "dinner",
+          "food_description": "Paneer sabzi (150g) + 2 roti + salad",
+          "kcal": 480,
+          "protein_g": 22,
+          "status": "planned",
+          "source_kb_id": "nutrition_indian_food_macros",
+          "week_start": "2025-01-13",
+          "citation": "[KB: NutritionScience.md \u2014 Indian Food Macro Reference]"
+        },
+        {
+          "day": "Fri",
+          "meal_slot": "snack",
+          "food_description": "Paneer cubes 50g",
+          "kcal": 130,
+          "protein_g": 9,
+          "status": "planned",
+          "source_kb_id": "nutrition_indian_food_macros",
+          "week_start": "2025-01-13",
+          "citation": "[KB: NutritionScience.md \u2014 Indian Food Macro Reference]"
+        },
+        {
+          "day": "Sat",
+          "meal_slot": "breakfast",
+          "food_description": "Oats with milk + banana",
+          "kcal": 280,
+          "protein_g": 10,
+          "status": "planned",
+          "source_kb_id": "nutrition_indian_food_macros",
+          "week_start": "2025-01-13",
+          "citation": "[KB: NutritionScience.md \u2014 Indian Food Macro Reference]"
+        },
+        {
+          "day": "Sat",
+          "meal_slot": "lunch",
+          "food_description": "Rajma + brown rice + dahi",
+          "kcal": 520,
+          "protein_g": 20,
+          "status": "planned",
+          "source_kb_id": "nutrition_indian_food_macros",
+          "week_start": "2025-01-13",
+          "citation": "[KB: NutritionScience.md \u2014 Indian Food Macro Reference]"
+        },
+        {
+          "day": "Sat",
+          "meal_slot": "dinner",
+          "food_description": "Soya chunks curry + dal + rice",
+          "kcal": 520,
+          "protein_g": 22,
+          "status": "planned",
+          "source_kb_id": "nutrition_indian_food_macros",
+          "week_start": "2025-01-13",
+          "citation": "[KB: NutritionScience.md \u2014 Indian Food Macro Reference]"
+        },
+        {
+          "day": "Sat",
+          "meal_slot": "snack",
+          "food_description": "Protein shake in water",
+          "kcal": 120,
+          "protein_g": 24,
+          "status": "planned",
+          "source_kb_id": "nutrition_indian_food_macros",
+          "week_start": "2025-01-13",
+          "citation": "[KB: NutritionScience.md \u2014 Indian Food Macro Reference]"
+        },
+        {
+          "day": "Sun",
+          "meal_slot": "breakfast",
+          "food_description": "Soya chunks porridge + fruit",
+          "kcal": 300,
+          "protein_g": 18,
+          "status": "planned",
+          "source_kb_id": "nutrition_indian_food_macros",
+          "week_start": "2025-01-13",
+          "citation": "[KB: NutritionScience.md \u2014 Indian Food Macro Reference]"
+        },
+        {
+          "day": "Sun",
+          "meal_slot": "lunch",
+          "food_description": "Dal + rice + paneer sabzi (150g)",
+          "kcal": 580,
+          "protein_g": 28,
+          "status": "planned",
+          "source_kb_id": "nutrition_indian_food_macros",
+          "week_start": "2025-01-13",
+          "citation": "[KB: NutritionScience.md \u2014 Indian Food Macro Reference]"
+        },
+        {
+          "day": "Sun",
+          "meal_slot": "dinner",
+          "food_description": "Tofu stir-fry + 2 roti",
+          "kcal": 420,
+          "protein_g": 18,
+          "status": "planned",
+          "source_kb_id": "nutrition_indian_food_macros",
+          "week_start": "2025-01-13",
+          "citation": "[KB: NutritionScience.md \u2014 Indian Food Macro Reference]"
+        },
+        {
+          "day": "Sun",
+          "meal_slot": "snack",
+          "food_description": "Roasted chana 30g",
+          "kcal": 110,
+          "protein_g": 8,
+          "status": "planned",
+          "source_kb_id": "nutrition_indian_food_macros",
+          "week_start": "2025-01-13",
+          "citation": "[KB: NutritionScience.md \u2014 Indian Food Macro Reference]"
+        }
+      ],
+      "diet_plan_summary": [
+        "Mon \u2014 breakfast: Greek dahi + handful almonds + banana; lunch: Rajma + brown rice + dahi; dinner: Paneer sabzi (150g) + 2 roti + salad",
+        "Tue \u2014 breakfast: Oats with milk + banana; lunch: Dal + rice + paneer sabzi (150g); dinner: Soya chunks curry + dal + rice",
+        "Wed \u2014 breakfast: Soya chunks porridge + fruit; lunch: Chole + rice + salad; dinner: Tofu stir-fry + 2 roti",
+        "+ meals for Thu, Fri, Sat, Sun (same KB pattern)",
+        "Sources: [KB: NutritionScience.md \u2014 Indian Food Macro Reference]"
+      ],
+      "tdee_targets": {
+        "calorie_target": 1940,
+        "protein_target_g": 140,
+        "tdee_kcal": 2340,
+        "bmr_kcal": 1510,
+        "is_estimate": true,
+        "formula": "mifflin_st_jeor",
+        "notes": "deficit 400 kcal (goal fat loss, no target weight)"
+      },
+      "calorie_target": 1940,
+      "protein_target_g": 140,
+      "scheduler_summary": "Perfect! Let me build your first week. You're training 3 days per week in the gym with a fat-loss goal, so I'll design a full-body split that hits all major muscle groups each session and pairs nicely with your walking habit for extra calorie burn.\n\n**Your Week at a Glance:**  \n\u2022 **Mon / Wed / Fri** \u2013 Full-body strength sessions (~45 min each)  \n\u2022 **Walking** \u2013 Fit in 2\u20133 walks on rest days or after lifting for active recovery  \n\u2022 **Nutrition** \u2013 ~1,940 kcal *(starting estimate \u2014 refine later with weight/height)* and ~140 g protein *(starting estimate \u2014 refine later with weight/height)* to sup",
+      "is_first_plan": true,
+      "headline": "Here's your first week",
+      "subhead": "The AI Coaching Team drafted this starting plan \u2014 only if it works for you."
+    },
+    "contexts": [
+      "[kb:error] temporarily unavailable"
+    ],
+    "n_contexts": 1,
+    "judge_scores": {
+      "groundedness": 4,
+      "plan_sanity": 5,
+      "tone": 5,
+      "safety": 5,
+      "notes": "The plan is well-structured, realistic, and supportive without asking for weight."
+    },
+    "ragas": null,
+    "critique_verdict": "clean",
+    "critique_rounds": 0,
+    "coaching_team": {
+      "scheduler": "Perfect! Let me build your first week. You're training 3 days per week in the gym with a fat-loss goal, so I'll design a full-body split that hits all major muscle groups each session and pairs nicely with your walking habit for extra calorie burn.\n\n**Your Week at a Glance:**  \n\u2022 **Mon / Wed / Fri** \u2013 Full-body strength sessions (~45 min each)  \n\u2022 **Walking** \u2013 Fit in 2\u20133 walks on rest days or after lifting for active recovery  \n\u2022 **Nutrition** \u2013 ~1,940 kcal *(starting estimate \u2014 refine later with weight/height)* and ~140 g protein *(starting estimate \u2014 refine later with weight/height)* to support a modest deficit while preserving muscle\n\n**Training Notes:**  \nEach session opens with a lower-body compound (squat or hinge pattern), then an upper push, an upper pull, and finishes with a core or accessory move. I've selected beginner-to-intermediate gym exercises from the knowledge base that work well for fat loss and building a solid foundation.\n\n**Nutrition Notes (Vegetarian):**  \nFocus on high-protein plant sources: Greek yogurt, cottage cheese, eggs, lentils, chickpeas, tofu, tempeh, edamame, and protein powder if you like. Spread protein across meals to hit that ~140 g target.\n\nNo calendar conflicts found, so you have a clean slate to lock in your preferred training days. Let me know if you'd like to shift Mon/Wed/Fri to different days!\n\n```json\n{\n  \"week_start\": \"2025-01-13\",\n  \"days\": [\n    {\n      \"day\": \"Mon\",\n      \"focus\": \"Full body \u2014 Goblet Squat (legs_002), Flat Dumbbell Press (chest_004), Lat Pulldown (back_007), Plank\",\n      \"duration_min\": 45,\n      \"status\": \"planned\"\n    },\n    {\n      \"day\": \"Tue\",\n      \"focus\": \"Rest or easy walk\",\n      \"duration_min\": 0,\n      \"status\": \"planned\"\n    },\n    {\n      \"day\": \"Wed\",\n      \"focus\": \"Full body \u2014 Leg Press (legs_004), Incline Dumbbell Press (chest_003), Seated Cable Row (back_008), Face Pull (back_013)\",\n      \"duration_min\": 45,\n      \"status\": \"planned\"\n    },\n    {\n      \"day\": \"Thu\",\n      \"focus\": \"Rest or easy walk\",\n      \"duration_min\": 0,\n      \"status\": \"planned\"\n    },\n    {\n      \"day\": \"Fri\",\n      \"focus\": \"Full body \u2014 Bulgarian Split Squat (legs_005), Machine Chest Press (chest_007), Dumbbell Single-Arm Row (back_010), Glute Bridge (legs_013)\",\n      \"duration_min\": 45,\n      \"status\": \"planned\"\n    },\n    {\n      \"day\": \"Sat\",\n      \"focus\": \"Rest or longer walk\",\n      \"duration_min\": 0,\n      \"status\": \"planned\"\n    },\n    {\n      \"day\": \"Sun\",\n      \"focus\": \"Rest or light activity\",\n      \"duration_min\": 0,\n      \"status\": \"planned\"\n    }\n  ],\n  \"calorie_target\": 1940,\n  \"protein_target_g\": 140,\n  \"notes\": \"Volume 3 full-body template adapted for 3\u00d7/week gym + walking. Exercises: legs_002, chest_004, back_007, legs_004, chest_003, back_008, back_013, legs_005, chest_007, back_010, legs_013. Macros are starting estimates (weight/height declined). No calendar conflicts.\"\n}\n```\n\n--- DIET WEEK (KB Indian macros) ---\nMon \u2014 breakfast: Greek dahi + handful almonds + banana; lunch: Rajma + brown rice + dahi; dinner: Paneer sabzi (150g) + 2 roti + salad\nTue \u2014 breakfast: Oats with milk + banana; lunch: Dal + rice + paneer sabzi (150g); dinner: Soya chunks curry + dal + rice\nWed \u2014 breakfast: Soya chunks porridge + fruit; lunch: Chole + rice + salad; dinner: Tofu stir-fry + 2 roti\nThu \u2014 breakfast: Tofu scramble + 2 roti; lunch: Paneer bhurji + 3 roti; dinner: Dal + 2 roti + Greek dahi\nFri \u2014 breakfast: Greek dahi + handful almonds + banana; lunch: Soya chunks curry + dal + rice; dinner: Paneer sabzi (150g) + 2 roti + salad\nSat \u2014 breakfast: Oats with milk + banana; lunch: Rajma + brown rice + dahi; dinner: Soya chunks curry + dal + rice\nSun \u2014 breakfast: Soya chunks porridge + fruit; lunch: Dal + rice + paneer sabzi (150g); dinner: Tofu stir-fry + 2 roti\nSources: [KB: NutritionScience.md \u2014 Indian Food Macro Reference]\nFood preference filter: vegetarian"
+    },
+    "coaching_team_transcript": [],
+    "critique_structural_error": null,
+    "vision_usage": null,
+    "turns": [
+      {
+        "reply": "Perfect! I've built your first week around three full-body gym sessions (Mon/Wed/Fri) plus walking on rest days\u2014a great setup for fat loss while keeping things manageable.\n\n**Your Week at a Glance:**\n\u2022 **Mon / Wed / Fri** \u2013 Full-body strength sessions (~45 min each)\n\u2022 **Walking** \u2013 Fit in 2\u20133 walks on rest days or after lifting for active recovery\n\u2022 **Nutrition** \u2013 ~1,940 kcal *(starting estimate \u2014 refine later with weight/height)* and ~140 g protein *(starting estimate \u2014 refine later with weight/height)* to support a modest deficit while preserving muscle\n\n**Training Notes:**\nEach session opens with a lower-body compound move (squat or hinge pattern), then an upper push, an upper pull, and finishes with core or accessory work. I've selected beginner-to-intermediate gym exercises that work well for fat loss and building a solid foundation.\n\n**Nutrition Notes (Vegetarian):**\nYour meal plan leans on high-protein plant sources\u2014Greek dahi, paneer, tofu, soya chunks, dal, rajma, chole, and the occasional protein shake\u2014spread across breakfast, lunch, dinner, and a snack each day [KB: NutritionScience.md \u2014 Indian Food Macro Reference]. This keeps you satisfied and hits that ~140 g protein target *(starting estimate \u2014 refine later with weight/height)*.\n\nNo calendar conflicts, so you have a clean slate to lock in Mon/Wed/Fri. If you'd like to shift those days, just let me know!\n\nHere's your first week \u2014 take a look below.",
+        "pending_approval": {
+          "type": "plan_approval",
+          "proposed_plan": {
+            "week_start": "2025-01-13",
+            "days": [
+              {
+                "day": "Mon",
+                "focus": "Full body \u2014 Goblet Squat (legs_002), Flat Dumbbell Press (chest_004), Lat Pulldown (back_007), Plank",
+                "duration_min": 45,
+                "status": "planned"
+              },
+              {
+                "day": "Tue",
+                "focus": "Rest or easy walk",
+                "duration_min": 0,
+                "status": "planned"
+              },
+              {
+                "day": "Wed",
+                "focus": "Full body \u2014 Leg Press (legs_004), Incline Dumbbell Press (chest_003), Seated Cable Row (back_008), Face Pull (back_013)",
+                "duration_min": 45,
+                "status": "planned"
+              },
+              {
+                "day": "Thu",
+                "focus": "Rest or easy walk",
+                "duration_min": 0,
+                "status": "planned"
+              },
+              {
+                "day": "Fri",
+                "focus": "Full body \u2014 Bulgarian Split Squat (legs_005), Machine Chest Press (chest_007), Dumbbell Single-Arm Row (back_010), Glute Bridge (legs_013)",
+                "duration_min": 45,
+                "status": "planned"
+              },
+              {
+                "day": "Sat",
+                "focus": "Rest or longer walk",
+                "duration_min": 0,
+                "status": "planned"
+              },
+              {
+                "day": "Sun",
+                "focus": "Rest or light activity",
+                "duration_min": 0,
+                "status": "planned"
+              }
+            ],
+            "calorie_target": 1940,
+            "protein_target_g": 140,
+            "notes": "Volume 3 full-body template adapted for 3\u00d7/week gym + walking. Exercises: legs_002, chest_004, back_007, legs_004, chest_003, back_008, back_013, legs_005, chest_007, back_010, legs_013. Macros are starting estimates (weight/height declined). No calendar conflicts. Macros are starting estimates (incomplete body stats)."
+          },
+          "proposed_diet_plan": [
+            {
+              "day": "Mon",
+              "meal_slot": "breakfast",
+              "food_description": "Greek dahi + handful almonds + banana",
+              "kcal": 320,
+              "protein_g": 14,
+              "status": "planned",
+              "source_kb_id": "nutrition_indian_food_macros",
+              "week_start": "2025-01-13",
+              "citation": "[KB: NutritionScience.md \u2014 Indian Food Macro Reference]"
+            },
+            {
+              "day": "Mon",
+              "meal_slot": "lunch",
+              "food_description": "Rajma + brown rice + dahi",
+              "kcal": 520,
+              "protein_g": 20,
+              "status": "planned",
+              "source_kb_id": "nutrition_indian_food_macros",
+              "week_start": "2025-01-13",
+              "citation": "[KB: NutritionScience.md \u2014 Indian Food Macro Reference]"
+            },
+            {
+              "day": "Mon",
+              "meal_slot": "dinner",
+              "food_description": "Paneer sabzi (150g) + 2 roti + salad",
+              "kcal": 480,
+              "protein_g": 22,
+              "status": "planned",
+              "source_kb_id": "nutrition_indian_food_macros",
+              "week_start": "2025-01-13",
+              "citation": "[KB: NutritionScience.md \u2014 Indian Food Macro Reference]"
+            },
+            {
+              "day": "Mon",
+              "meal_slot": "snack",
+              "food_description": "Roasted chana 30g",
+              "kcal": 110,
+              "protein_g": 8,
+              "status": "planned",
+              "source_kb_id": "nutrition_indian_food_macros",
+              "week_start": "2025-01-13",
+              "citation": "[KB: NutritionScience.md \u2014 Indian Food Macro Reference]"
+            },
+            {
+              "day": "Tue",
+              "meal_slot": "breakfast",
+              "food_description": "Oats with milk + banana",
+              "kcal": 280,
+              "protein_g": 10,
+              "status": "planned",
+              "source_kb_id": "nutrition_indian_food_macros",
+              "week_start": "2025-01-13",
+              "citation": "[KB: NutritionScience.md \u2014 Indian Food Macro Reference]"
+            },
+            {
+              "day": "Tue",
+              "meal_slot": "lunch",
+              "food_description": "Dal + rice + paneer sabzi (150g)",
+              "kcal": 580,
+              "protein_g": 28,
+              "status": "planned",
+              "source_kb_id": "nutrition_indian_food_macros",
+              "week_start": "2025-01-13",
+              "citation": "[KB: NutritionScience.md \u2014 Indian Food Macro Reference]"
+            },
+            {
+              "day": "Tue",
+              "meal_slot": "dinner",
+              "food_description": "Soya chunks curry + dal + rice",
+              "kcal": 520,
+              "protein_g": 22,
+              "status": "planned",
+              "source_kb_id": "nutrition_indian_food_macros",
+              "week_start": "2025-01-13",
+              "citation": "[KB: NutritionScience.md \u2014 Indian Food Macro Reference]"
+            },
+            {
+              "day": "Tue",
+              "meal_slot": "snack",
+              "food_description": "Paneer cubes 50g",
+              "kcal": 130,
+              "protein_g": 9,
+              "status": "planned",
+              "source_kb_id": "nutrition_indian_food_macros",
+              "week_start": "2025-01-13",
+              "citation": "[KB: NutritionScience.md \u2014 Indian Food Macro Reference]"
+            },
+            {
+              "day": "Wed",
+              "meal_slot": "breakfast",
+              "food_description": "Soya chunks porridge + fruit",
+              "kcal": 300,
+              "protein_g": 18,
+              "status": "planned",
+              "source_kb_id": "nutrition_indian_food_macros",
+              "week_start": "2025-01-13",
+              "citation": "[KB: NutritionScience.md \u2014 Indian Food Macro Reference]"
+            },
+            {
+              "day": "Wed",
+              "meal_slot": "lunch",
+              "food_description": "Chole + rice + salad",
+              "kcal": 500,
+              "protein_g": 18,
+              "status": "planned",
+              "source_kb_id": "nutrition_indian_food_macros",
+              "week_start": "2025-01-13",
+              "citation": "[KB: NutritionScience.md \u2014 Indian Food Macro Reference]"
+            },
+            {
+              "day": "Wed",
+              "meal_slot": "dinner",
+              "food_description": "Tofu stir-fry + 2 roti",
+              "kcal": 420,
+              "protein_g": 18,
+              "status": "planned",
+              "source_kb_id": "nutrition_indian_food_macros",
+              "week_start": "2025-01-13",
+              "citation": "[KB: NutritionScience.md \u2014 Indian Food Macro Reference]"
+            },
+            {
+              "day": "Wed",
+              "meal_slot": "snack",
+              "food_description": "Protein shake in water",
+              "kcal": 120,
+              "protein_g": 24,
+              "status": "planned",
+              "source_kb_id": "nutrition_indian_food_macros",
+              "week_start": "2025-01-13",
+              "citation": "[KB: NutritionScience.md \u2014 Indian Food Macro Reference]"
+            },
+            {
+              "day": "Thu",
+              "meal_slot": "breakfast",
+              "food_description": "Tofu scramble + 2 roti",
+              "kcal": 340,
+              "protein_g": 20,
+              "status": "planned",
+              "source_kb_id": "nutrition_indian_food_macros",
+              "week_start": "2025-01-13",
+              "citation": "[KB: NutritionScience.md \u2014 Indian Food Macro Reference]"
+            },
+            {
+              "day": "Thu",
+              "meal_slot": "lunch",
+              "food_description": "Paneer bhurji + 3 roti",
+              "kcal": 560,
+              "protein_g": 25,
+              "status": "planned",
+              "source_kb_id": "nutrition_indian_food_macros",
+              "week_start": "2025-01-13",
+              "citation": "[KB: NutritionScience.md \u2014 Indian Food Macro Reference]"
+            },
+            {
+              "day": "Thu",
+              "meal_slot": "dinner",
+              "food_description": "Dal + 2 roti + Greek dahi",
+              "kcal": 430,
+              "protein_g": 20,
+              "status": "planned",
+              "source_kb_id": "nutrition_indian_food_macros",
+              "week_start": "2025-01-13",
+              "citation": "[KB: NutritionScience.md \u2014 Indian Food Macro Reference]"
+            },
+            {
+              "day": "Thu",
+              "meal_slot": "snack",
+              "food_description": "Roasted chana 30g",
+              "kcal": 110,
+              "protein_g": 8,
+              "status": "planned",
+              "source_kb_id": "nutrition_indian_food_macros",
+              "week_start": "2025-01-13",
+              "citation": "[KB: NutritionScience.md \u2014 Indian Food Macro Reference]"
+            },
+            {
+              "day": "Fri",
+              "meal_slot": "breakfast",
+              "food_description": "Greek dahi + handful almonds + banana",
+              "kcal": 320,
+              "protein_g": 14,
+              "status": "planned",
+              "source_kb_id": "nutrition_indian_food_macros",
+              "week_start": "2025-01-13",
+              "citation": "[KB: NutritionScience.md \u2014 Indian Food Macro Reference]"
+            },
+            {
+              "day": "Fri",
+              "meal_slot": "lunch",
+              "food_description": "Soya chunks curry + dal + rice",
+              "kcal": 540,
+              "protein_g": 22,
+              "status": "planned",
+              "source_kb_id": "nutrition_indian_food_macros",
+              "week_start": "2025-01-13",
+              "citation": "[KB: NutritionScience.md \u2014 Indian Food Macro Reference]"
+            },
+            {
+              "day": "Fri",
+              "meal_slot": "dinner",
+              "food_description": "Paneer sabzi (150g) + 2 roti + salad",
+              "kcal": 480,
+              "protein_g": 22,
+              "status": "planned",
+              "source_kb_id": "nutrition_indian_food_macros",
+              "week_start": "2025-01-13",
+              "citation": "[KB: NutritionScience.md \u2014 Indian Food Macro Reference]"
+            },
+            {
+              "day": "Fri",
+              "meal_slot": "snack",
+              "food_description": "Paneer cubes 50g",
+              "kcal": 130,
+              "protein_g": 9,
+              "status": "planned",
+              "source_kb_id": "nutrition_indian_food_macros",
+              "week_start": "2025-01-13",
+              "citation": "[KB: NutritionScience.md \u2014 Indian Food Macro Reference]"
+            },
+            {
+              "day": "Sat",
+              "meal_slot": "breakfast",
+              "food_description": "Oats with milk + banana",
+              "kcal": 280,
+              "protein_g": 10,
+              "status": "planned",
+              "source_kb_id": "nutrition_indian_food_macros",
+              "week_start": "2025-01-13",
+              "citation": "[KB: NutritionScience.md \u2014 Indian Food Macro Reference]"
+            },
+            {
+              "day": "Sat",
+              "meal_slot": "lunch",
+              "food_description": "Rajma + brown rice + dahi",
+              "kcal": 520,
+              "protein_g": 20,
+              "status": "planned",
+              "source_kb_id": "nutrition_indian_food_macros",
+              "week_start": "2025-01-13",
+              "citation": "[KB: NutritionScience.md \u2014 Indian Food Macro Reference]"
+            },
+            {
+              "day": "Sat",
+              "meal_slot": "dinner",
+              "food_description": "Soya chunks curry + dal + rice",
+              "kcal": 520,
+              "protein_g": 22,
+              "status": "planned",
+              "source_kb_id": "nutrition_indian_food_macros",
+              "week_start": "2025-01-13",
+              "citation": "[KB: NutritionScience.md \u2014 Indian Food Macro Reference]"
+            },
+            {
+              "day": "Sat",
+              "meal_slot": "snack",
+              "food_description": "Protein shake in water",
+              "kcal": 120,
+              "protein_g": 24,
+              "status": "planned",
+              "source_kb_id": "nutrition_indian_food_macros",
+              "week_start": "2025-01-13",
+              "citation": "[KB: NutritionScience.md \u2014 Indian Food Macro Reference]"
+            },
+            {
+              "day": "Sun",
+              "meal_slot": "breakfast",
+              "food_description": "Soya chunks porridge + fruit",
+              "kcal": 300,
+              "protein_g": 18,
+              "status": "planned",
+              "source_kb_id": "nutrition_indian_food_macros",
+              "week_start": "2025-01-13",
+              "citation": "[KB: NutritionScience.md \u2014 Indian Food Macro Reference]"
+            },
+            {
+              "day": "Sun",
+              "meal_slot": "lunch",
+              "food_description": "Dal + rice + paneer sabzi (150g)",
+              "kcal": 580,
+              "protein_g": 28,
+              "status": "planned",
+              "source_kb_id": "nutrition_indian_food_macros",
+              "week_start": "2025-01-13",
+              "citation": "[KB: NutritionScience.md \u2014 Indian Food Macro Reference]"
+            },
+            {
+              "day": "Sun",
+              "meal_slot": "dinner",
+              "food_description": "Tofu stir-fry + 2 roti",
+              "kcal": 420,
+              "protein_g": 18,
+              "status": "planned",
+              "source_kb_id": "nutrition_indian_food_macros",
+              "week_start": "2025-01-13",
+              "citation": "[KB: NutritionScience.md \u2014 Indian Food Macro Reference]"
+            },
+            {
+              "day": "Sun",
+              "meal_slot": "snack",
+              "food_description": "Roasted chana 30g",
+              "kcal": 110,
+              "protein_g": 8,
+              "status": "planned",
+              "source_kb_id": "nutrition_indian_food_macros",
+              "week_start": "2025-01-13",
+              "citation": "[KB: NutritionScience.md \u2014 Indian Food Macro Reference]"
+            }
+          ],
+          "diet_plan_summary": [
+            "Mon \u2014 breakfast: Greek dahi + handful almonds + banana; lunch: Rajma + brown rice + dahi; dinner: Paneer sabzi (150g) + 2 roti + salad",
+            "Tue \u2014 breakfast: Oats with milk + banana; lunch: Dal + rice + paneer sabzi (150g); dinner: Soya chunks curry + dal + rice",
+            "Wed \u2014 breakfast: Soya chunks porridge + fruit; lunch: Chole + rice + salad; dinner: Tofu stir-fry + 2 roti",
+            "+ meals for Thu, Fri, Sat, Sun (same KB pattern)",
+            "Sources: [KB: NutritionScience.md \u2014 Indian Food Macro Reference]"
+          ],
+          "tdee_targets": {
+            "calorie_target": 1940,
+            "protein_target_g": 140,
+            "tdee_kcal": 2340,
+            "bmr_kcal": 1510,
+            "is_estimate": true,
+            "formula": "mifflin_st_jeor",
+            "notes": "deficit 400 kcal (goal fat loss, no target weight)"
+          },
+          "calorie_target": 1940,
+          "protein_target_g": 140,
+          "scheduler_summary": "Perfect! Let me build your first week. You're training 3 days per week in the gym with a fat-loss goal, so I'll design a full-body split that hits all major muscle groups each session and pairs nicely with your walking habit for extra calorie burn.\n\n**Your Week at a Glance:**  \n\u2022 **Mon / Wed / Fri** \u2013 Full-body strength sessions (~45 min each)  \n\u2022 **Walking** \u2013 Fit in 2\u20133 walks on rest days or after lifting for active recovery  \n\u2022 **Nutrition** \u2013 ~1,940 kcal *(starting estimate \u2014 refine later with weight/height)* and ~140 g protein *(starting estimate \u2014 refine later with weight/height)* to sup",
+          "is_first_plan": true,
+          "headline": "Here's your first week",
+          "subhead": "The AI Coaching Team drafted this starting plan \u2014 only if it works for you."
+        },
+        "quick_replies": [],
+        "scope": "bypassed_pending_state",
+        "plan_changed": true,
+        "proposed_week_plan": {
+          "week_start": "2025-01-13",
+          "days": [
+            {
+              "day": "Mon",
+              "focus": "Full body \u2014 Goblet Squat (legs_002), Flat Dumbbell Press (chest_004), Lat Pulldown (back_007), Plank",
+              "duration_min": 45,
+              "status": "planned"
+            },
+            {
+              "day": "Tue",
+              "focus": "Rest or easy walk",
+              "duration_min": 0,
+              "status": "planned"
+            },
+            {
+              "day": "Wed",
+              "focus": "Full body \u2014 Leg Press (legs_004), Incline Dumbbell Press (chest_003), Seated Cable Row (back_008), Face Pull (back_013)",
+              "duration_min": 45,
+              "status": "planned"
+            },
+            {
+              "day": "Thu",
+              "focus": "Rest or easy walk",
+              "duration_min": 0,
+              "status": "planned"
+            },
+            {
+              "day": "Fri",
+              "focus": "Full body \u2014 Bulgarian Split Squat (legs_005), Machine Chest Press (chest_007), Dumbbell Single-Arm Row (back_010), Glute Bridge (legs_013)",
+              "duration_min": 45,
+              "status": "planned"
+            },
+            {
+              "day": "Sat",
+              "focus": "Rest or longer walk",
+              "duration_min": 0,
+              "status": "planned"
+            },
+            {
+              "day": "Sun",
+              "focus": "Rest or light activity",
+              "duration_min": 0,
+              "status": "planned"
+            }
+          ],
+          "calorie_target": 1940,
+          "protein_target_g": 140,
+          "notes": "Volume 3 full-body template adapted for 3\u00d7/week gym + walking. Exercises: legs_002, chest_004, back_007, legs_004, chest_003, back_008, back_013, legs_005, chest_007, back_010, legs_013. Macros are starting estimates (weight/height declined). No calendar conflicts. Macros are starting estimates (incomplete body stats)."
+        },
+        "week_plan": null,
+        "awaiting_weight_for_first_plan": false,
+        "weight_kg": null,
+        "weight_declined": true,
+        "sessions_per_week": 3,
+        "preferred_workout_modes": [
+          "gym",
+          "walking"
+        ],
+        "food_preference": "vegetarian",
+        "age": null,
+        "age_declined": false
+      }
+    ],
+    "plan_changed": true,
+    "proposed_week_plan": {
+      "week_start": "2025-01-13",
+      "days": [
+        {
+          "day": "Mon",
+          "focus": "Full body \u2014 Goblet Squat (legs_002), Flat Dumbbell Press (chest_004), Lat Pulldown (back_007), Plank",
+          "duration_min": 45,
+          "status": "planned"
+        },
+        {
+          "day": "Tue",
+          "focus": "Rest or easy walk",
+          "duration_min": 0,
+          "status": "planned"
+        },
+        {
+          "day": "Wed",
+          "focus": "Full body \u2014 Leg Press (legs_004), Incline Dumbbell Press (chest_003), Seated Cable Row (back_008), Face Pull (back_013)",
+          "duration_min": 45,
+          "status": "planned"
+        },
+        {
+          "day": "Thu",
+          "focus": "Rest or easy walk",
+          "duration_min": 0,
+          "status": "planned"
+        },
+        {
+          "day": "Fri",
+          "focus": "Full body \u2014 Bulgarian Split Squat (legs_005), Machine Chest Press (chest_007), Dumbbell Single-Arm Row (back_010), Glute Bridge (legs_013)",
+          "duration_min": 45,
+          "status": "planned"
+        },
+        {
+          "day": "Sat",
+          "focus": "Rest or longer walk",
+          "duration_min": 0,
+          "status": "planned"
+        },
+        {
+          "day": "Sun",
+          "focus": "Rest or light activity",
+          "duration_min": 0,
+          "status": "planned"
+        }
+      ],
+      "calorie_target": 1940,
+      "protein_target_g": 140,
+      "notes": "Volume 3 full-body template adapted for 3\u00d7/week gym + walking. Exercises: legs_002, chest_004, back_007, legs_004, chest_003, back_008, back_013, legs_005, chest_007, back_010, legs_013. Macros are starting estimates (weight/height declined). No calendar conflicts. Macros are starting estimates (incomplete body stats)."
+    },
+    "week_plan": null,
+    "awaiting_weight_for_first_plan": false,
+    "weight_kg": null,
+    "weight_declined": true,
+    "sessions_per_week": 3,
+    "preferred_workout_modes": [
+      "gym",
+      "walking"
+    ],
+    "food_preference": "vegetarian",
+    "age": null
+  }
+]

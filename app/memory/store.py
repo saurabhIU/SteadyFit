@@ -16,7 +16,7 @@ from app.config import settings
 from app.graph.state import UserProfile, WeekPlan
 
 _SLUG_RE = re.compile(r"[^a-z0-9]+")
-TRY_TTL_HOURS = 48
+TRY_TTL_HOURS = 4
 KB_DOC_TYPES = ["kb_exercise", "kb_guide", "kb_template", "kb_science"]
 
 
@@ -64,7 +64,7 @@ def create_user(name: str, user_id: str | None = None) -> str:
 
 
 def create_try_user() -> str:
-    """Public no-login session: try-<8hex>, ephemeral, expires in 48h."""
+    """Public no-login session: try-<8hex>, ephemeral, expires in 4h."""
     uid = f"try-{uuid.uuid4().hex[:8]}"
     expires = datetime.now(timezone.utc) + timedelta(hours=TRY_TTL_HOURS)
     with _conn() as c:

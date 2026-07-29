@@ -116,19 +116,35 @@ function BottomNav({
 
 function ProfileSwitcher() {
   const { userId, profiles, setUserId, ready } = useProfile();
-  // Keep the demo switcher for stable profiles only — try-* guests stay on ?profile=.
-  const demoProfiles = profiles.filter((p) => !p.is_ephemeral);
+  // Keep the demo switcher for stable, public-facing profiles only — try-*
+  // guests stay on ?profile=, and demo-new is an internal eval fixture
+  // (see evals/helpers.py EVAL_USER_NEW / scripts/seed_memory.py --profile
+  // fresh), not part of the public demo flow. New-user walkthroughs use
+  // "Try it yourself" instead.
+  const demoProfiles = profiles.filter(
+    (p) => !p.is_ephemeral && p.user_id !== "demo-new",
+  );
   if (!ready || demoProfiles.length === 0) return null;
 
-  const selectValue = demoProfiles.some((p) => p.user_id === userId)
-    ? userId
-    : demoProfiles[0].user_id;
+  // The active session (e.g. a try-* guest, or demo-new via a direct link)
+  // may not be one of the switchable demoProfiles. Never silently fall back
+  // to demoProfiles[0] here — that previously showed an unrelated stable
+  // profile's name (e.g. demo-veteran's "John") as if it were the active
+  // session. Instead, surface an honest self-referencing option so the
+  // dropdown still doubles as "switch to a named demo profile" without
+  // misrepresenting who's currently active.
+  const isStableActive = demoProfiles.some((p) => p.user_id === userId);
+  const currentProfile = profiles.find((p) => p.user_id === userId);
+  const guestLabel =
+    currentProfile?.name && currentProfile.name !== "Guest"
+      ? `${currentProfile.name} (this session)`
+      : "Guest (this session)";
 
   return (
     <label className="flex items-center gap-2 text-xs text-navy-muted">
       <span className="hidden sm:inline">Profile</span>
       <select
-        value={selectValue}
+        value={userId}
         onChange={(e) => setUserId(e.target.value)}
         aria-label="Demo profile"
         className={cn(
@@ -137,6 +153,7 @@ function ProfileSwitcher() {
           "focus-visible:border-sage/50",
         )}
       >
+        {!isStableActive && <option value={userId}>{guestLabel}</option>}
         {demoProfiles.map((p) => (
           <option key={p.user_id} value={p.user_id}>
             {p.name}

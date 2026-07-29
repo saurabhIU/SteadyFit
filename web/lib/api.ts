@@ -75,6 +75,7 @@ export async function sendChat(
   message: string,
   threadId?: string | null,
   image?: { base64: string; mime: string } | null,
+  opts?: { userId?: string },
 ): Promise<ChatResponse> {
   const body: Record<string, unknown> = {
     message,
@@ -84,9 +85,16 @@ export async function sendChat(
     body.image_base64 = image.base64;
     body.image_mime = image.mime || "image/jpeg";
   }
+  const headers = new Headers();
+  headers.set("Content-Type", "application/json");
+  const uid = (opts?.userId || activeUserId || "").trim();
+  if (!uid) {
+    throw new ApiError("No active profile — refresh and try again", 400);
+  }
+  headers.set("X-User-Id", uid);
   const res = await fetch(`${API_URL}/api/chat`, {
     method: "POST",
-    headers: userHeaders({ "Content-Type": "application/json" }),
+    headers,
     body: JSON.stringify(body),
   });
   return parseJson<ChatResponse>(res);
@@ -95,10 +103,18 @@ export async function sendChat(
 export async function sendApprove(
   threadId: string,
   decision: "accept" | "reject",
+  opts?: { userId?: string },
 ): Promise<ChatResponse> {
+  const headers = new Headers();
+  headers.set("Content-Type", "application/json");
+  const uid = (opts?.userId || activeUserId || "").trim();
+  if (!uid) {
+    throw new ApiError("No active profile — refresh and try again", 400);
+  }
+  headers.set("X-User-Id", uid);
   const res = await fetch(`${API_URL}/api/approve`, {
     method: "POST",
-    headers: userHeaders({ "Content-Type": "application/json" }),
+    headers,
     body: JSON.stringify({ thread_id: threadId, decision }),
   });
   return parseJson<ChatResponse>(res);
@@ -174,12 +190,21 @@ export type UploadResponse = {
   ingested_chunks: number;
 };
 
-export async function uploadDocument(file: File): Promise<UploadResponse> {
+export async function uploadDocument(
+  file: File,
+  opts?: { userId?: string },
+): Promise<UploadResponse> {
   const body = new FormData();
   body.append("file", file);
+  const headers = new Headers();
+  const uid = (opts?.userId || activeUserId || "").trim();
+  if (!uid) {
+    throw new ApiError("No active profile — refresh and try again", 400);
+  }
+  headers.set("X-User-Id", uid);
   const res = await fetch(`${API_URL}/api/upload`, {
     method: "POST",
-    headers: userHeaders(),
+    headers,
     body,
   });
   return parseJson<UploadResponse>(res);

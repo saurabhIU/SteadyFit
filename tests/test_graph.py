@@ -171,7 +171,7 @@ def test_critique_soft_nitpick_coerced_to_clean(monkeypatch):
     )
     state = CoachingTeamState(
         intent="schedule",
-        profile=UserProfile(name="Saurabh", goal="lose fat", sessions_per_week=3, onboarding_complete=True),
+        profile=UserProfile(name="John", goal="lose fat", sessions_per_week=3, onboarding_complete=True),
         proposals={"scheduler": "light Thursday walk week with 1900 kcal / 140g protein"},
     )
     out = critique_mod.critique_node(state)
@@ -196,7 +196,7 @@ def test_critique_hard_knee_failure_still_revises(monkeypatch):
     state = CoachingTeamState(
         intent="schedule",
         profile=UserProfile(
-            name="Saurabh",
+            name="John",
             goal="lose fat",
             constraints=["left knee pain — avoid deep loaded squats"],
             onboarding_complete=True,
@@ -224,7 +224,7 @@ def test_critique_node_second_pass_caps_without_loop(monkeypatch):
     state = CoachingTeamState(
         intent="schedule",
         profile=UserProfile(
-            name="Saurabh",
+            name="John",
             goal="lose fat",
             constraints=["left knee — avoid deep loaded squats"],
             onboarding_complete=True,

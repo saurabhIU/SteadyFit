@@ -8,6 +8,7 @@ import { cn } from "@/lib/utils";
 type PlanApprovalCardProps = {
   approval: PendingApproval;
   threadId: string;
+  userId: string;
   onResolved: (reply: string) => void;
   onError: (message: string) => void;
 };
@@ -15,6 +16,7 @@ type PlanApprovalCardProps = {
 export function PlanApprovalCard({
   approval,
   threadId,
+  userId,
   onResolved,
   onError,
 }: PlanApprovalCardProps) {
@@ -22,14 +24,20 @@ export function PlanApprovalCard({
   const [confirmation, setConfirmation] = useState<string | null>(null);
   const plan = approval.proposed_plan;
   const isFirst = Boolean(approval.is_first_plan);
+  const personalizationNote =
+    approval.personalization_note?.trim() ||
+    (approval.subhead?.includes("uploaded a personal document")
+      ? approval.subhead.trim()
+      : "");
   const headline =
     approval.headline?.trim() ||
     (isFirst ? "Here's your first week" : "A small tweak to your week");
-  const subhead =
-    approval.subhead?.trim() ||
-    (isFirst
-      ? "The AI Coaching Team drafted this starting plan — only if it works for you."
-      : "The AI Coaching Team lined up these adjustments — only if they work for you.");
+  const defaultSubhead = isFirst
+    ? "The AI Coaching Team drafted this starting plan — only if it works for you."
+    : "The AI Coaching Team lined up these adjustments — only if they work for you.";
+  const subhead = personalizationNote
+    ? personalizationNote
+    : approval.subhead?.trim() || defaultSubhead;
   const rejectLabel = isFirst ? "Not yet" : "Keep my current plan";
 
   const calorie =
@@ -49,7 +57,7 @@ export function PlanApprovalCard({
   async function decide(decision: "accept" | "reject") {
     setBusy(true);
     try {
-      const data = await sendApprove(threadId, decision);
+      const data = await sendApprove(threadId, decision, { userId });
       setConfirmation(
         decision === "accept"
           ? "Plan saved — we'll keep you on track."
@@ -88,9 +96,13 @@ export function PlanApprovalCard({
       <h3 className="text-sm font-semibold text-card-text">
         {headline}
       </h3>
-      <p className="mt-1.5 text-sm text-card-text/80">
-        {subhead}
-      </p>
+      {personalizationNote ? (
+        <p className="mt-2 rounded-lg border border-sage/30 bg-sage/10 px-3 py-2 text-sm text-card-text">
+          {personalizationNote}
+        </p>
+      ) : (
+        <p className="mt-1.5 text-sm text-card-text/80">{subhead}</p>
+      )}
 
       {calorie != null || protein != null ? (
         <p className="mt-3 font-mono text-sm text-card-text/90">

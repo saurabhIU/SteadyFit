@@ -139,13 +139,15 @@ def retrieve(
     })
     try:
         vec = _embed_query(query)
-        where, params = _filter_clauses(
+        where, where_params = _filter_clauses(
             doc_types=doc_types,
             modality=modality,
             user_id=None,
             kb_shared=True,
         )
-        params.extend([Vector(vec), Vector(vec), k])
+        # Param order MUST match %s left-to-right occurrence in the SQL text:
+        # dist-vector, then WHERE-clause params, then order-by vector, then limit.
+        params = [Vector(vec), *where_params, Vector(vec), k]
         sql = f"""
             SELECT source, text, kb_id, source_file, meta, (embedding <=> %s) AS dist
             FROM {TABLE}
@@ -262,9 +264,12 @@ def retrieve_hybrid(
 
         with psycopg.connect(settings.database_url) as conn:
             register_vector(conn)
-            dense_params = list(base_params) + [Vector(vec), Vector(vec), candidate_n]
+            # Param order MUST match %s left-to-right occurrence in the SQL text
+            # (see dense_sql/sparse_sql above) — the ranking expression's %s comes
+            # BEFORE the WHERE-clause's filter params, not after.
+            dense_params = [Vector(vec), *base_params, Vector(vec), candidate_n]
             dense_rows = list(conn.execute(dense_sql, dense_params).fetchall())
-            sparse_params = list(base_params) + [query, query, candidate_n]
+            sparse_params = [query, *base_params, query, candidate_n]
             try:
                 sparse_rows = list(conn.execute(sparse_sql, sparse_params).fetchall())
             except Exception:

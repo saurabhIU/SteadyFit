@@ -1,4 +1,4 @@
-# Saurabh — Personal Training Program
+# John — Personal Training Program
 # Replace names, dates, and numbers with your own data before uploading.
 
 ## Program overview

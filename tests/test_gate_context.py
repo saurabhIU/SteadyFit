@@ -33,7 +33,7 @@ def test_short_reject_detected():
 
 
 def test_pending_approve_skips_scope_gate():
-    profile = UserProfile(name="Saurabh", onboarding_complete=True)
+    profile = UserProfile(name="John", onboarding_complete=True)
     pending = {"type": "plan_approval", "proposed_plan": {}}
     assert should_skip_scope_gate(profile=profile, pending_approval=pending) is True
 
@@ -50,7 +50,7 @@ def test_intake_incomplete_skips_scope_gate():
 
 def test_complete_profile_no_pending_does_not_skip():
     profile = UserProfile(
-        name="Saurabh",
+        name="John",
         goal="lose 8kg",
         sessions_per_week=5,
         preferred_workout_modes=["gym"],
@@ -125,7 +125,7 @@ def test_history_with_turns_is_not_first_user_turn():
 
 def test_first_user_turn_skips_scope_gate_for_complete_profile():
     profile = UserProfile(
-        name="Saurabh",
+        name="John",
         goal="lose 8kg",
         sessions_per_week=5,
         preferred_workout_modes=["gym"],

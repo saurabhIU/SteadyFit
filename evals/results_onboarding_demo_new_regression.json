@@ -1,0 +1,682 @@
+[
+  {
+    "id": 29,
+    "category": "onboarding",
+    "input": "34M, want to lose fat, mostly walking and some gym, 3 days a week, non-vegetarian",
+    "expected_behavior": "Extracts multiple slots from one message; progresses intake without re-asking filled slots; warm tone.",
+    "reply": "Got it \u2014 goal: lose fat; 3x/week; modes: walking, gym; food: non-vegetarian; age 34; male. Does that look right?",
+    "scope": "bypassed_pending_state",
+    "must_pass": false,
+    "expect_scope": null,
+    "priority": null,
+    "pending_approval": null,
+    "contexts": [],
+    "n_contexts": 0,
+    "judge_scores": {
+      "groundedness": 5,
+      "plan_sanity": 5,
+      "tone": 5,
+      "safety": 5,
+      "notes": "The reply effectively summarizes the intake information in a warm and clear manner."
+    },
+    "ragas": null,
+    "critique_verdict": null,
+    "critique_rounds": 0,
+    "coaching_team": {},
+    "coaching_team_transcript": [],
+    "critique_structural_error": null,
+    "vision_usage": null,
+    "turns": [
+      {
+        "reply": "Got it \u2014 goal: lose fat; 3x/week; modes: walking, gym; food: non-vegetarian; age 34; male. Does that look right?",
+        "pending_approval": null,
+        "quick_replies": [
+          "Yes, looks good",
+          "No, let me tweak"
+        ],
+        "scope": "bypassed_pending_state",
+        "plan_changed": false,
+        "proposed_week_plan": null,
+        "week_plan": {
+          "week_start": "2025-01-13",
+          "days": [
+            {
+              "day": "Mon",
+              "focus": "Full Body A \u2014 Goblet Squat (legs_002), Flat Dumbbell Press (chest_004), Lat Pulldown (back_007), Plank (core_001)",
+              "duration_min": 45,
+              "status": "planned"
+            },
+            {
+              "day": "Tue",
+              "focus": "Full Body B \u2014 Leg Press (legs_004), Dumbbell Shoulder Press (shoulders_002), Seated Cable Row (back_008), Dead Bug (core_002)",
+              "duration_min": 45,
+              "status": "planned"
+            },
+            {
+              "day": "Wed",
+              "focus": "Full Body C \u2014 Reverse Lunge (legs_006), Push-Up Standard (chest_010), Dumbbell Single-Arm Row (back_010), Bicycle Crunch (core_005)",
+              "duration_min": 45,
+              "status": "planned"
+            },
+            {
+              "day": "Thu",
+              "focus": "Rest (work travel)",
+              "duration_min": 0,
+              "status": "planned"
+            },
+            {
+              "day": "Fri",
+              "focus": "Rest (work travel)",
+              "duration_min": 0,
+              "status": "planned"
+            },
+            {
+              "day": "Sat",
+              "focus": "Full Body D \u2014 Goblet Squat (legs_002), Incline Dumbbell Press (chest_003), Face Pull (shoulders_005), Plank (core_001)",
+              "duration_min": 45,
+              "status": "planned"
+            },
+            {
+              "day": "Sun",
+              "focus": "Full Body E \u2014 Glute Bridge (legs_013), Dumbbell Curl (arms_002), Tricep Pushdown (arms_009_cable), Bird Dog (core_003)",
+              "duration_min": 45,
+              "status": "planned"
+            }
+          ],
+          "calorie_target": 2200,
+          "protein_target_g": 120,
+          "notes": "Beginner gym program, 5 sessions/week. KB exercises: legs_002, legs_004, legs_006, legs_013, chest_003, chest_004, chest_010, back_007, back_008, back_010, shoulders_002, shoulders_005, arms_002, arms_009_cable, core_001, core_002, core_003, core_005. Avoided Thu/Fri per calendar conflicts (work travel). Full-body split to build foundational strength and movement quality."
+        },
+        "awaiting_weight_for_first_plan": false,
+        "weight_kg": null,
+        "weight_declined": false,
+        "sessions_per_week": 3,
+        "preferred_workout_modes": [
+          "walking",
+          "gym"
+        ],
+        "food_preference": "non-vegetarian",
+        "age": 34,
+        "age_declined": false,
+        "intent": "intake",
+        "onboarding_complete": false,
+        "goal": "lose fat"
+      }
+    ],
+    "plan_changed": false,
+    "proposed_week_plan": null,
+    "week_plan": {
+      "week_start": "2025-01-13",
+      "days": [
+        {
+          "day": "Mon",
+          "focus": "Full Body A \u2014 Goblet Squat (legs_002), Flat Dumbbell Press (chest_004), Lat Pulldown (back_007), Plank (core_001)",
+          "duration_min": 45,
+          "status": "planned"
+        },
+        {
+          "day": "Tue",
+          "focus": "Full Body B \u2014 Leg Press (legs_004), Dumbbell Shoulder Press (shoulders_002), Seated Cable Row (back_008), Dead Bug (core_002)",
+          "duration_min": 45,
+          "status": "planned"
+        },
+        {
+          "day": "Wed",
+          "focus": "Full Body C \u2014 Reverse Lunge (legs_006), Push-Up Standard (chest_010), Dumbbell Single-Arm Row (back_010), Bicycle Crunch (core_005)",
+          "duration_min": 45,
+          "status": "planned"
+        },
+        {
+          "day": "Thu",
+          "focus": "Rest (work travel)",
+          "duration_min": 0,
+          "status": "planned"
+        },
+        {
+          "day": "Fri",
+          "focus": "Rest (work travel)",
+          "duration_min": 0,
+          "status": "planned"
+        },
+        {
+          "day": "Sat",
+          "focus": "Full Body D \u2014 Goblet Squat (legs_002), Incline Dumbbell Press (chest_003), Face Pull (shoulders_005), Plank (core_001)",
+          "duration_min": 45,
+          "status": "planned"
+        },
+        {
+          "day": "Sun",
+          "focus": "Full Body E \u2014 Glute Bridge (legs_013), Dumbbell Curl (arms_002), Tricep Pushdown (arms_009_cable), Bird Dog (core_003)",
+          "duration_min": 45,
+          "status": "planned"
+        }
+      ],
+      "calorie_target": 2200,
+      "protein_target_g": 120,
+      "notes": "Beginner gym program, 5 sessions/week. KB exercises: legs_002, legs_004, legs_006, legs_013, chest_003, chest_004, chest_010, back_007, back_008, back_010, shoulders_002, shoulders_005, arms_002, arms_009_cable, core_001, core_002, core_003, core_005. Avoided Thu/Fri per calendar conflicts (work travel). Full-body split to build foundational strength and movement quality."
+    },
+    "awaiting_weight_for_first_plan": false,
+    "weight_kg": null,
+    "weight_declined": false,
+    "sessions_per_week": 3,
+    "preferred_workout_modes": [
+      "walking",
+      "gym"
+    ],
+    "food_preference": "non-vegetarian",
+    "age": 34,
+    "intent": "intake",
+    "onboarding_complete": false,
+    "goal": "lose fat"
+  },
+  {
+    "id": 30,
+    "category": "onboarding",
+    "input": "prefer not to say",
+    "expected_behavior": "Accepts age/sex decline; does not insist; continues to next unfilled slot.",
+    "reply": "Got it \u2014 goal: lose fat; 3x/week; modes: walking, gym; food: non-vegetarian; age 34. Does that look right?",
+    "scope": "bypassed_pending_state",
+    "must_pass": false,
+    "expect_scope": null,
+    "priority": null,
+    "pending_approval": null,
+    "contexts": [],
+    "n_contexts": 0,
+    "judge_scores": {
+      "groundedness": 5,
+      "plan_sanity": 5,
+      "tone": 5,
+      "safety": 5,
+      "notes": "The response is clear, confirming details without pressure."
+    },
+    "ragas": null,
+    "critique_verdict": null,
+    "critique_rounds": 0,
+    "coaching_team": {},
+    "coaching_team_transcript": [],
+    "critique_structural_error": null,
+    "vision_usage": null,
+    "turns": [
+      {
+        "reply": "Got it \u2014 goal: lose fat; 3x/week; modes: walking, gym; food: non-vegetarian; age 34. Does that look right?",
+        "pending_approval": null,
+        "quick_replies": [
+          "Yes, looks good",
+          "No, let me tweak"
+        ],
+        "scope": "bypassed_pending_state",
+        "plan_changed": false,
+        "proposed_week_plan": null,
+        "week_plan": {
+          "week_start": "2025-01-13",
+          "days": [
+            {
+              "day": "Mon",
+              "focus": "Full Body A \u2014 Goblet Squat (legs_002), Flat Dumbbell Press (chest_004), Lat Pulldown (back_007), Plank (core_001)",
+              "duration_min": 45,
+              "status": "planned"
+            },
+            {
+              "day": "Tue",
+              "focus": "Full Body B \u2014 Leg Press (legs_004), Dumbbell Shoulder Press (shoulders_002), Seated Cable Row (back_008), Dead Bug (core_002)",
+              "duration_min": 45,
+              "status": "planned"
+            },
+            {
+              "day": "Wed",
+              "focus": "Full Body C \u2014 Reverse Lunge (legs_006), Push-Up Standard (chest_010), Dumbbell Single-Arm Row (back_010), Bicycle Crunch (core_005)",
+              "duration_min": 45,
+              "status": "planned"
+            },
+            {
+              "day": "Thu",
+              "focus": "Rest (work travel)",
+              "duration_min": 0,
+              "status": "planned"
+            },
+            {
+              "day": "Fri",
+              "focus": "Rest (work travel)",
+              "duration_min": 0,
+              "status": "planned"
+            },
+            {
+              "day": "Sat",
+              "focus": "Full Body D \u2014 Goblet Squat (legs_002), Incline Dumbbell Press (chest_003), Face Pull (shoulders_005), Plank (core_001)",
+              "duration_min": 45,
+              "status": "planned"
+            },
+            {
+              "day": "Sun",
+              "focus": "Full Body E \u2014 Glute Bridge (legs_013), Dumbbell Curl (arms_002), Tricep Pushdown (arms_009_cable), Bird Dog (core_003)",
+              "duration_min": 45,
+              "status": "planned"
+            }
+          ],
+          "calorie_target": 2200,
+          "protein_target_g": 120,
+          "notes": "Beginner gym program, 5 sessions/week. KB exercises: legs_002, legs_004, legs_006, legs_013, chest_003, chest_004, chest_010, back_007, back_008, back_010, shoulders_002, shoulders_005, arms_002, arms_009_cable, core_001, core_002, core_003, core_005. Avoided Thu/Fri per calendar conflicts (work travel). Full-body split to build foundational strength and movement quality."
+        },
+        "awaiting_weight_for_first_plan": false,
+        "weight_kg": null,
+        "weight_declined": false,
+        "sessions_per_week": 3,
+        "preferred_workout_modes": [
+          "walking",
+          "gym"
+        ],
+        "food_preference": "non-vegetarian",
+        "age": 34,
+        "age_declined": false,
+        "intent": "intake",
+        "onboarding_complete": false,
+        "goal": "lose fat"
+      }
+    ],
+    "plan_changed": false,
+    "proposed_week_plan": null,
+    "week_plan": {
+      "week_start": "2025-01-13",
+      "days": [
+        {
+          "day": "Mon",
+          "focus": "Full Body A \u2014 Goblet Squat (legs_002), Flat Dumbbell Press (chest_004), Lat Pulldown (back_007), Plank (core_001)",
+          "duration_min": 45,
+          "status": "planned"
+        },
+        {
+          "day": "Tue",
+          "focus": "Full Body B \u2014 Leg Press (legs_004), Dumbbell Shoulder Press (shoulders_002), Seated Cable Row (back_008), Dead Bug (core_002)",
+          "duration_min": 45,
+          "status": "planned"
+        },
+        {
+          "day": "Wed",
+          "focus": "Full Body C \u2014 Reverse Lunge (legs_006), Push-Up Standard (chest_010), Dumbbell Single-Arm Row (back_010), Bicycle Crunch (core_005)",
+          "duration_min": 45,
+          "status": "planned"
+        },
+        {
+          "day": "Thu",
+          "focus": "Rest (work travel)",
+          "duration_min": 0,
+          "status": "planned"
+        },
+        {
+          "day": "Fri",
+          "focus": "Rest (work travel)",
+          "duration_min": 0,
+          "status": "planned"
+        },
+        {
+          "day": "Sat",
+          "focus": "Full Body D \u2014 Goblet Squat (legs_002), Incline Dumbbell Press (chest_003), Face Pull (shoulders_005), Plank (core_001)",
+          "duration_min": 45,
+          "status": "planned"
+        },
+        {
+          "day": "Sun",
+          "focus": "Full Body E \u2014 Glute Bridge (legs_013), Dumbbell Curl (arms_002), Tricep Pushdown (arms_009_cable), Bird Dog (core_003)",
+          "duration_min": 45,
+          "status": "planned"
+        }
+      ],
+      "calorie_target": 2200,
+      "protein_target_g": 120,
+      "notes": "Beginner gym program, 5 sessions/week. KB exercises: legs_002, legs_004, legs_006, legs_013, chest_003, chest_004, chest_010, back_007, back_008, back_010, shoulders_002, shoulders_005, arms_002, arms_009_cable, core_001, core_002, core_003, core_005. Avoided Thu/Fri per calendar conflicts (work travel). Full-body split to build foundational strength and movement quality."
+    },
+    "awaiting_weight_for_first_plan": false,
+    "weight_kg": null,
+    "weight_declined": false,
+    "sessions_per_week": 3,
+    "preferred_workout_modes": [
+      "walking",
+      "gym"
+    ],
+    "food_preference": "non-vegetarian",
+    "age": 34,
+    "intent": "intake",
+    "onboarding_complete": false,
+    "goal": "lose fat"
+  },
+  {
+    "id": 31,
+    "category": "onboarding",
+    "input": "is creatine safe for beginners?",
+    "expected_behavior": "If mid-onboarding: brief factual answer then resumes intake question; does not abandon onboarding.",
+    "reply": "Got it \u2014 goal: lose fat; 3x/week; modes: walking, gym; food: non-vegetarian; age 34. Does that look right?",
+    "scope": "bypassed_pending_state",
+    "must_pass": false,
+    "expect_scope": null,
+    "priority": null,
+    "pending_approval": null,
+    "contexts": [],
+    "n_contexts": 0,
+    "judge_scores": {
+      "groundedness": 5,
+      "plan_sanity": 5,
+      "tone": 5,
+      "safety": 5,
+      "notes": "The response accurately summarizes the user's goals and continues the onboarding process."
+    },
+    "ragas": null,
+    "critique_verdict": null,
+    "critique_rounds": 0,
+    "coaching_team": {},
+    "coaching_team_transcript": [],
+    "critique_structural_error": null,
+    "vision_usage": null,
+    "turns": [
+      {
+        "reply": "Got it \u2014 goal: lose fat; 3x/week; modes: walking, gym; food: non-vegetarian; age 34. Does that look right?",
+        "pending_approval": null,
+        "quick_replies": [
+          "Yes, looks good",
+          "No, let me tweak"
+        ],
+        "scope": "bypassed_pending_state",
+        "plan_changed": false,
+        "proposed_week_plan": null,
+        "week_plan": {
+          "week_start": "2025-01-13",
+          "days": [
+            {
+              "day": "Mon",
+              "focus": "Full Body A \u2014 Goblet Squat (legs_002), Flat Dumbbell Press (chest_004), Lat Pulldown (back_007), Plank (core_001)",
+              "duration_min": 45,
+              "status": "planned"
+            },
+            {
+              "day": "Tue",
+              "focus": "Full Body B \u2014 Leg Press (legs_004), Dumbbell Shoulder Press (shoulders_002), Seated Cable Row (back_008), Dead Bug (core_002)",
+              "duration_min": 45,
+              "status": "planned"
+            },
+            {
+              "day": "Wed",
+              "focus": "Full Body C \u2014 Reverse Lunge (legs_006), Push-Up Standard (chest_010), Dumbbell Single-Arm Row (back_010), Bicycle Crunch (core_005)",
+              "duration_min": 45,
+              "status": "planned"
+            },
+            {
+              "day": "Thu",
+              "focus": "Rest (work travel)",
+              "duration_min": 0,
+              "status": "planned"
+            },
+            {
+              "day": "Fri",
+              "focus": "Rest (work travel)",
+              "duration_min": 0,
+              "status": "planned"
+            },
+            {
+              "day": "Sat",
+              "focus": "Full Body D \u2014 Goblet Squat (legs_002), Incline Dumbbell Press (chest_003), Face Pull (shoulders_005), Plank (core_001)",
+              "duration_min": 45,
+              "status": "planned"
+            },
+            {
+              "day": "Sun",
+              "focus": "Full Body E \u2014 Glute Bridge (legs_013), Dumbbell Curl (arms_002), Tricep Pushdown (arms_009_cable), Bird Dog (core_003)",
+              "duration_min": 45,
+              "status": "planned"
+            }
+          ],
+          "calorie_target": 2200,
+          "protein_target_g": 120,
+          "notes": "Beginner gym program, 5 sessions/week. KB exercises: legs_002, legs_004, legs_006, legs_013, chest_003, chest_004, chest_010, back_007, back_008, back_010, shoulders_002, shoulders_005, arms_002, arms_009_cable, core_001, core_002, core_003, core_005. Avoided Thu/Fri per calendar conflicts (work travel). Full-body split to build foundational strength and movement quality."
+        },
+        "awaiting_weight_for_first_plan": false,
+        "weight_kg": null,
+        "weight_declined": false,
+        "sessions_per_week": 3,
+        "preferred_workout_modes": [
+          "walking",
+          "gym"
+        ],
+        "food_preference": "non-vegetarian",
+        "age": 34,
+        "age_declined": false,
+        "intent": "intake",
+        "onboarding_complete": false,
+        "goal": "lose fat"
+      }
+    ],
+    "plan_changed": false,
+    "proposed_week_plan": null,
+    "week_plan": {
+      "week_start": "2025-01-13",
+      "days": [
+        {
+          "day": "Mon",
+          "focus": "Full Body A \u2014 Goblet Squat (legs_002), Flat Dumbbell Press (chest_004), Lat Pulldown (back_007), Plank (core_001)",
+          "duration_min": 45,
+          "status": "planned"
+        },
+        {
+          "day": "Tue",
+          "focus": "Full Body B \u2014 Leg Press (legs_004), Dumbbell Shoulder Press (shoulders_002), Seated Cable Row (back_008), Dead Bug (core_002)",
+          "duration_min": 45,
+          "status": "planned"
+        },
+        {
+          "day": "Wed",
+          "focus": "Full Body C \u2014 Reverse Lunge (legs_006), Push-Up Standard (chest_010), Dumbbell Single-Arm Row (back_010), Bicycle Crunch (core_005)",
+          "duration_min": 45,
+          "status": "planned"
+        },
+        {
+          "day": "Thu",
+          "focus": "Rest (work travel)",
+          "duration_min": 0,
+          "status": "planned"
+        },
+        {
+          "day": "Fri",
+          "focus": "Rest (work travel)",
+          "duration_min": 0,
+          "status": "planned"
+        },
+        {
+          "day": "Sat",
+          "focus": "Full Body D \u2014 Goblet Squat (legs_002), Incline Dumbbell Press (chest_003), Face Pull (shoulders_005), Plank (core_001)",
+          "duration_min": 45,
+          "status": "planned"
+        },
+        {
+          "day": "Sun",
+          "focus": "Full Body E \u2014 Glute Bridge (legs_013), Dumbbell Curl (arms_002), Tricep Pushdown (arms_009_cable), Bird Dog (core_003)",
+          "duration_min": 45,
+          "status": "planned"
+        }
+      ],
+      "calorie_target": 2200,
+      "protein_target_g": 120,
+      "notes": "Beginner gym program, 5 sessions/week. KB exercises: legs_002, legs_004, legs_006, legs_013, chest_003, chest_004, chest_010, back_007, back_008, back_010, shoulders_002, shoulders_005, arms_002, arms_009_cable, core_001, core_002, core_003, core_005. Avoided Thu/Fri per calendar conflicts (work travel). Full-body split to build foundational strength and movement quality."
+    },
+    "awaiting_weight_for_first_plan": false,
+    "weight_kg": null,
+    "weight_declined": false,
+    "sessions_per_week": 3,
+    "preferred_workout_modes": [
+      "walking",
+      "gym"
+    ],
+    "food_preference": "non-vegetarian",
+    "age": 34,
+    "intent": "intake",
+    "onboarding_complete": false,
+    "goal": "lose fat"
+  },
+  {
+    "id": 32,
+    "category": "onboarding",
+    "input": "I want to change my goal \u2014 build muscle instead of cutting",
+    "expected_behavior": "After completed onboarding: updates goal slot, confirms, does not restart full onboarding.",
+    "reply": "Got it \u2014 goal: build muscle; 3x/week; modes: walking, gym; food: non-vegetarian; age 34. Does that look right?",
+    "scope": "bypassed_pending_state",
+    "must_pass": false,
+    "expect_scope": null,
+    "priority": null,
+    "pending_approval": null,
+    "contexts": [],
+    "n_contexts": 0,
+    "judge_scores": {
+      "groundedness": 5,
+      "plan_sanity": 5,
+      "tone": 5,
+      "safety": 5,
+      "notes": "The response accurately summarizes the onboarding details in a clear and friendly manner."
+    },
+    "ragas": null,
+    "critique_verdict": null,
+    "critique_rounds": 0,
+    "coaching_team": {},
+    "coaching_team_transcript": [],
+    "critique_structural_error": null,
+    "vision_usage": null,
+    "turns": [
+      {
+        "reply": "Got it \u2014 goal: build muscle; 3x/week; modes: walking, gym; food: non-vegetarian; age 34. Does that look right?",
+        "pending_approval": null,
+        "quick_replies": [
+          "Yes, looks good",
+          "No, let me tweak"
+        ],
+        "scope": "bypassed_pending_state",
+        "plan_changed": false,
+        "proposed_week_plan": null,
+        "week_plan": {
+          "week_start": "2025-01-13",
+          "days": [
+            {
+              "day": "Mon",
+              "focus": "Full Body A \u2014 Goblet Squat (legs_002), Flat Dumbbell Press (chest_004), Lat Pulldown (back_007), Plank (core_001)",
+              "duration_min": 45,
+              "status": "planned"
+            },
+            {
+              "day": "Tue",
+              "focus": "Full Body B \u2014 Leg Press (legs_004), Dumbbell Shoulder Press (shoulders_002), Seated Cable Row (back_008), Dead Bug (core_002)",
+              "duration_min": 45,
+              "status": "planned"
+            },
+            {
+              "day": "Wed",
+              "focus": "Full Body C \u2014 Reverse Lunge (legs_006), Push-Up Standard (chest_010), Dumbbell Single-Arm Row (back_010), Bicycle Crunch (core_005)",
+              "duration_min": 45,
+              "status": "planned"
+            },
+            {
+              "day": "Thu",
+              "focus": "Rest (work travel)",
+              "duration_min": 0,
+              "status": "planned"
+            },
+            {
+              "day": "Fri",
+              "focus": "Rest (work travel)",
+              "duration_min": 0,
+              "status": "planned"
+            },
+            {
+              "day": "Sat",
+              "focus": "Full Body D \u2014 Goblet Squat (legs_002), Incline Dumbbell Press (chest_003), Face Pull (shoulders_005), Plank (core_001)",
+              "duration_min": 45,
+              "status": "planned"
+            },
+            {
+              "day": "Sun",
+              "focus": "Full Body E \u2014 Glute Bridge (legs_013), Dumbbell Curl (arms_002), Tricep Pushdown (arms_009_cable), Bird Dog (core_003)",
+              "duration_min": 45,
+              "status": "planned"
+            }
+          ],
+          "calorie_target": 2200,
+          "protein_target_g": 120,
+          "notes": "Beginner gym program, 5 sessions/week. KB exercises: legs_002, legs_004, legs_006, legs_013, chest_003, chest_004, chest_010, back_007, back_008, back_010, shoulders_002, shoulders_005, arms_002, arms_009_cable, core_001, core_002, core_003, core_005. Avoided Thu/Fri per calendar conflicts (work travel). Full-body split to build foundational strength and movement quality."
+        },
+        "awaiting_weight_for_first_plan": false,
+        "weight_kg": null,
+        "weight_declined": false,
+        "sessions_per_week": 3,
+        "preferred_workout_modes": [
+          "walking",
+          "gym"
+        ],
+        "food_preference": "non-vegetarian",
+        "age": 34,
+        "age_declined": false,
+        "intent": "intake",
+        "onboarding_complete": false,
+        "goal": "build muscle"
+      }
+    ],
+    "plan_changed": false,
+    "proposed_week_plan": null,
+    "week_plan": {
+      "week_start": "2025-01-13",
+      "days": [
+        {
+          "day": "Mon",
+          "focus": "Full Body A \u2014 Goblet Squat (legs_002), Flat Dumbbell Press (chest_004), Lat Pulldown (back_007), Plank (core_001)",
+          "duration_min": 45,
+          "status": "planned"
+        },
+        {
+          "day": "Tue",
+          "focus": "Full Body B \u2014 Leg Press (legs_004), Dumbbell Shoulder Press (shoulders_002), Seated Cable Row (back_008), Dead Bug (core_002)",
+          "duration_min": 45,
+          "status": "planned"
+        },
+        {
+          "day": "Wed",
+          "focus": "Full Body C \u2014 Reverse Lunge (legs_006), Push-Up Standard (chest_010), Dumbbell Single-Arm Row (back_010), Bicycle Crunch (core_005)",
+          "duration_min": 45,
+          "status": "planned"
+        },
+        {
+          "day": "Thu",
+          "focus": "Rest (work travel)",
+          "duration_min": 0,
+          "status": "planned"
+        },
+        {
+          "day": "Fri",
+          "focus": "Rest (work travel)",
+          "duration_min": 0,
+          "status": "planned"
+        },
+        {
+          "day": "Sat",
+          "focus": "Full Body D \u2014 Goblet Squat (legs_002), Incline Dumbbell Press (chest_003), Face Pull (shoulders_005), Plank (core_001)",
+          "duration_min": 45,
+          "status": "planned"
+        },
+        {
+          "day": "Sun",
+          "focus": "Full Body E \u2014 Glute Bridge (legs_013), Dumbbell Curl (arms_002), Tricep Pushdown (arms_009_cable), Bird Dog (core_003)",
+          "duration_min": 45,
+          "status": "planned"
+        }
+      ],
+      "calorie_target": 2200,
+      "protein_target_g": 120,
+      "notes": "Beginner gym program, 5 sessions/week. KB exercises: legs_002, legs_004, legs_006, legs_013, chest_003, chest_004, chest_010, back_007, back_008, back_010, shoulders_002, shoulders_005, arms_002, arms_009_cable, core_001, core_002, core_003, core_005. Avoided Thu/Fri per calendar conflicts (work travel). Full-body split to build foundational strength and movement quality."
+    },
+    "awaiting_weight_for_first_plan": false,
+    "weight_kg": null,
+    "weight_declined": false,
+    "sessions_per_week": 3,
+    "preferred_workout_modes": [
+      "walking",
+      "gym"
+    ],
+    "food_preference": "non-vegetarian",
+    "age": 34,
+    "intent": "intake",
+    "onboarding_complete": false,
+    "goal": "build muscle"
+  }
+]

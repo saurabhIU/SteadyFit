@@ -1,0 +1,2072 @@
+[
+  {
+    "id": 112,
+    "category": "diet_plan",
+    "input": "Please draft my first week plan.",
+    "expected_behavior": "CRITICAL diet gate: weight\u2192target\u2192height\u2192activity chips/freetext. Final approval card has calorie/protein from Mifflin-St Jeor code path, proposed_diet_plan meals, vegetarian-safe (no chicken/fish), KB citation in diet summary. Free-text reply is short intro only (no day-by-day). Meals are neutral cuisine (not Indian-default). week_start is current calendar Monday.",
+    "reply": "I've built your first week around gym, walking for your lose fat goal, with workouts and meals ready for you to review. Here's your plan \u2014 take a look below.",
+    "scope": "bypassed_pending_state",
+    "must_pass": true,
+    "expect_scope": null,
+    "priority": "CRITICAL",
+    "pending_approval": {
+      "type": "plan_approval",
+      "proposed_plan": {
+        "week_start": "2026-07-27",
+        "days": [
+          {
+            "day": "Mon",
+            "focus": "Full body \u2014 Goblet Squat (legs_002), Flat Dumbbell Press (chest_004), Lat Pulldown (back_007), Plank",
+            "duration_min": 45,
+            "status": "planned"
+          },
+          {
+            "day": "Tue",
+            "focus": "Walking 30\u201340 min, easy pace",
+            "duration_min": 35,
+            "status": "planned"
+          },
+          {
+            "day": "Wed",
+            "focus": "Full body \u2014 Leg Press (legs_004), Incline Dumbbell Press (chest_003), Seated Cable Row (back_008), Glute Bridge (legs_013)",
+            "duration_min": 45,
+            "status": "planned"
+          },
+          {
+            "day": "Thu",
+            "focus": "Walking 30\u201340 min, easy pace",
+            "duration_min": 35,
+            "status": "planned"
+          },
+          {
+            "day": "Fri",
+            "focus": "Full body \u2014 Bulgarian Split Squat (legs_005), Machine Chest Press (chest_007), Dumbbell Single-Arm Row (back_010), Face Pull (back_013)",
+            "duration_min": 45,
+            "status": "planned"
+          },
+          {
+            "day": "Sat",
+            "focus": "Walking 30\u201340 min, easy pace",
+            "duration_min": 35,
+            "status": "planned"
+          },
+          {
+            "day": "Sun",
+            "focus": "Rest",
+            "duration_min": 0,
+            "status": "planned"
+          }
+        ],
+        "calorie_target": 1467,
+        "protein_target_g": 144,
+        "notes": "First week Volume 3 scaffold. Exercises selected via find_exercises_tool (gym, beginner\u2013intermediate): legs_002, chest_004, back_007, legs_004, chest_003, back_008, legs_013, legs_005, chest_007, back_010, back_013. Macros computed via Mifflin\u2013St Jeor (72 kg, 165 cm, 32 y/o female, light activity, 500 kcal deficit)."
+      },
+      "proposed_diet_plan": [
+        {
+          "day": "Mon",
+          "meal_slot": "breakfast",
+          "food_description": "Oatmeal with milk + banana",
+          "kcal": 320,
+          "protein_g": 12,
+          "status": "planned",
+          "source_kb_id": "nutrition_everyday_meals",
+          "week_start": "2026-07-27",
+          "citation": "[KB: NutritionScience.md \u2014 everyday meal patterns]",
+          "cuisine": "neutral"
+        },
+        {
+          "day": "Mon",
+          "meal_slot": "lunch",
+          "food_description": "Lentil bowl + brown rice + veggies",
+          "kcal": 500,
+          "protein_g": 22,
+          "status": "planned",
+          "source_kb_id": "nutrition_everyday_meals",
+          "week_start": "2026-07-27",
+          "citation": "[KB: NutritionScience.md \u2014 everyday meal patterns]",
+          "cuisine": "neutral"
+        },
+        {
+          "day": "Mon",
+          "meal_slot": "dinner",
+          "food_description": "Tofu stir-fry + rice",
+          "kcal": 450,
+          "protein_g": 22,
+          "status": "planned",
+          "source_kb_id": "nutrition_everyday_meals",
+          "week_start": "2026-07-27",
+          "citation": "[KB: NutritionScience.md \u2014 everyday meal patterns]",
+          "cuisine": "neutral"
+        },
+        {
+          "day": "Mon",
+          "meal_slot": "snack",
+          "food_description": "Protein shake in water",
+          "kcal": 120,
+          "protein_g": 24,
+          "status": "planned",
+          "source_kb_id": "nutrition_everyday_meals",
+          "week_start": "2026-07-27",
+          "citation": "[KB: NutritionScience.md \u2014 everyday meal patterns]",
+          "cuisine": "neutral"
+        },
+        {
+          "day": "Tue",
+          "meal_slot": "breakfast",
+          "food_description": "Greek yogurt + berries + almonds",
+          "kcal": 280,
+          "protein_g": 18,
+          "status": "planned",
+          "source_kb_id": "nutrition_everyday_meals",
+          "week_start": "2026-07-27",
+          "citation": "[KB: NutritionScience.md \u2014 everyday meal patterns]",
+          "cuisine": "neutral"
+        },
+        {
+          "day": "Tue",
+          "meal_slot": "lunch",
+          "food_description": "Chickpea salad + quinoa",
+          "kcal": 470,
+          "protein_g": 20,
+          "status": "planned",
+          "source_kb_id": "nutrition_everyday_meals",
+          "week_start": "2026-07-27",
+          "citation": "[KB: NutritionScience.md \u2014 everyday meal patterns]",
+          "cuisine": "neutral"
+        },
+        {
+          "day": "Tue",
+          "meal_slot": "dinner",
+          "food_description": "Pasta with tomato sauce + side salad",
+          "kcal": 480,
+          "protein_g": 16,
+          "status": "planned",
+          "source_kb_id": "nutrition_everyday_meals",
+          "week_start": "2026-07-27",
+          "citation": "[KB: NutritionScience.md \u2014 everyday meal patterns]",
+          "cuisine": "neutral"
+        },
+        {
+          "day": "Tue",
+          "meal_slot": "snack",
+          "food_description": "Apple + peanut butter",
+          "kcal": 200,
+          "protein_g": 6,
+          "status": "planned",
+          "source_kb_id": "nutrition_everyday_meals",
+          "week_start": "2026-07-27",
+          "citation": "[KB: NutritionScience.md \u2014 everyday meal patterns]",
+          "cuisine": "neutral"
+        },
+        {
+          "day": "Wed",
+          "meal_slot": "breakfast",
+          "food_description": "Overnight oats with soy milk + fruit",
+          "kcal": 300,
+          "protein_g": 14,
+          "status": "planned",
+          "source_kb_id": "nutrition_everyday_meals",
+          "week_start": "2026-07-27",
+          "citation": "[KB: NutritionScience.md \u2014 everyday meal patterns]",
+          "cuisine": "neutral"
+        },
+        {
+          "day": "Wed",
+          "meal_slot": "lunch",
+          "food_description": "Cottage cheese + fruit + crackers",
+          "kcal": 420,
+          "protein_g": 28,
+          "status": "planned",
+          "source_kb_id": "nutrition_everyday_meals",
+          "week_start": "2026-07-27",
+          "citation": "[KB: NutritionScience.md \u2014 everyday meal patterns]",
+          "cuisine": "neutral"
+        },
+        {
+          "day": "Wed",
+          "meal_slot": "dinner",
+          "food_description": "Black bean tacos + salsa",
+          "kcal": 460,
+          "protein_g": 18,
+          "status": "planned",
+          "source_kb_id": "nutrition_everyday_meals",
+          "week_start": "2026-07-27",
+          "citation": "[KB: NutritionScience.md \u2014 everyday meal patterns]",
+          "cuisine": "neutral"
+        },
+        {
+          "day": "Wed",
+          "meal_slot": "snack",
+          "food_description": "Greek yogurt cup",
+          "kcal": 150,
+          "protein_g": 15,
+          "status": "planned",
+          "source_kb_id": "nutrition_everyday_meals",
+          "week_start": "2026-07-27",
+          "citation": "[KB: NutritionScience.md \u2014 everyday meal patterns]",
+          "cuisine": "neutral"
+        },
+        {
+          "day": "Thu",
+          "meal_slot": "breakfast",
+          "food_description": "Tofu scramble + toast",
+          "kcal": 320,
+          "protein_g": 18,
+          "status": "planned",
+          "source_kb_id": "nutrition_everyday_meals",
+          "week_start": "2026-07-27",
+          "citation": "[KB: NutritionScience.md \u2014 everyday meal patterns]",
+          "cuisine": "neutral"
+        },
+        {
+          "day": "Thu",
+          "meal_slot": "lunch",
+          "food_description": "Bean burrito bowl (no cheese)",
+          "kcal": 510,
+          "protein_g": 18,
+          "status": "planned",
+          "source_kb_id": "nutrition_everyday_meals",
+          "week_start": "2026-07-27",
+          "citation": "[KB: NutritionScience.md \u2014 everyday meal patterns]",
+          "cuisine": "neutral"
+        },
+        {
+          "day": "Thu",
+          "meal_slot": "dinner",
+          "food_description": "Tofu stir-fry + rice",
+          "kcal": 450,
+          "protein_g": 22,
+          "status": "planned",
+          "source_kb_id": "nutrition_everyday_meals",
+          "week_start": "2026-07-27",
+          "citation": "[KB: NutritionScience.md \u2014 everyday meal patterns]",
+          "cuisine": "neutral"
+        },
+        {
+          "day": "Thu",
+          "meal_slot": "snack",
+          "food_description": "Hummus + carrot sticks",
+          "kcal": 180,
+          "protein_g": 6,
+          "status": "planned",
+          "source_kb_id": "nutrition_everyday_meals",
+          "week_start": "2026-07-27",
+          "citation": "[KB: NutritionScience.md \u2014 everyday meal patterns]",
+          "cuisine": "neutral"
+        },
+        {
+          "day": "Fri",
+          "meal_slot": "breakfast",
+          "food_description": "Oatmeal with milk + banana",
+          "kcal": 320,
+          "protein_g": 12,
+          "status": "planned",
+          "source_kb_id": "nutrition_everyday_meals",
+          "week_start": "2026-07-27",
+          "citation": "[KB: NutritionScience.md \u2014 everyday meal patterns]",
+          "cuisine": "neutral"
+        },
+        {
+          "day": "Fri",
+          "meal_slot": "lunch",
+          "food_description": "Lentil bowl + brown rice + veggies",
+          "kcal": 500,
+          "protein_g": 22,
+          "status": "planned",
+          "source_kb_id": "nutrition_everyday_meals",
+          "week_start": "2026-07-27",
+          "citation": "[KB: NutritionScience.md \u2014 everyday meal patterns]",
+          "cuisine": "neutral"
+        },
+        {
+          "day": "Fri",
+          "meal_slot": "dinner",
+          "food_description": "Pasta with tomato sauce + side salad",
+          "kcal": 480,
+          "protein_g": 16,
+          "status": "planned",
+          "source_kb_id": "nutrition_everyday_meals",
+          "week_start": "2026-07-27",
+          "citation": "[KB: NutritionScience.md \u2014 everyday meal patterns]",
+          "cuisine": "neutral"
+        },
+        {
+          "day": "Fri",
+          "meal_slot": "snack",
+          "food_description": "Protein shake in water",
+          "kcal": 120,
+          "protein_g": 24,
+          "status": "planned",
+          "source_kb_id": "nutrition_everyday_meals",
+          "week_start": "2026-07-27",
+          "citation": "[KB: NutritionScience.md \u2014 everyday meal patterns]",
+          "cuisine": "neutral"
+        },
+        {
+          "day": "Sat",
+          "meal_slot": "breakfast",
+          "food_description": "Greek yogurt + berries + almonds",
+          "kcal": 280,
+          "protein_g": 18,
+          "status": "planned",
+          "source_kb_id": "nutrition_everyday_meals",
+          "week_start": "2026-07-27",
+          "citation": "[KB: NutritionScience.md \u2014 everyday meal patterns]",
+          "cuisine": "neutral"
+        },
+        {
+          "day": "Sat",
+          "meal_slot": "lunch",
+          "food_description": "Chickpea salad + quinoa",
+          "kcal": 470,
+          "protein_g": 20,
+          "status": "planned",
+          "source_kb_id": "nutrition_everyday_meals",
+          "week_start": "2026-07-27",
+          "citation": "[KB: NutritionScience.md \u2014 everyday meal patterns]",
+          "cuisine": "neutral"
+        },
+        {
+          "day": "Sat",
+          "meal_slot": "dinner",
+          "food_description": "Black bean tacos + salsa",
+          "kcal": 460,
+          "protein_g": 18,
+          "status": "planned",
+          "source_kb_id": "nutrition_everyday_meals",
+          "week_start": "2026-07-27",
+          "citation": "[KB: NutritionScience.md \u2014 everyday meal patterns]",
+          "cuisine": "neutral"
+        },
+        {
+          "day": "Sat",
+          "meal_slot": "snack",
+          "food_description": "Apple + peanut butter",
+          "kcal": 200,
+          "protein_g": 6,
+          "status": "planned",
+          "source_kb_id": "nutrition_everyday_meals",
+          "week_start": "2026-07-27",
+          "citation": "[KB: NutritionScience.md \u2014 everyday meal patterns]",
+          "cuisine": "neutral"
+        },
+        {
+          "day": "Sun",
+          "meal_slot": "breakfast",
+          "food_description": "Overnight oats with soy milk + fruit",
+          "kcal": 300,
+          "protein_g": 14,
+          "status": "planned",
+          "source_kb_id": "nutrition_everyday_meals",
+          "week_start": "2026-07-27",
+          "citation": "[KB: NutritionScience.md \u2014 everyday meal patterns]",
+          "cuisine": "neutral"
+        },
+        {
+          "day": "Sun",
+          "meal_slot": "lunch",
+          "food_description": "Cottage cheese + fruit + crackers",
+          "kcal": 420,
+          "protein_g": 28,
+          "status": "planned",
+          "source_kb_id": "nutrition_everyday_meals",
+          "week_start": "2026-07-27",
+          "citation": "[KB: NutritionScience.md \u2014 everyday meal patterns]",
+          "cuisine": "neutral"
+        },
+        {
+          "day": "Sun",
+          "meal_slot": "dinner",
+          "food_description": "Tofu stir-fry + rice",
+          "kcal": 450,
+          "protein_g": 22,
+          "status": "planned",
+          "source_kb_id": "nutrition_everyday_meals",
+          "week_start": "2026-07-27",
+          "citation": "[KB: NutritionScience.md \u2014 everyday meal patterns]",
+          "cuisine": "neutral"
+        },
+        {
+          "day": "Sun",
+          "meal_slot": "snack",
+          "food_description": "Greek yogurt cup",
+          "kcal": 150,
+          "protein_g": 15,
+          "status": "planned",
+          "source_kb_id": "nutrition_everyday_meals",
+          "week_start": "2026-07-27",
+          "citation": "[KB: NutritionScience.md \u2014 everyday meal patterns]",
+          "cuisine": "neutral"
+        }
+      ],
+      "diet_plan_summary": [
+        "Mon \u2014 breakfast: Oatmeal with milk + banana; lunch: Lentil bowl + brown rice + veggies; dinner: Tofu stir-fry + rice",
+        "Tue \u2014 breakfast: Greek yogurt + berries + almonds; lunch: Chickpea salad + quinoa; dinner: Pasta with tomato sauce + side salad",
+        "Wed \u2014 breakfast: Overnight oats with soy milk + fruit; lunch: Cottage cheese + fruit + crackers; dinner: Black bean tacos + salsa",
+        "+ meals for Thu, Fri, Sat, Sun (same pattern)",
+        "Sources: [KB: NutritionScience.md \u2014 everyday meal patterns]"
+      ],
+      "tdee_targets": {
+        "calorie_target": 1467,
+        "protein_target_g": 144,
+        "tdee_kcal": 1967,
+        "bmr_kcal": 1430,
+        "is_estimate": false,
+        "formula": "mifflin_st_jeor",
+        "notes": "deficit 500 kcal toward 65 kg"
+      },
+      "calorie_target": 1467,
+      "protein_target_g": 144,
+      "scheduler_summary": "Perfect! I've got your first week ready. You'll train **3 days** in the gym\u2014hitting full-body patterns each session\u2014and I've built in walking on your off days to keep movement consistent without overloading recovery.\n\n**The plan:**  \n\u2022 **Mon / Wed / Fri** \u2013 Gym sessions (~45 min): compound lifts for legs, chest, back, plus core. I've chosen beginner-friendly movements like goblet squats, dumbbell presses, and cable rows so you can nail form before adding heavier loads.  \n\u2022 **Tue / Thu / Sat** \u2013 Walking (30\u201340 min): easy-paced, outdoors or treadmill.  \n\u2022 **Sun** \u2013 Full rest.\n\n**Nutrition:**  \n\u2022",
+      "is_first_plan": true,
+      "headline": "Here's your first week",
+      "subhead": "The AI Coaching Team drafted this starting plan \u2014 only if it works for you."
+    },
+    "contexts": [
+      "[kb:error] temporarily unavailable"
+    ],
+    "n_contexts": 1,
+    "judge_scores": {
+      "groundedness": 1,
+      "plan_sanity": 2,
+      "tone": 3,
+      "safety": 2,
+      "notes": "The response lacks specific details and context for a diet plan."
+    },
+    "ragas": null,
+    "critique_verdict": "clean",
+    "critique_rounds": 0,
+    "coaching_team": {
+      "scheduler": "Perfect! I've got your first week ready. You'll train **3 days** in the gym\u2014hitting full-body patterns each session\u2014and I've built in walking on your off days to keep movement consistent without overloading recovery.\n\n**The plan:**  \n\u2022 **Mon / Wed / Fri** \u2013 Gym sessions (~45 min): compound lifts for legs, chest, back, plus core. I've chosen beginner-friendly movements like goblet squats, dumbbell presses, and cable rows so you can nail form before adding heavier loads.  \n\u2022 **Tue / Thu / Sat** \u2013 Walking (30\u201340 min): easy-paced, outdoors or treadmill.  \n\u2022 **Sun** \u2013 Full rest.\n\n**Nutrition:**  \n\u2022 **1,467 kcal/day** (500 kcal deficit from your TDEE of ~1,967)  \n\u2022 **144 g protein/day** (2.0 g/kg) to preserve muscle while losing fat  \n\nSince you're vegetarian, focus on Greek yogurt, cottage cheese, lentils, chickpeas, tofu, tempeh, edamame, and a quality plant or whey protein powder to hit that target comfortably.\n\n---\n\n```json\n{\n  \"week_start\": \"2026-07-27\",\n  \"days\": [\n    {\n      \"day\": \"Mon\",\n      \"focus\": \"Full body \u2014 Goblet Squat (legs_002), Flat Dumbbell Press (chest_004), Lat Pulldown (back_007), Plank\",\n      \"duration_min\": 45,\n      \"status\": \"planned\"\n    },\n    {\n      \"day\": \"Tue\",\n      \"focus\": \"Walking 30\u201340 min, easy pace\",\n      \"duration_min\": 35,\n      \"status\": \"planned\"\n    },\n    {\n      \"day\": \"Wed\",\n      \"focus\": \"Full body \u2014 Leg Press (legs_004), Incline Dumbbell Press (chest_003), Seated Cable Row (back_008), Glute Bridge (legs_013)\",\n      \"duration_min\": 45,\n      \"status\": \"planned\"\n    },\n    {\n      \"day\": \"Thu\",\n      \"focus\": \"Walking 30\u201340 min, easy pace\",\n      \"duration_min\": 35,\n      \"status\": \"planned\"\n    },\n    {\n      \"day\": \"Fri\",\n      \"focus\": \"Full body \u2014 Bulgarian Split Squat (legs_005), Machine Chest Press (chest_007), Dumbbell Single-Arm Row (back_010), Face Pull (back_013)\",\n      \"duration_min\": 45,\n      \"status\": \"planned\"\n    },\n    {\n      \"day\": \"Sat\",\n      \"focus\": \"Walking 30\u201340 min, easy pace\",\n      \"duration_min\": 35,\n      \"status\": \"planned\"\n    },\n    {\n      \"day\": \"Sun\",\n      \"focus\": \"Rest\",\n      \"duration_min\": 0,\n      \"status\": \"planned\"\n    }\n  ],\n  \"calorie_target\": 1467,\n  \"protein_target_g\": 144,\n  \"notes\": \"First week Volume 3 scaffold. Exercises selected via find_exercises_tool (gym, beginner\u2013intermediate): legs_002, chest_004, back_007, legs_004, chest_003, back_008, legs_013, legs_005, chest_007, back_010, back_013. Macros computed via Mifflin\u2013St Jeor (72 kg, 165 cm, 32 y/o female, light activity, 500 kcal deficit).\"\n}\n```\n\n[structured week_start=2026-07-27; 7 workout days; 28 planned meals]"
+    },
+    "coaching_team_transcript": [],
+    "critique_structural_error": null,
+    "vision_usage": null,
+    "turns": [
+      {
+        "reply": "Before I draft your first week \u2014 what's your current weight? (kg or lb is fine.) I'll use it to set calorie and protein targets. Or tap Prefer not to say and I'll use starting estimates.",
+        "pending_approval": null,
+        "quick_replies": [
+          "Prefer not to say"
+        ],
+        "scope": "bypassed_pending_state",
+        "plan_changed": false,
+        "proposed_week_plan": null,
+        "week_plan": null,
+        "awaiting_weight_for_first_plan": true,
+        "weight_kg": null,
+        "weight_declined": false,
+        "sessions_per_week": 3,
+        "preferred_workout_modes": [
+          "gym",
+          "walking"
+        ],
+        "food_preference": "vegetarian",
+        "age": 32,
+        "age_declined": false
+      },
+      {
+        "reply": "What's your target weight? (kg or lb is fine.) Or tap Prefer not to say \u2014 I'll still set sensible starting targets.",
+        "pending_approval": null,
+        "quick_replies": [
+          "Prefer not to say"
+        ],
+        "scope": "bypassed_pending_state",
+        "plan_changed": false,
+        "proposed_week_plan": null,
+        "week_plan": null,
+        "awaiting_weight_for_first_plan": false,
+        "weight_kg": 72.0,
+        "weight_declined": false,
+        "sessions_per_week": 3,
+        "preferred_workout_modes": [
+          "gym",
+          "walking"
+        ],
+        "food_preference": "vegetarian",
+        "age": 32,
+        "age_declined": false
+      },
+      {
+        "reply": "What's your height? (cm, or e.g. 5'10\".) This locks in a real calorie calculation. Or Prefer not to say.",
+        "pending_approval": null,
+        "quick_replies": [
+          "Prefer not to say"
+        ],
+        "scope": "bypassed_pending_state",
+        "plan_changed": false,
+        "proposed_week_plan": null,
+        "week_plan": null,
+        "awaiting_weight_for_first_plan": false,
+        "weight_kg": 72.0,
+        "weight_declined": false,
+        "sessions_per_week": 3,
+        "preferred_workout_modes": [
+          "gym",
+          "walking"
+        ],
+        "food_preference": "vegetarian",
+        "age": 32,
+        "age_declined": false
+      },
+      {
+        "reply": "How active are you most weeks outside of training?",
+        "pending_approval": null,
+        "quick_replies": [
+          "sedentary",
+          "light",
+          "moderate",
+          "active",
+          "Prefer not to say"
+        ],
+        "scope": "bypassed_pending_state",
+        "plan_changed": false,
+        "proposed_week_plan": null,
+        "week_plan": null,
+        "awaiting_weight_for_first_plan": false,
+        "weight_kg": 72.0,
+        "weight_declined": false,
+        "sessions_per_week": 3,
+        "preferred_workout_modes": [
+          "gym",
+          "walking"
+        ],
+        "food_preference": "vegetarian",
+        "age": 32,
+        "age_declined": false
+      },
+      {
+        "reply": "I've built your first week around gym, walking for your lose fat goal, with workouts and meals ready for you to review. Here's your plan \u2014 take a look below.",
+        "pending_approval": {
+          "type": "plan_approval",
+          "proposed_plan": {
+            "week_start": "2026-07-27",
+            "days": [
+              {
+                "day": "Mon",
+                "focus": "Full body \u2014 Goblet Squat (legs_002), Flat Dumbbell Press (chest_004), Lat Pulldown (back_007), Plank",
+                "duration_min": 45,
+                "status": "planned"
+              },
+              {
+                "day": "Tue",
+                "focus": "Walking 30\u201340 min, easy pace",
+                "duration_min": 35,
+                "status": "planned"
+              },
+              {
+                "day": "Wed",
+                "focus": "Full body \u2014 Leg Press (legs_004), Incline Dumbbell Press (chest_003), Seated Cable Row (back_008), Glute Bridge (legs_013)",
+                "duration_min": 45,
+                "status": "planned"
+              },
+              {
+                "day": "Thu",
+                "focus": "Walking 30\u201340 min, easy pace",
+                "duration_min": 35,
+                "status": "planned"
+              },
+              {
+                "day": "Fri",
+                "focus": "Full body \u2014 Bulgarian Split Squat (legs_005), Machine Chest Press (chest_007), Dumbbell Single-Arm Row (back_010), Face Pull (back_013)",
+                "duration_min": 45,
+                "status": "planned"
+              },
+              {
+                "day": "Sat",
+                "focus": "Walking 30\u201340 min, easy pace",
+                "duration_min": 35,
+                "status": "planned"
+              },
+              {
+                "day": "Sun",
+                "focus": "Rest",
+                "duration_min": 0,
+                "status": "planned"
+              }
+            ],
+            "calorie_target": 1467,
+            "protein_target_g": 144,
+            "notes": "First week Volume 3 scaffold. Exercises selected via find_exercises_tool (gym, beginner\u2013intermediate): legs_002, chest_004, back_007, legs_004, chest_003, back_008, legs_013, legs_005, chest_007, back_010, back_013. Macros computed via Mifflin\u2013St Jeor (72 kg, 165 cm, 32 y/o female, light activity, 500 kcal deficit)."
+          },
+          "proposed_diet_plan": [
+            {
+              "day": "Mon",
+              "meal_slot": "breakfast",
+              "food_description": "Oatmeal with milk + banana",
+              "kcal": 320,
+              "protein_g": 12,
+              "status": "planned",
+              "source_kb_id": "nutrition_everyday_meals",
+              "week_start": "2026-07-27",
+              "citation": "[KB: NutritionScience.md \u2014 everyday meal patterns]",
+              "cuisine": "neutral"
+            },
+            {
+              "day": "Mon",
+              "meal_slot": "lunch",
+              "food_description": "Lentil bowl + brown rice + veggies",
+              "kcal": 500,
+              "protein_g": 22,
+              "status": "planned",
+              "source_kb_id": "nutrition_everyday_meals",
+              "week_start": "2026-07-27",
+              "citation": "[KB: NutritionScience.md \u2014 everyday meal patterns]",
+              "cuisine": "neutral"
+            },
+            {
+              "day": "Mon",
+              "meal_slot": "dinner",
+              "food_description": "Tofu stir-fry + rice",
+              "kcal": 450,
+              "protein_g": 22,
+              "status": "planned",
+              "source_kb_id": "nutrition_everyday_meals",
+              "week_start": "2026-07-27",
+              "citation": "[KB: NutritionScience.md \u2014 everyday meal patterns]",
+              "cuisine": "neutral"
+            },
+            {
+              "day": "Mon",
+              "meal_slot": "snack",
+              "food_description": "Protein shake in water",
+              "kcal": 120,
+              "protein_g": 24,
+              "status": "planned",
+              "source_kb_id": "nutrition_everyday_meals",
+              "week_start": "2026-07-27",
+              "citation": "[KB: NutritionScience.md \u2014 everyday meal patterns]",
+              "cuisine": "neutral"
+            },
+            {
+              "day": "Tue",
+              "meal_slot": "breakfast",
+              "food_description": "Greek yogurt + berries + almonds",
+              "kcal": 280,
+              "protein_g": 18,
+              "status": "planned",
+              "source_kb_id": "nutrition_everyday_meals",
+              "week_start": "2026-07-27",
+              "citation": "[KB: NutritionScience.md \u2014 everyday meal patterns]",
+              "cuisine": "neutral"
+            },
+            {
+              "day": "Tue",
+              "meal_slot": "lunch",
+              "food_description": "Chickpea salad + quinoa",
+              "kcal": 470,
+              "protein_g": 20,
+              "status": "planned",
+              "source_kb_id": "nutrition_everyday_meals",
+              "week_start": "2026-07-27",
+              "citation": "[KB: NutritionScience.md \u2014 everyday meal patterns]",
+              "cuisine": "neutral"
+            },
+            {
+              "day": "Tue",
+              "meal_slot": "dinner",
+              "food_description": "Pasta with tomato sauce + side salad",
+              "kcal": 480,
+              "protein_g": 16,
+              "status": "planned",
+              "source_kb_id": "nutrition_everyday_meals",
+              "week_start": "2026-07-27",
+              "citation": "[KB: NutritionScience.md \u2014 everyday meal patterns]",
+              "cuisine": "neutral"
+            },
+            {
+              "day": "Tue",
+              "meal_slot": "snack",
+              "food_description": "Apple + peanut butter",
+              "kcal": 200,
+              "protein_g": 6,
+              "status": "planned",
+              "source_kb_id": "nutrition_everyday_meals",
+              "week_start": "2026-07-27",
+              "citation": "[KB: NutritionScience.md \u2014 everyday meal patterns]",
+              "cuisine": "neutral"
+            },
+            {
+              "day": "Wed",
+              "meal_slot": "breakfast",
+              "food_description": "Overnight oats with soy milk + fruit",
+              "kcal": 300,
+              "protein_g": 14,
+              "status": "planned",
+              "source_kb_id": "nutrition_everyday_meals",
+              "week_start": "2026-07-27",
+              "citation": "[KB: NutritionScience.md \u2014 everyday meal patterns]",
+              "cuisine": "neutral"
+            },
+            {
+              "day": "Wed",
+              "meal_slot": "lunch",
+              "food_description": "Cottage cheese + fruit + crackers",
+              "kcal": 420,
+              "protein_g": 28,
+              "status": "planned",
+              "source_kb_id": "nutrition_everyday_meals",
+              "week_start": "2026-07-27",
+              "citation": "[KB: NutritionScience.md \u2014 everyday meal patterns]",
+              "cuisine": "neutral"
+            },
+            {
+              "day": "Wed",
+              "meal_slot": "dinner",
+              "food_description": "Black bean tacos + salsa",
+              "kcal": 460,
+              "protein_g": 18,
+              "status": "planned",
+              "source_kb_id": "nutrition_everyday_meals",
+              "week_start": "2026-07-27",
+              "citation": "[KB: NutritionScience.md \u2014 everyday meal patterns]",
+              "cuisine": "neutral"
+            },
+            {
+              "day": "Wed",
+              "meal_slot": "snack",
+              "food_description": "Greek yogurt cup",
+              "kcal": 150,
+              "protein_g": 15,
+              "status": "planned",
+              "source_kb_id": "nutrition_everyday_meals",
+              "week_start": "2026-07-27",
+              "citation": "[KB: NutritionScience.md \u2014 everyday meal patterns]",
+              "cuisine": "neutral"
+            },
+            {
+              "day": "Thu",
+              "meal_slot": "breakfast",
+              "food_description": "Tofu scramble + toast",
+              "kcal": 320,
+              "protein_g": 18,
+              "status": "planned",
+              "source_kb_id": "nutrition_everyday_meals",
+              "week_start": "2026-07-27",
+              "citation": "[KB: NutritionScience.md \u2014 everyday meal patterns]",
+              "cuisine": "neutral"
+            },
+            {
+              "day": "Thu",
+              "meal_slot": "lunch",
+              "food_description": "Bean burrito bowl (no cheese)",
+              "kcal": 510,
+              "protein_g": 18,
+              "status": "planned",
+              "source_kb_id": "nutrition_everyday_meals",
+              "week_start": "2026-07-27",
+              "citation": "[KB: NutritionScience.md \u2014 everyday meal patterns]",
+              "cuisine": "neutral"
+            },
+            {
+              "day": "Thu",
+              "meal_slot": "dinner",
+              "food_description": "Tofu stir-fry + rice",
+              "kcal": 450,
+              "protein_g": 22,
+              "status": "planned",
+              "source_kb_id": "nutrition_everyday_meals",
+              "week_start": "2026-07-27",
+              "citation": "[KB: NutritionScience.md \u2014 everyday meal patterns]",
+              "cuisine": "neutral"
+            },
+            {
+              "day": "Thu",
+              "meal_slot": "snack",
+              "food_description": "Hummus + carrot sticks",
+              "kcal": 180,
+              "protein_g": 6,
+              "status": "planned",
+              "source_kb_id": "nutrition_everyday_meals",
+              "week_start": "2026-07-27",
+              "citation": "[KB: NutritionScience.md \u2014 everyday meal patterns]",
+              "cuisine": "neutral"
+            },
+            {
+              "day": "Fri",
+              "meal_slot": "breakfast",
+              "food_description": "Oatmeal with milk + banana",
+              "kcal": 320,
+              "protein_g": 12,
+              "status": "planned",
+              "source_kb_id": "nutrition_everyday_meals",
+              "week_start": "2026-07-27",
+              "citation": "[KB: NutritionScience.md \u2014 everyday meal patterns]",
+              "cuisine": "neutral"
+            },
+            {
+              "day": "Fri",
+              "meal_slot": "lunch",
+              "food_description": "Lentil bowl + brown rice + veggies",
+              "kcal": 500,
+              "protein_g": 22,
+              "status": "planned",
+              "source_kb_id": "nutrition_everyday_meals",
+              "week_start": "2026-07-27",
+              "citation": "[KB: NutritionScience.md \u2014 everyday meal patterns]",
+              "cuisine": "neutral"
+            },
+            {
+              "day": "Fri",
+              "meal_slot": "dinner",
+              "food_description": "Pasta with tomato sauce + side salad",
+              "kcal": 480,
+              "protein_g": 16,
+              "status": "planned",
+              "source_kb_id": "nutrition_everyday_meals",
+              "week_start": "2026-07-27",
+              "citation": "[KB: NutritionScience.md \u2014 everyday meal patterns]",
+              "cuisine": "neutral"
+            },
+            {
+              "day": "Fri",
+              "meal_slot": "snack",
+              "food_description": "Protein shake in water",
+              "kcal": 120,
+              "protein_g": 24,
+              "status": "planned",
+              "source_kb_id": "nutrition_everyday_meals",
+              "week_start": "2026-07-27",
+              "citation": "[KB: NutritionScience.md \u2014 everyday meal patterns]",
+              "cuisine": "neutral"
+            },
+            {
+              "day": "Sat",
+              "meal_slot": "breakfast",
+              "food_description": "Greek yogurt + berries + almonds",
+              "kcal": 280,
+              "protein_g": 18,
+              "status": "planned",
+              "source_kb_id": "nutrition_everyday_meals",
+              "week_start": "2026-07-27",
+              "citation": "[KB: NutritionScience.md \u2014 everyday meal patterns]",
+              "cuisine": "neutral"
+            },
+            {
+              "day": "Sat",
+              "meal_slot": "lunch",
+              "food_description": "Chickpea salad + quinoa",
+              "kcal": 470,
+              "protein_g": 20,
+              "status": "planned",
+              "source_kb_id": "nutrition_everyday_meals",
+              "week_start": "2026-07-27",
+              "citation": "[KB: NutritionScience.md \u2014 everyday meal patterns]",
+              "cuisine": "neutral"
+            },
+            {
+              "day": "Sat",
+              "meal_slot": "dinner",
+              "food_description": "Black bean tacos + salsa",
+              "kcal": 460,
+              "protein_g": 18,
+              "status": "planned",
+              "source_kb_id": "nutrition_everyday_meals",
+              "week_start": "2026-07-27",
+              "citation": "[KB: NutritionScience.md \u2014 everyday meal patterns]",
+              "cuisine": "neutral"
+            },
+            {
+              "day": "Sat",
+              "meal_slot": "snack",
+              "food_description": "Apple + peanut butter",
+              "kcal": 200,
+              "protein_g": 6,
+              "status": "planned",
+              "source_kb_id": "nutrition_everyday_meals",
+              "week_start": "2026-07-27",
+              "citation": "[KB: NutritionScience.md \u2014 everyday meal patterns]",
+              "cuisine": "neutral"
+            },
+            {
+              "day": "Sun",
+              "meal_slot": "breakfast",
+              "food_description": "Overnight oats with soy milk + fruit",
+              "kcal": 300,
+              "protein_g": 14,
+              "status": "planned",
+              "source_kb_id": "nutrition_everyday_meals",
+              "week_start": "2026-07-27",
+              "citation": "[KB: NutritionScience.md \u2014 everyday meal patterns]",
+              "cuisine": "neutral"
+            },
+            {
+              "day": "Sun",
+              "meal_slot": "lunch",
+              "food_description": "Cottage cheese + fruit + crackers",
+              "kcal": 420,
+              "protein_g": 28,
+              "status": "planned",
+              "source_kb_id": "nutrition_everyday_meals",
+              "week_start": "2026-07-27",
+              "citation": "[KB: NutritionScience.md \u2014 everyday meal patterns]",
+              "cuisine": "neutral"
+            },
+            {
+              "day": "Sun",
+              "meal_slot": "dinner",
+              "food_description": "Tofu stir-fry + rice",
+              "kcal": 450,
+              "protein_g": 22,
+              "status": "planned",
+              "source_kb_id": "nutrition_everyday_meals",
+              "week_start": "2026-07-27",
+              "citation": "[KB: NutritionScience.md \u2014 everyday meal patterns]",
+              "cuisine": "neutral"
+            },
+            {
+              "day": "Sun",
+              "meal_slot": "snack",
+              "food_description": "Greek yogurt cup",
+              "kcal": 150,
+              "protein_g": 15,
+              "status": "planned",
+              "source_kb_id": "nutrition_everyday_meals",
+              "week_start": "2026-07-27",
+              "citation": "[KB: NutritionScience.md \u2014 everyday meal patterns]",
+              "cuisine": "neutral"
+            }
+          ],
+          "diet_plan_summary": [
+            "Mon \u2014 breakfast: Oatmeal with milk + banana; lunch: Lentil bowl + brown rice + veggies; dinner: Tofu stir-fry + rice",
+            "Tue \u2014 breakfast: Greek yogurt + berries + almonds; lunch: Chickpea salad + quinoa; dinner: Pasta with tomato sauce + side salad",
+            "Wed \u2014 breakfast: Overnight oats with soy milk + fruit; lunch: Cottage cheese + fruit + crackers; dinner: Black bean tacos + salsa",
+            "+ meals for Thu, Fri, Sat, Sun (same pattern)",
+            "Sources: [KB: NutritionScience.md \u2014 everyday meal patterns]"
+          ],
+          "tdee_targets": {
+            "calorie_target": 1467,
+            "protein_target_g": 144,
+            "tdee_kcal": 1967,
+            "bmr_kcal": 1430,
+            "is_estimate": false,
+            "formula": "mifflin_st_jeor",
+            "notes": "deficit 500 kcal toward 65 kg"
+          },
+          "calorie_target": 1467,
+          "protein_target_g": 144,
+          "scheduler_summary": "Perfect! I've got your first week ready. You'll train **3 days** in the gym\u2014hitting full-body patterns each session\u2014and I've built in walking on your off days to keep movement consistent without overloading recovery.\n\n**The plan:**  \n\u2022 **Mon / Wed / Fri** \u2013 Gym sessions (~45 min): compound lifts for legs, chest, back, plus core. I've chosen beginner-friendly movements like goblet squats, dumbbell presses, and cable rows so you can nail form before adding heavier loads.  \n\u2022 **Tue / Thu / Sat** \u2013 Walking (30\u201340 min): easy-paced, outdoors or treadmill.  \n\u2022 **Sun** \u2013 Full rest.\n\n**Nutrition:**  \n\u2022",
+          "is_first_plan": true,
+          "headline": "Here's your first week",
+          "subhead": "The AI Coaching Team drafted this starting plan \u2014 only if it works for you."
+        },
+        "quick_replies": [],
+        "scope": "bypassed_pending_state",
+        "plan_changed": true,
+        "proposed_week_plan": {
+          "week_start": "2026-07-27",
+          "days": [
+            {
+              "day": "Mon",
+              "focus": "Full body \u2014 Goblet Squat (legs_002), Flat Dumbbell Press (chest_004), Lat Pulldown (back_007), Plank",
+              "duration_min": 45,
+              "status": "planned"
+            },
+            {
+              "day": "Tue",
+              "focus": "Walking 30\u201340 min, easy pace",
+              "duration_min": 35,
+              "status": "planned"
+            },
+            {
+              "day": "Wed",
+              "focus": "Full body \u2014 Leg Press (legs_004), Incline Dumbbell Press (chest_003), Seated Cable Row (back_008), Glute Bridge (legs_013)",
+              "duration_min": 45,
+              "status": "planned"
+            },
+            {
+              "day": "Thu",
+              "focus": "Walking 30\u201340 min, easy pace",
+              "duration_min": 35,
+              "status": "planned"
+            },
+            {
+              "day": "Fri",
+              "focus": "Full body \u2014 Bulgarian Split Squat (legs_005), Machine Chest Press (chest_007), Dumbbell Single-Arm Row (back_010), Face Pull (back_013)",
+              "duration_min": 45,
+              "status": "planned"
+            },
+            {
+              "day": "Sat",
+              "focus": "Walking 30\u201340 min, easy pace",
+              "duration_min": 35,
+              "status": "planned"
+            },
+            {
+              "day": "Sun",
+              "focus": "Rest",
+              "duration_min": 0,
+              "status": "planned"
+            }
+          ],
+          "calorie_target": 1467,
+          "protein_target_g": 144,
+          "notes": "First week Volume 3 scaffold. Exercises selected via find_exercises_tool (gym, beginner\u2013intermediate): legs_002, chest_004, back_007, legs_004, chest_003, back_008, legs_013, legs_005, chest_007, back_010, back_013. Macros computed via Mifflin\u2013St Jeor (72 kg, 165 cm, 32 y/o female, light activity, 500 kcal deficit)."
+        },
+        "week_plan": null,
+        "awaiting_weight_for_first_plan": false,
+        "weight_kg": 72.0,
+        "weight_declined": false,
+        "sessions_per_week": 3,
+        "preferred_workout_modes": [
+          "gym",
+          "walking"
+        ],
+        "food_preference": "vegetarian",
+        "age": 32,
+        "age_declined": false
+      }
+    ],
+    "plan_changed": true,
+    "proposed_week_plan": {
+      "week_start": "2026-07-27",
+      "days": [
+        {
+          "day": "Mon",
+          "focus": "Full body \u2014 Goblet Squat (legs_002), Flat Dumbbell Press (chest_004), Lat Pulldown (back_007), Plank",
+          "duration_min": 45,
+          "status": "planned"
+        },
+        {
+          "day": "Tue",
+          "focus": "Walking 30\u201340 min, easy pace",
+          "duration_min": 35,
+          "status": "planned"
+        },
+        {
+          "day": "Wed",
+          "focus": "Full body \u2014 Leg Press (legs_004), Incline Dumbbell Press (chest_003), Seated Cable Row (back_008), Glute Bridge (legs_013)",
+          "duration_min": 45,
+          "status": "planned"
+        },
+        {
+          "day": "Thu",
+          "focus": "Walking 30\u201340 min, easy pace",
+          "duration_min": 35,
+          "status": "planned"
+        },
+        {
+          "day": "Fri",
+          "focus": "Full body \u2014 Bulgarian Split Squat (legs_005), Machine Chest Press (chest_007), Dumbbell Single-Arm Row (back_010), Face Pull (back_013)",
+          "duration_min": 45,
+          "status": "planned"
+        },
+        {
+          "day": "Sat",
+          "focus": "Walking 30\u201340 min, easy pace",
+          "duration_min": 35,
+          "status": "planned"
+        },
+        {
+          "day": "Sun",
+          "focus": "Rest",
+          "duration_min": 0,
+          "status": "planned"
+        }
+      ],
+      "calorie_target": 1467,
+      "protein_target_g": 144,
+      "notes": "First week Volume 3 scaffold. Exercises selected via find_exercises_tool (gym, beginner\u2013intermediate): legs_002, chest_004, back_007, legs_004, chest_003, back_008, legs_013, legs_005, chest_007, back_010, back_013. Macros computed via Mifflin\u2013St Jeor (72 kg, 165 cm, 32 y/o female, light activity, 500 kcal deficit)."
+    },
+    "week_plan": null,
+    "awaiting_weight_for_first_plan": false,
+    "weight_kg": 72.0,
+    "weight_declined": false,
+    "sessions_per_week": 3,
+    "preferred_workout_modes": [
+      "gym",
+      "walking"
+    ],
+    "food_preference": "vegetarian",
+    "age": 32
+  },
+  {
+    "id": 114,
+    "category": "diet_plan",
+    "input": "Please draft my first week plan.",
+    "expected_behavior": "Full TDEE profile already set (vegetarian). First-week draft approval includes diet meals with zero flesh foods; macros present. Free-text reply is short intro only (no day-by-day). Meals are neutral cuisine (not Indian-default). week_start is current calendar Monday.",
+    "reply": "I've built your first week around gym, walking for your lose fat goal, with workouts and meals ready for you to review. Here's your plan \u2014 take a look below.",
+    "scope": "bypassed_pending_state",
+    "must_pass": true,
+    "expect_scope": null,
+    "priority": null,
+    "pending_approval": {
+      "type": "plan_approval",
+      "proposed_plan": {
+        "week_start": "2026-07-27",
+        "days": [
+          {
+            "day": "Mon",
+            "focus": "Full Body A \u2014 Goblet Squat (legs_002), Flat Dumbbell Press (chest_004), Lat Pulldown (back_007), Dumbbell Shoulder Press (shoulders_002)",
+            "duration_min": 50,
+            "status": "planned"
+          },
+          {
+            "day": "Tue",
+            "focus": "Walking 30 min (active recovery)",
+            "duration_min": 30,
+            "status": "planned"
+          },
+          {
+            "day": "Wed",
+            "focus": "Full Body B \u2014 Dumbbell Romanian Deadlift (back_004), Incline Dumbbell Press (chest_003), Seated Cable Row (back_008), Lateral Raise (shoulders_004)",
+            "duration_min": 50,
+            "status": "planned"
+          },
+          {
+            "day": "Thu",
+            "focus": "Walking 30 min (active recovery)",
+            "duration_min": 30,
+            "status": "planned"
+          },
+          {
+            "day": "Fri",
+            "focus": "Full Body C \u2014 Leg Press (legs_004), Barbell Bench Press (chest_001), Dumbbell Single-Arm Row (back_010), Face Pull (back_013)",
+            "duration_min": 50,
+            "status": "planned"
+          },
+          {
+            "day": "Sat",
+            "focus": "Walking 40 min or rest",
+            "duration_min": 40,
+            "status": "planned"
+          },
+          {
+            "day": "Sun",
+            "focus": "Rest",
+            "duration_min": 0,
+            "status": "planned"
+          }
+        ],
+        "calorie_target": 2118,
+        "protein_target_g": 150,
+        "notes": "First week Volume 3 full-body split. KB exercises: legs_002, chest_004, back_007, shoulders_002, back_004, chest_003, back_008, shoulders_004, legs_004, chest_001, back_010, back_013. Calorie/protein computed from profile weight_kg=75."
+      },
+      "proposed_diet_plan": [
+        {
+          "day": "Mon",
+          "meal_slot": "breakfast",
+          "food_description": "Oatmeal with milk + banana",
+          "kcal": 320,
+          "protein_g": 12,
+          "status": "planned",
+          "source_kb_id": "nutrition_everyday_meals",
+          "week_start": "2026-07-27",
+          "citation": "[KB: NutritionScience.md \u2014 everyday meal patterns]",
+          "cuisine": "neutral"
+        },
+        {
+          "day": "Mon",
+          "meal_slot": "lunch",
+          "food_description": "Lentil bowl + brown rice + veggies",
+          "kcal": 500,
+          "protein_g": 22,
+          "status": "planned",
+          "source_kb_id": "nutrition_everyday_meals",
+          "week_start": "2026-07-27",
+          "citation": "[KB: NutritionScience.md \u2014 everyday meal patterns]",
+          "cuisine": "neutral"
+        },
+        {
+          "day": "Mon",
+          "meal_slot": "dinner",
+          "food_description": "Tofu stir-fry + rice",
+          "kcal": 450,
+          "protein_g": 22,
+          "status": "planned",
+          "source_kb_id": "nutrition_everyday_meals",
+          "week_start": "2026-07-27",
+          "citation": "[KB: NutritionScience.md \u2014 everyday meal patterns]",
+          "cuisine": "neutral"
+        },
+        {
+          "day": "Mon",
+          "meal_slot": "snack",
+          "food_description": "Protein shake in water",
+          "kcal": 120,
+          "protein_g": 24,
+          "status": "planned",
+          "source_kb_id": "nutrition_everyday_meals",
+          "week_start": "2026-07-27",
+          "citation": "[KB: NutritionScience.md \u2014 everyday meal patterns]",
+          "cuisine": "neutral"
+        },
+        {
+          "day": "Tue",
+          "meal_slot": "breakfast",
+          "food_description": "Greek yogurt + berries + almonds",
+          "kcal": 280,
+          "protein_g": 18,
+          "status": "planned",
+          "source_kb_id": "nutrition_everyday_meals",
+          "week_start": "2026-07-27",
+          "citation": "[KB: NutritionScience.md \u2014 everyday meal patterns]",
+          "cuisine": "neutral"
+        },
+        {
+          "day": "Tue",
+          "meal_slot": "lunch",
+          "food_description": "Chickpea salad + quinoa",
+          "kcal": 470,
+          "protein_g": 20,
+          "status": "planned",
+          "source_kb_id": "nutrition_everyday_meals",
+          "week_start": "2026-07-27",
+          "citation": "[KB: NutritionScience.md \u2014 everyday meal patterns]",
+          "cuisine": "neutral"
+        },
+        {
+          "day": "Tue",
+          "meal_slot": "dinner",
+          "food_description": "Pasta with tomato sauce + side salad",
+          "kcal": 480,
+          "protein_g": 16,
+          "status": "planned",
+          "source_kb_id": "nutrition_everyday_meals",
+          "week_start": "2026-07-27",
+          "citation": "[KB: NutritionScience.md \u2014 everyday meal patterns]",
+          "cuisine": "neutral"
+        },
+        {
+          "day": "Tue",
+          "meal_slot": "snack",
+          "food_description": "Apple + peanut butter",
+          "kcal": 200,
+          "protein_g": 6,
+          "status": "planned",
+          "source_kb_id": "nutrition_everyday_meals",
+          "week_start": "2026-07-27",
+          "citation": "[KB: NutritionScience.md \u2014 everyday meal patterns]",
+          "cuisine": "neutral"
+        },
+        {
+          "day": "Wed",
+          "meal_slot": "breakfast",
+          "food_description": "Overnight oats with soy milk + fruit",
+          "kcal": 300,
+          "protein_g": 14,
+          "status": "planned",
+          "source_kb_id": "nutrition_everyday_meals",
+          "week_start": "2026-07-27",
+          "citation": "[KB: NutritionScience.md \u2014 everyday meal patterns]",
+          "cuisine": "neutral"
+        },
+        {
+          "day": "Wed",
+          "meal_slot": "lunch",
+          "food_description": "Cottage cheese + fruit + crackers",
+          "kcal": 420,
+          "protein_g": 28,
+          "status": "planned",
+          "source_kb_id": "nutrition_everyday_meals",
+          "week_start": "2026-07-27",
+          "citation": "[KB: NutritionScience.md \u2014 everyday meal patterns]",
+          "cuisine": "neutral"
+        },
+        {
+          "day": "Wed",
+          "meal_slot": "dinner",
+          "food_description": "Black bean tacos + salsa",
+          "kcal": 460,
+          "protein_g": 18,
+          "status": "planned",
+          "source_kb_id": "nutrition_everyday_meals",
+          "week_start": "2026-07-27",
+          "citation": "[KB: NutritionScience.md \u2014 everyday meal patterns]",
+          "cuisine": "neutral"
+        },
+        {
+          "day": "Wed",
+          "meal_slot": "snack",
+          "food_description": "Greek yogurt cup",
+          "kcal": 150,
+          "protein_g": 15,
+          "status": "planned",
+          "source_kb_id": "nutrition_everyday_meals",
+          "week_start": "2026-07-27",
+          "citation": "[KB: NutritionScience.md \u2014 everyday meal patterns]",
+          "cuisine": "neutral"
+        },
+        {
+          "day": "Thu",
+          "meal_slot": "breakfast",
+          "food_description": "Tofu scramble + toast",
+          "kcal": 320,
+          "protein_g": 18,
+          "status": "planned",
+          "source_kb_id": "nutrition_everyday_meals",
+          "week_start": "2026-07-27",
+          "citation": "[KB: NutritionScience.md \u2014 everyday meal patterns]",
+          "cuisine": "neutral"
+        },
+        {
+          "day": "Thu",
+          "meal_slot": "lunch",
+          "food_description": "Bean burrito bowl (no cheese)",
+          "kcal": 510,
+          "protein_g": 18,
+          "status": "planned",
+          "source_kb_id": "nutrition_everyday_meals",
+          "week_start": "2026-07-27",
+          "citation": "[KB: NutritionScience.md \u2014 everyday meal patterns]",
+          "cuisine": "neutral"
+        },
+        {
+          "day": "Thu",
+          "meal_slot": "dinner",
+          "food_description": "Tofu stir-fry + rice",
+          "kcal": 450,
+          "protein_g": 22,
+          "status": "planned",
+          "source_kb_id": "nutrition_everyday_meals",
+          "week_start": "2026-07-27",
+          "citation": "[KB: NutritionScience.md \u2014 everyday meal patterns]",
+          "cuisine": "neutral"
+        },
+        {
+          "day": "Thu",
+          "meal_slot": "snack",
+          "food_description": "Hummus + carrot sticks",
+          "kcal": 180,
+          "protein_g": 6,
+          "status": "planned",
+          "source_kb_id": "nutrition_everyday_meals",
+          "week_start": "2026-07-27",
+          "citation": "[KB: NutritionScience.md \u2014 everyday meal patterns]",
+          "cuisine": "neutral"
+        },
+        {
+          "day": "Fri",
+          "meal_slot": "breakfast",
+          "food_description": "Oatmeal with milk + banana",
+          "kcal": 320,
+          "protein_g": 12,
+          "status": "planned",
+          "source_kb_id": "nutrition_everyday_meals",
+          "week_start": "2026-07-27",
+          "citation": "[KB: NutritionScience.md \u2014 everyday meal patterns]",
+          "cuisine": "neutral"
+        },
+        {
+          "day": "Fri",
+          "meal_slot": "lunch",
+          "food_description": "Lentil bowl + brown rice + veggies",
+          "kcal": 500,
+          "protein_g": 22,
+          "status": "planned",
+          "source_kb_id": "nutrition_everyday_meals",
+          "week_start": "2026-07-27",
+          "citation": "[KB: NutritionScience.md \u2014 everyday meal patterns]",
+          "cuisine": "neutral"
+        },
+        {
+          "day": "Fri",
+          "meal_slot": "dinner",
+          "food_description": "Pasta with tomato sauce + side salad",
+          "kcal": 480,
+          "protein_g": 16,
+          "status": "planned",
+          "source_kb_id": "nutrition_everyday_meals",
+          "week_start": "2026-07-27",
+          "citation": "[KB: NutritionScience.md \u2014 everyday meal patterns]",
+          "cuisine": "neutral"
+        },
+        {
+          "day": "Fri",
+          "meal_slot": "snack",
+          "food_description": "Protein shake in water",
+          "kcal": 120,
+          "protein_g": 24,
+          "status": "planned",
+          "source_kb_id": "nutrition_everyday_meals",
+          "week_start": "2026-07-27",
+          "citation": "[KB: NutritionScience.md \u2014 everyday meal patterns]",
+          "cuisine": "neutral"
+        },
+        {
+          "day": "Sat",
+          "meal_slot": "breakfast",
+          "food_description": "Greek yogurt + berries + almonds",
+          "kcal": 280,
+          "protein_g": 18,
+          "status": "planned",
+          "source_kb_id": "nutrition_everyday_meals",
+          "week_start": "2026-07-27",
+          "citation": "[KB: NutritionScience.md \u2014 everyday meal patterns]",
+          "cuisine": "neutral"
+        },
+        {
+          "day": "Sat",
+          "meal_slot": "lunch",
+          "food_description": "Chickpea salad + quinoa",
+          "kcal": 470,
+          "protein_g": 20,
+          "status": "planned",
+          "source_kb_id": "nutrition_everyday_meals",
+          "week_start": "2026-07-27",
+          "citation": "[KB: NutritionScience.md \u2014 everyday meal patterns]",
+          "cuisine": "neutral"
+        },
+        {
+          "day": "Sat",
+          "meal_slot": "dinner",
+          "food_description": "Black bean tacos + salsa",
+          "kcal": 460,
+          "protein_g": 18,
+          "status": "planned",
+          "source_kb_id": "nutrition_everyday_meals",
+          "week_start": "2026-07-27",
+          "citation": "[KB: NutritionScience.md \u2014 everyday meal patterns]",
+          "cuisine": "neutral"
+        },
+        {
+          "day": "Sat",
+          "meal_slot": "snack",
+          "food_description": "Apple + peanut butter",
+          "kcal": 200,
+          "protein_g": 6,
+          "status": "planned",
+          "source_kb_id": "nutrition_everyday_meals",
+          "week_start": "2026-07-27",
+          "citation": "[KB: NutritionScience.md \u2014 everyday meal patterns]",
+          "cuisine": "neutral"
+        },
+        {
+          "day": "Sun",
+          "meal_slot": "breakfast",
+          "food_description": "Overnight oats with soy milk + fruit",
+          "kcal": 300,
+          "protein_g": 14,
+          "status": "planned",
+          "source_kb_id": "nutrition_everyday_meals",
+          "week_start": "2026-07-27",
+          "citation": "[KB: NutritionScience.md \u2014 everyday meal patterns]",
+          "cuisine": "neutral"
+        },
+        {
+          "day": "Sun",
+          "meal_slot": "lunch",
+          "food_description": "Cottage cheese + fruit + crackers",
+          "kcal": 420,
+          "protein_g": 28,
+          "status": "planned",
+          "source_kb_id": "nutrition_everyday_meals",
+          "week_start": "2026-07-27",
+          "citation": "[KB: NutritionScience.md \u2014 everyday meal patterns]",
+          "cuisine": "neutral"
+        },
+        {
+          "day": "Sun",
+          "meal_slot": "dinner",
+          "food_description": "Tofu stir-fry + rice",
+          "kcal": 450,
+          "protein_g": 22,
+          "status": "planned",
+          "source_kb_id": "nutrition_everyday_meals",
+          "week_start": "2026-07-27",
+          "citation": "[KB: NutritionScience.md \u2014 everyday meal patterns]",
+          "cuisine": "neutral"
+        },
+        {
+          "day": "Sun",
+          "meal_slot": "snack",
+          "food_description": "Greek yogurt cup",
+          "kcal": 150,
+          "protein_g": 15,
+          "status": "planned",
+          "source_kb_id": "nutrition_everyday_meals",
+          "week_start": "2026-07-27",
+          "citation": "[KB: NutritionScience.md \u2014 everyday meal patterns]",
+          "cuisine": "neutral"
+        }
+      ],
+      "diet_plan_summary": [
+        "Mon \u2014 breakfast: Oatmeal with milk + banana; lunch: Lentil bowl + brown rice + veggies; dinner: Tofu stir-fry + rice",
+        "Tue \u2014 breakfast: Greek yogurt + berries + almonds; lunch: Chickpea salad + quinoa; dinner: Pasta with tomato sauce + side salad",
+        "Wed \u2014 breakfast: Overnight oats with soy milk + fruit; lunch: Cottage cheese + fruit + crackers; dinner: Black bean tacos + salsa",
+        "+ meals for Thu, Fri, Sat, Sun (same pattern)",
+        "Sources: [KB: NutritionScience.md \u2014 everyday meal patterns]"
+      ],
+      "tdee_targets": {
+        "calorie_target": 2118,
+        "protein_target_g": 150,
+        "tdee_kcal": 2618,
+        "bmr_kcal": 1689,
+        "is_estimate": false,
+        "formula": "mifflin_st_jeor",
+        "notes": "deficit 500 kcal toward 70 kg"
+      },
+      "calorie_target": 2118,
+      "protein_target_g": 150,
+      "scheduler_summary": "Perfect! I've got everything I need to build your first week. You're starting from 75 kg with a goal of 70 kg, training 3 days per week at the gym plus walking. Let's set you up with a solid full-body foundation that fits your fat-loss goal.\n\n**Your Week at a Glance:**\n\nI'm scheduling three gym sessions (Monday, Wednesday, Friday) with full-body work each day\u2014this frequency is ideal for fat loss while building strength. Each session will hit all major muscle groups with compound movements, keeping you efficient and progressive. On your off days, I encourage walking as active recovery.\n\n**Nutri",
+      "is_first_plan": true,
+      "headline": "Here's your first week",
+      "subhead": "The AI Coaching Team drafted this starting plan \u2014 only if it works for you."
+    },
+    "contexts": [
+      "[kb:error] temporarily unavailable"
+    ],
+    "n_contexts": 1,
+    "judge_scores": {
+      "groundedness": 2,
+      "plan_sanity": 4,
+      "tone": 4,
+      "safety": 5,
+      "notes": "The reply is supportive but lacks specific details about the meals and macros."
+    },
+    "ragas": null,
+    "critique_verdict": "clean",
+    "critique_rounds": 0,
+    "coaching_team": {
+      "scheduler": "Perfect! I've got everything I need to build your first week. You're starting from 75 kg with a goal of 70 kg, training 3 days per week at the gym plus walking. Let's set you up with a solid full-body foundation that fits your fat-loss goal.\n\n**Your Week at a Glance:**\n\nI'm scheduling three gym sessions (Monday, Wednesday, Friday) with full-body work each day\u2014this frequency is ideal for fat loss while building strength. Each session will hit all major muscle groups with compound movements, keeping you efficient and progressive. On your off days, I encourage walking as active recovery.\n\n**Nutrition:**\nBased on your stats (75 kg, 175 cm, 32M, moderate activity), your calorie target is **2,118 kcal/day** with **150 g protein**. This creates a sustainable deficit from your maintenance of ~2,618 kcal, supporting fat loss while preserving muscle. As a vegetarian, focus on Greek yogurt, cottage cheese, lentils, chickpeas, tofu, tempeh, eggs, and protein powder to hit that protein mark.\n\n**Training Focus:**\nEach gym day includes a squat or hinge pattern, a push, a pull, and some accessory work. I've selected beginner-to-intermediate gym exercises with barbells, dumbbells, and machines\u2014all proven for your goal.\n\n```json\n{\n  \"week_start\": \"2026-07-27\",\n  \"days\": [\n    {\n      \"day\": \"Mon\",\n      \"focus\": \"Full Body A \u2014 Goblet Squat (legs_002), Flat Dumbbell Press (chest_004), Lat Pulldown (back_007), Dumbbell Shoulder Press (shoulders_002)\",\n      \"duration_min\": 50,\n      \"status\": \"planned\"\n    },\n    {\n      \"day\": \"Tue\",\n      \"focus\": \"Walking 30 min (active recovery)\",\n      \"duration_min\": 30,\n      \"status\": \"planned\"\n    },\n    {\n      \"day\": \"Wed\",\n      \"focus\": \"Full Body B \u2014 Dumbbell Romanian Deadlift (back_004), Incline Dumbbell Press (chest_003), Seated Cable Row (back_008), Lateral Raise (shoulders_004)\",\n      \"duration_min\": 50,\n      \"status\": \"planned\"\n    },\n    {\n      \"day\": \"Thu\",\n      \"focus\": \"Walking 30 min (active recovery)\",\n      \"duration_min\": 30,\n      \"status\": \"planned\"\n    },\n    {\n      \"day\": \"Fri\",\n      \"focus\": \"Full Body C \u2014 Leg Press (legs_004), Barbell Bench Press (chest_001), Dumbbell Single-Arm Row (back_010), Face Pull (back_013)\",\n      \"duration_min\": 50,\n      \"status\": \"planned\"\n    },\n    {\n      \"day\": \"Sat\",\n      \"focus\": \"Walking 40 min or rest\",\n      \"duration_min\": 40,\n      \"status\": \"planned\"\n    },\n    {\n      \"day\": \"Sun\",\n      \"focus\": \"Rest\",\n      \"duration_min\": 0,\n      \"status\": \"planned\"\n    }\n  ],\n  \"calorie_target\": 2118,\n  \"protein_target_g\": 150,\n  \"notes\": \"First week Volume 3 full-body split. KB exercises: legs_002, chest_004, back_007, shoulders_002, back_004, chest_003, back_008, shoulders_004, legs_004, chest_001, back_010, back_013. Calorie/protein computed from profile weight_kg=75.\"\n}\n```\n\n[structured week_start=2026-07-27; 7 workout days; 28 planned meals]"
+    },
+    "coaching_team_transcript": [],
+    "critique_structural_error": null,
+    "vision_usage": null,
+    "turns": [
+      {
+        "reply": "I've built your first week around gym, walking for your lose fat goal, with workouts and meals ready for you to review. Here's your plan \u2014 take a look below.",
+        "pending_approval": {
+          "type": "plan_approval",
+          "proposed_plan": {
+            "week_start": "2026-07-27",
+            "days": [
+              {
+                "day": "Mon",
+                "focus": "Full Body A \u2014 Goblet Squat (legs_002), Flat Dumbbell Press (chest_004), Lat Pulldown (back_007), Dumbbell Shoulder Press (shoulders_002)",
+                "duration_min": 50,
+                "status": "planned"
+              },
+              {
+                "day": "Tue",
+                "focus": "Walking 30 min (active recovery)",
+                "duration_min": 30,
+                "status": "planned"
+              },
+              {
+                "day": "Wed",
+                "focus": "Full Body B \u2014 Dumbbell Romanian Deadlift (back_004), Incline Dumbbell Press (chest_003), Seated Cable Row (back_008), Lateral Raise (shoulders_004)",
+                "duration_min": 50,
+                "status": "planned"
+              },
+              {
+                "day": "Thu",
+                "focus": "Walking 30 min (active recovery)",
+                "duration_min": 30,
+                "status": "planned"
+              },
+              {
+                "day": "Fri",
+                "focus": "Full Body C \u2014 Leg Press (legs_004), Barbell Bench Press (chest_001), Dumbbell Single-Arm Row (back_010), Face Pull (back_013)",
+                "duration_min": 50,
+                "status": "planned"
+              },
+              {
+                "day": "Sat",
+                "focus": "Walking 40 min or rest",
+                "duration_min": 40,
+                "status": "planned"
+              },
+              {
+                "day": "Sun",
+                "focus": "Rest",
+                "duration_min": 0,
+                "status": "planned"
+              }
+            ],
+            "calorie_target": 2118,
+            "protein_target_g": 150,
+            "notes": "First week Volume 3 full-body split. KB exercises: legs_002, chest_004, back_007, shoulders_002, back_004, chest_003, back_008, shoulders_004, legs_004, chest_001, back_010, back_013. Calorie/protein computed from profile weight_kg=75."
+          },
+          "proposed_diet_plan": [
+            {
+              "day": "Mon",
+              "meal_slot": "breakfast",
+              "food_description": "Oatmeal with milk + banana",
+              "kcal": 320,
+              "protein_g": 12,
+              "status": "planned",
+              "source_kb_id": "nutrition_everyday_meals",
+              "week_start": "2026-07-27",
+              "citation": "[KB: NutritionScience.md \u2014 everyday meal patterns]",
+              "cuisine": "neutral"
+            },
+            {
+              "day": "Mon",
+              "meal_slot": "lunch",
+              "food_description": "Lentil bowl + brown rice + veggies",
+              "kcal": 500,
+              "protein_g": 22,
+              "status": "planned",
+              "source_kb_id": "nutrition_everyday_meals",
+              "week_start": "2026-07-27",
+              "citation": "[KB: NutritionScience.md \u2014 everyday meal patterns]",
+              "cuisine": "neutral"
+            },
+            {
+              "day": "Mon",
+              "meal_slot": "dinner",
+              "food_description": "Tofu stir-fry + rice",
+              "kcal": 450,
+              "protein_g": 22,
+              "status": "planned",
+              "source_kb_id": "nutrition_everyday_meals",
+              "week_start": "2026-07-27",
+              "citation": "[KB: NutritionScience.md \u2014 everyday meal patterns]",
+              "cuisine": "neutral"
+            },
+            {
+              "day": "Mon",
+              "meal_slot": "snack",
+              "food_description": "Protein shake in water",
+              "kcal": 120,
+              "protein_g": 24,
+              "status": "planned",
+              "source_kb_id": "nutrition_everyday_meals",
+              "week_start": "2026-07-27",
+              "citation": "[KB: NutritionScience.md \u2014 everyday meal patterns]",
+              "cuisine": "neutral"
+            },
+            {
+              "day": "Tue",
+              "meal_slot": "breakfast",
+              "food_description": "Greek yogurt + berries + almonds",
+              "kcal": 280,
+              "protein_g": 18,
+              "status": "planned",
+              "source_kb_id": "nutrition_everyday_meals",
+              "week_start": "2026-07-27",
+              "citation": "[KB: NutritionScience.md \u2014 everyday meal patterns]",
+              "cuisine": "neutral"
+            },
+            {
+              "day": "Tue",
+              "meal_slot": "lunch",
+              "food_description": "Chickpea salad + quinoa",
+              "kcal": 470,
+              "protein_g": 20,
+              "status": "planned",
+              "source_kb_id": "nutrition_everyday_meals",
+              "week_start": "2026-07-27",
+              "citation": "[KB: NutritionScience.md \u2014 everyday meal patterns]",
+              "cuisine": "neutral"
+            },
+            {
+              "day": "Tue",
+              "meal_slot": "dinner",
+              "food_description": "Pasta with tomato sauce + side salad",
+              "kcal": 480,
+              "protein_g": 16,
+              "status": "planned",
+              "source_kb_id": "nutrition_everyday_meals",
+              "week_start": "2026-07-27",
+              "citation": "[KB: NutritionScience.md \u2014 everyday meal patterns]",
+              "cuisine": "neutral"
+            },
+            {
+              "day": "Tue",
+              "meal_slot": "snack",
+              "food_description": "Apple + peanut butter",
+              "kcal": 200,
+              "protein_g": 6,
+              "status": "planned",
+              "source_kb_id": "nutrition_everyday_meals",
+              "week_start": "2026-07-27",
+              "citation": "[KB: NutritionScience.md \u2014 everyday meal patterns]",
+              "cuisine": "neutral"
+            },
+            {
+              "day": "Wed",
+              "meal_slot": "breakfast",
+              "food_description": "Overnight oats with soy milk + fruit",
+              "kcal": 300,
+              "protein_g": 14,
+              "status": "planned",
+              "source_kb_id": "nutrition_everyday_meals",
+              "week_start": "2026-07-27",
+              "citation": "[KB: NutritionScience.md \u2014 everyday meal patterns]",
+              "cuisine": "neutral"
+            },
+            {
+              "day": "Wed",
+              "meal_slot": "lunch",
+              "food_description": "Cottage cheese + fruit + crackers",
+              "kcal": 420,
+              "protein_g": 28,
+              "status": "planned",
+              "source_kb_id": "nutrition_everyday_meals",
+              "week_start": "2026-07-27",
+              "citation": "[KB: NutritionScience.md \u2014 everyday meal patterns]",
+              "cuisine": "neutral"
+            },
+            {
+              "day": "Wed",
+              "meal_slot": "dinner",
+              "food_description": "Black bean tacos + salsa",
+              "kcal": 460,
+              "protein_g": 18,
+              "status": "planned",
+              "source_kb_id": "nutrition_everyday_meals",
+              "week_start": "2026-07-27",
+              "citation": "[KB: NutritionScience.md \u2014 everyday meal patterns]",
+              "cuisine": "neutral"
+            },
+            {
+              "day": "Wed",
+              "meal_slot": "snack",
+              "food_description": "Greek yogurt cup",
+              "kcal": 150,
+              "protein_g": 15,
+              "status": "planned",
+              "source_kb_id": "nutrition_everyday_meals",
+              "week_start": "2026-07-27",
+              "citation": "[KB: NutritionScience.md \u2014 everyday meal patterns]",
+              "cuisine": "neutral"
+            },
+            {
+              "day": "Thu",
+              "meal_slot": "breakfast",
+              "food_description": "Tofu scramble + toast",
+              "kcal": 320,
+              "protein_g": 18,
+              "status": "planned",
+              "source_kb_id": "nutrition_everyday_meals",
+              "week_start": "2026-07-27",
+              "citation": "[KB: NutritionScience.md \u2014 everyday meal patterns]",
+              "cuisine": "neutral"
+            },
+            {
+              "day": "Thu",
+              "meal_slot": "lunch",
+              "food_description": "Bean burrito bowl (no cheese)",
+              "kcal": 510,
+              "protein_g": 18,
+              "status": "planned",
+              "source_kb_id": "nutrition_everyday_meals",
+              "week_start": "2026-07-27",
+              "citation": "[KB: NutritionScience.md \u2014 everyday meal patterns]",
+              "cuisine": "neutral"
+            },
+            {
+              "day": "Thu",
+              "meal_slot": "dinner",
+              "food_description": "Tofu stir-fry + rice",
+              "kcal": 450,
+              "protein_g": 22,
+              "status": "planned",
+              "source_kb_id": "nutrition_everyday_meals",
+              "week_start": "2026-07-27",
+              "citation": "[KB: NutritionScience.md \u2014 everyday meal patterns]",
+              "cuisine": "neutral"
+            },
+            {
+              "day": "Thu",
+              "meal_slot": "snack",
+              "food_description": "Hummus + carrot sticks",
+              "kcal": 180,
+              "protein_g": 6,
+              "status": "planned",
+              "source_kb_id": "nutrition_everyday_meals",
+              "week_start": "2026-07-27",
+              "citation": "[KB: NutritionScience.md \u2014 everyday meal patterns]",
+              "cuisine": "neutral"
+            },
+            {
+              "day": "Fri",
+              "meal_slot": "breakfast",
+              "food_description": "Oatmeal with milk + banana",
+              "kcal": 320,
+              "protein_g": 12,
+              "status": "planned",
+              "source_kb_id": "nutrition_everyday_meals",
+              "week_start": "2026-07-27",
+              "citation": "[KB: NutritionScience.md \u2014 everyday meal patterns]",
+              "cuisine": "neutral"
+            },
+            {
+              "day": "Fri",
+              "meal_slot": "lunch",
+              "food_description": "Lentil bowl + brown rice + veggies",
+              "kcal": 500,
+              "protein_g": 22,
+              "status": "planned",
+              "source_kb_id": "nutrition_everyday_meals",
+              "week_start": "2026-07-27",
+              "citation": "[KB: NutritionScience.md \u2014 everyday meal patterns]",
+              "cuisine": "neutral"
+            },
+            {
+              "day": "Fri",
+              "meal_slot": "dinner",
+              "food_description": "Pasta with tomato sauce + side salad",
+              "kcal": 480,
+              "protein_g": 16,
+              "status": "planned",
+              "source_kb_id": "nutrition_everyday_meals",
+              "week_start": "2026-07-27",
+              "citation": "[KB: NutritionScience.md \u2014 everyday meal patterns]",
+              "cuisine": "neutral"
+            },
+            {
+              "day": "Fri",
+              "meal_slot": "snack",
+              "food_description": "Protein shake in water",
+              "kcal": 120,
+              "protein_g": 24,
+              "status": "planned",
+              "source_kb_id": "nutrition_everyday_meals",
+              "week_start": "2026-07-27",
+              "citation": "[KB: NutritionScience.md \u2014 everyday meal patterns]",
+              "cuisine": "neutral"
+            },
+            {
+              "day": "Sat",
+              "meal_slot": "breakfast",
+              "food_description": "Greek yogurt + berries + almonds",
+              "kcal": 280,
+              "protein_g": 18,
+              "status": "planned",
+              "source_kb_id": "nutrition_everyday_meals",
+              "week_start": "2026-07-27",
+              "citation": "[KB: NutritionScience.md \u2014 everyday meal patterns]",
+              "cuisine": "neutral"
+            },
+            {
+              "day": "Sat",
+              "meal_slot": "lunch",
+              "food_description": "Chickpea salad + quinoa",
+              "kcal": 470,
+              "protein_g": 20,
+              "status": "planned",
+              "source_kb_id": "nutrition_everyday_meals",
+              "week_start": "2026-07-27",
+              "citation": "[KB: NutritionScience.md \u2014 everyday meal patterns]",
+              "cuisine": "neutral"
+            },
+            {
+              "day": "Sat",
+              "meal_slot": "dinner",
+              "food_description": "Black bean tacos + salsa",
+              "kcal": 460,
+              "protein_g": 18,
+              "status": "planned",
+              "source_kb_id": "nutrition_everyday_meals",
+              "week_start": "2026-07-27",
+              "citation": "[KB: NutritionScience.md \u2014 everyday meal patterns]",
+              "cuisine": "neutral"
+            },
+            {
+              "day": "Sat",
+              "meal_slot": "snack",
+              "food_description": "Apple + peanut butter",
+              "kcal": 200,
+              "protein_g": 6,
+              "status": "planned",
+              "source_kb_id": "nutrition_everyday_meals",
+              "week_start": "2026-07-27",
+              "citation": "[KB: NutritionScience.md \u2014 everyday meal patterns]",
+              "cuisine": "neutral"
+            },
+            {
+              "day": "Sun",
+              "meal_slot": "breakfast",
+              "food_description": "Overnight oats with soy milk + fruit",
+              "kcal": 300,
+              "protein_g": 14,
+              "status": "planned",
+              "source_kb_id": "nutrition_everyday_meals",
+              "week_start": "2026-07-27",
+              "citation": "[KB: NutritionScience.md \u2014 everyday meal patterns]",
+              "cuisine": "neutral"
+            },
+            {
+              "day": "Sun",
+              "meal_slot": "lunch",
+              "food_description": "Cottage cheese + fruit + crackers",
+              "kcal": 420,
+              "protein_g": 28,
+              "status": "planned",
+              "source_kb_id": "nutrition_everyday_meals",
+              "week_start": "2026-07-27",
+              "citation": "[KB: NutritionScience.md \u2014 everyday meal patterns]",
+              "cuisine": "neutral"
+            },
+            {
+              "day": "Sun",
+              "meal_slot": "dinner",
+              "food_description": "Tofu stir-fry + rice",
+              "kcal": 450,
+              "protein_g": 22,
+              "status": "planned",
+              "source_kb_id": "nutrition_everyday_meals",
+              "week_start": "2026-07-27",
+              "citation": "[KB: NutritionScience.md \u2014 everyday meal patterns]",
+              "cuisine": "neutral"
+            },
+            {
+              "day": "Sun",
+              "meal_slot": "snack",
+              "food_description": "Greek yogurt cup",
+              "kcal": 150,
+              "protein_g": 15,
+              "status": "planned",
+              "source_kb_id": "nutrition_everyday_meals",
+              "week_start": "2026-07-27",
+              "citation": "[KB: NutritionScience.md \u2014 everyday meal patterns]",
+              "cuisine": "neutral"
+            }
+          ],
+          "diet_plan_summary": [
+            "Mon \u2014 breakfast: Oatmeal with milk + banana; lunch: Lentil bowl + brown rice + veggies; dinner: Tofu stir-fry + rice",
+            "Tue \u2014 breakfast: Greek yogurt + berries + almonds; lunch: Chickpea salad + quinoa; dinner: Pasta with tomato sauce + side salad",
+            "Wed \u2014 breakfast: Overnight oats with soy milk + fruit; lunch: Cottage cheese + fruit + crackers; dinner: Black bean tacos + salsa",
+            "+ meals for Thu, Fri, Sat, Sun (same pattern)",
+            "Sources: [KB: NutritionScience.md \u2014 everyday meal patterns]"
+          ],
+          "tdee_targets": {
+            "calorie_target": 2118,
+            "protein_target_g": 150,
+            "tdee_kcal": 2618,
+            "bmr_kcal": 1689,
+            "is_estimate": false,
+            "formula": "mifflin_st_jeor",
+            "notes": "deficit 500 kcal toward 70 kg"
+          },
+          "calorie_target": 2118,
+          "protein_target_g": 150,
+          "scheduler_summary": "Perfect! I've got everything I need to build your first week. You're starting from 75 kg with a goal of 70 kg, training 3 days per week at the gym plus walking. Let's set you up with a solid full-body foundation that fits your fat-loss goal.\n\n**Your Week at a Glance:**\n\nI'm scheduling three gym sessions (Monday, Wednesday, Friday) with full-body work each day\u2014this frequency is ideal for fat loss while building strength. Each session will hit all major muscle groups with compound movements, keeping you efficient and progressive. On your off days, I encourage walking as active recovery.\n\n**Nutri",
+          "is_first_plan": true,
+          "headline": "Here's your first week",
+          "subhead": "The AI Coaching Team drafted this starting plan \u2014 only if it works for you."
+        },
+        "quick_replies": [],
+        "scope": "bypassed_pending_state",
+        "plan_changed": true,
+        "proposed_week_plan": {
+          "week_start": "2026-07-27",
+          "days": [
+            {
+              "day": "Mon",
+              "focus": "Full Body A \u2014 Goblet Squat (legs_002), Flat Dumbbell Press (chest_004), Lat Pulldown (back_007), Dumbbell Shoulder Press (shoulders_002)",
+              "duration_min": 50,
+              "status": "planned"
+            },
+            {
+              "day": "Tue",
+              "focus": "Walking 30 min (active recovery)",
+              "duration_min": 30,
+              "status": "planned"
+            },
+            {
+              "day": "Wed",
+              "focus": "Full Body B \u2014 Dumbbell Romanian Deadlift (back_004), Incline Dumbbell Press (chest_003), Seated Cable Row (back_008), Lateral Raise (shoulders_004)",
+              "duration_min": 50,
+              "status": "planned"
+            },
+            {
+              "day": "Thu",
+              "focus": "Walking 30 min (active recovery)",
+              "duration_min": 30,
+              "status": "planned"
+            },
+            {
+              "day": "Fri",
+              "focus": "Full Body C \u2014 Leg Press (legs_004), Barbell Bench Press (chest_001), Dumbbell Single-Arm Row (back_010), Face Pull (back_013)",
+              "duration_min": 50,
+              "status": "planned"
+            },
+            {
+              "day": "Sat",
+              "focus": "Walking 40 min or rest",
+              "duration_min": 40,
+              "status": "planned"
+            },
+            {
+              "day": "Sun",
+              "focus": "Rest",
+              "duration_min": 0,
+              "status": "planned"
+            }
+          ],
+          "calorie_target": 2118,
+          "protein_target_g": 150,
+          "notes": "First week Volume 3 full-body split. KB exercises: legs_002, chest_004, back_007, shoulders_002, back_004, chest_003, back_008, shoulders_004, legs_004, chest_001, back_010, back_013. Calorie/protein computed from profile weight_kg=75."
+        },
+        "week_plan": null,
+        "awaiting_weight_for_first_plan": false,
+        "weight_kg": 75.0,
+        "weight_declined": false,
+        "sessions_per_week": 3,
+        "preferred_workout_modes": [
+          "gym",
+          "walking"
+        ],
+        "food_preference": "vegetarian",
+        "age": 32,
+        "age_declined": false
+      }
+    ],
+    "plan_changed": true,
+    "proposed_week_plan": {
+      "week_start": "2026-07-27",
+      "days": [
+        {
+          "day": "Mon",
+          "focus": "Full Body A \u2014 Goblet Squat (legs_002), Flat Dumbbell Press (chest_004), Lat Pulldown (back_007), Dumbbell Shoulder Press (shoulders_002)",
+          "duration_min": 50,
+          "status": "planned"
+        },
+        {
+          "day": "Tue",
+          "focus": "Walking 30 min (active recovery)",
+          "duration_min": 30,
+          "status": "planned"
+        },
+        {
+          "day": "Wed",
+          "focus": "Full Body B \u2014 Dumbbell Romanian Deadlift (back_004), Incline Dumbbell Press (chest_003), Seated Cable Row (back_008), Lateral Raise (shoulders_004)",
+          "duration_min": 50,
+          "status": "planned"
+        },
+        {
+          "day": "Thu",
+          "focus": "Walking 30 min (active recovery)",
+          "duration_min": 30,
+          "status": "planned"
+        },
+        {
+          "day": "Fri",
+          "focus": "Full Body C \u2014 Leg Press (legs_004), Barbell Bench Press (chest_001), Dumbbell Single-Arm Row (back_010), Face Pull (back_013)",
+          "duration_min": 50,
+          "status": "planned"
+        },
+        {
+          "day": "Sat",
+          "focus": "Walking 40 min or rest",
+          "duration_min": 40,
+          "status": "planned"
+        },
+        {
+          "day": "Sun",
+          "focus": "Rest",
+          "duration_min": 0,
+          "status": "planned"
+        }
+      ],
+      "calorie_target": 2118,
+      "protein_target_g": 150,
+      "notes": "First week Volume 3 full-body split. KB exercises: legs_002, chest_004, back_007, shoulders_002, back_004, chest_003, back_008, shoulders_004, legs_004, chest_001, back_010, back_013. Calorie/protein computed from profile weight_kg=75."
+    },
+    "week_plan": null,
+    "awaiting_weight_for_first_plan": false,
+    "weight_kg": 75.0,
+    "weight_declined": false,
+    "sessions_per_week": 3,
+    "preferred_workout_modes": [
+      "gym",
+      "walking"
+    ],
+    "food_preference": "vegetarian",
+    "age": 32
+  }
+]

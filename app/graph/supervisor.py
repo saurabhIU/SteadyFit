@@ -14,7 +14,10 @@ from app.graph.diet_gate import (
     needs_diet_gate_before_first_plan,
 )
 from app.graph.upload_offer import open_first_diet_slot
-from app.graph.weight_gate import looks_like_first_plan_request
+from app.graph.weight_gate import (
+    looks_like_first_plan_request,
+    looks_like_training_day_preference,
+)
 from app.graph.micro_workout import (
     looks_like_quick_10_done,
     looks_like_quick_10_extra,
@@ -205,17 +208,13 @@ def coach_node(state: CoachingTeamState) -> dict:
             "quick_replies": [],
             **critique_reset,
         }
-    if looks_like_cardiometabolic_safety_interrupt(user_msg):
-        # Same path as pregnancy: population-guide KB via knowledge agent.
-        return {
-            "intent": "knowledge",
-            "coaching_team_rounds": rounds,
-            "quick_replies": [],
-            **critique_reset,
-        }
 
-    # Deterministic first-plan diet gate (do not wait on LLM intent).
-    if looks_like_first_plan_request(user_msg):
+    # Plan draft / rebuild / training-day prefs → schedule BEFORE cardiometabolic
+    # knowledge divert. "draft again with my health profile" must produce a
+    # WeekPlan + announcement, not a knowledge essay that invents a plan card.
+    if looks_like_first_plan_request(user_msg) or looks_like_training_day_preference(
+        user_msg
+    ):
         saved = get_saved_week_plan(state.user_id) if state.user_id else None
         if needs_diet_gate_before_first_plan(
             state.profile, week_plan=state.week_plan, saved_plan=saved
@@ -230,6 +229,21 @@ def coach_node(state: CoachingTeamState) -> dict:
                 "coaching_team_rounds": rounds,
                 **critique_reset,
             }
+        return {
+            "intent": "schedule",
+            "coaching_team_rounds": rounds,
+            "quick_replies": [],
+            **critique_reset,
+        }
+
+    if looks_like_cardiometabolic_safety_interrupt(user_msg):
+        # Same path as pregnancy: population-guide KB via knowledge agent.
+        return {
+            "intent": "knowledge",
+            "coaching_team_rounds": rounds,
+            "quick_replies": [],
+            **critique_reset,
+        }
 
     llm = get_llm(max_tokens=32)
     history_without_latest = list(state.messages or [])[:-1] if state.messages else []
@@ -367,6 +381,34 @@ def _plan_change_intro(state: CoachingTeamState) -> str:
     )
 
 
+def _flagged_reply_additions(proposals: dict | None) -> list[str]:
+    """Collect additive fragments for plan_changed replies (never overwrite-only).
+
+    Supported proposal keys:
+    - reply_additions: list[str]
+    - personalization_note / reply_addition: single str
+    - offer_upload True + upload_offer_text: legacy soft-hint path
+    """
+    if not isinstance(proposals, dict):
+        return []
+    additions: list[str] = []
+    raw_list = proposals.get("reply_additions")
+    if isinstance(raw_list, list):
+        for item in raw_list:
+            text = str(item or "").strip()
+            if text and text not in additions:
+                additions.append(text)
+    for key in ("personalization_note", "reply_addition"):
+        text = str(proposals.get(key) or "").strip()
+        if text and text not in additions:
+            additions.append(text)
+    if proposals.get("offer_upload"):
+        hint = str(proposals.get("upload_offer_text") or "").strip()
+        if hint and hint not in additions:
+            additions.append(hint)
+    return additions
+
+
 def _sanitize_plan_change_reply(text: str, *, plan_changed: bool) -> str:
     """Strip legacy text-approve CTAs; ensure a soft look-below when plan pending."""
     cleaned = _REPLY_APPROVE_RE.sub("", text or "")
@@ -384,11 +426,100 @@ def _sanitize_plan_change_reply(text: str, *, plan_changed: bool) -> str:
     return cleaned
 
 
+def _compose_plan_changed_reply(state: CoachingTeamState, body: str) -> str:
+    """Additive composition: intro/body + any flagged pending content.
+
+    plan_changed turns must never discard specialist- or gate-flagged fragments
+    (the silent-overwrite class of bugs).
+    Personalization announcement is placed FIRST so it stays visible above the
+    coaching-team panel / approval card in the UI.
+    """
+    base = _sanitize_plan_change_reply(body, plan_changed=True)
+    additions = _flagged_reply_additions(state.proposals)
+    if not additions:
+        return base
+    note = str(state.proposals.get("personalization_note") or "").strip()
+    rest = [a for a in additions if a != note]
+    parts: list[str] = []
+    if note:
+        parts.append(note)
+    parts.append(base)
+    parts.extend(rest)
+    return "\n\n".join(parts)
+
+
+def _ensure_personalization_on_plan_change(state: CoachingTeamState) -> dict:
+    """Failsafe for plan_changed turns: announcement + constraint scrub.
+
+    Scheduler normally sets these; if it misses (empty user_id, retrieval miss,
+    older code path), the user-facing reply/approval card still reflect docs.
+    """
+    from app.graph.personalization import (
+        PERSONALIZATION_ANNOUNCEMENT,
+        apply_personalization_flags,
+        load_personal_plan_context,
+        scrub_diet_for_food_avoids,
+        scrub_week_plan_for_avoids,
+    )
+    from app.graph.plan_utils import coerce_week_plan
+    from app.memory.user_context import get_current_user_id
+
+    proposals = dict(state.proposals or {})
+    uid = (state.user_id or get_current_user_id() or "").strip()
+    ctx = load_personal_plan_context(uid, state.profile)
+    if not ctx.has_docs:
+        return proposals
+
+    proposals = apply_personalization_flags(proposals, ctx)
+    # Guarantee the exact announcement string even if a stale note was set.
+    proposals["personalization_note"] = PERSONALIZATION_ANNOUNCEMENT
+
+    plan = coerce_week_plan(proposals.get("proposed_week_plan"))
+    tag = ctx.citations[0].get("tag") if ctx.citations else None
+    if plan is not None and ctx.avoid_terms:
+        scrubbed = scrub_week_plan_for_avoids(
+            plan, ctx.avoid_terms, source_tag=tag
+        )
+        proposals["proposed_week_plan"] = scrubbed.model_dump()
+    diet = proposals.get("proposed_diet_plan")
+    if isinstance(diet, list) and ctx.food_avoids:
+        proposals["proposed_diet_plan"] = scrub_diet_for_food_avoids(
+            diet, ctx.food_avoids, source_tag=tag
+        )
+    if ctx.conflicts:
+        proposals["doc_profile_conflicts"] = list(ctx.conflicts)
+    return proposals
+
+
+_PLAN_CHANGED_RETAIN_KEYS = (
+    "plan_changed",
+    "proposed_week_plan",
+    "proposed_diet_plan",
+    "diet_plan_summary",
+    "tdee_targets",
+    "nutrition_plan_change",
+    "scheduler",
+    "memory_written",
+    "offer_upload",
+    "upload_offer_text",
+    "personalization_note",
+    "reply_addition",
+    "reply_additions",
+    "doc_profile_conflicts",
+)
+
+
 def coaching_team_node(state: CoachingTeamState) -> dict:
     plan_changed = bool(state.proposals.get("plan_changed"))
     user_msg = as_text(state.messages[-1].content) if state.messages else ""
     # One source of truth: structured plan on the approval card. Free-text is intro only.
     if plan_changed:
+        # Failsafe: personal docs → announcement + constraint scrub on the
+        # user-facing path (not only scheduler), so the reply never silently
+        # drops the note again.
+        proposals = _ensure_personalization_on_plan_change(state)
+        state = state.model_copy(update={"proposals": proposals})
+
         # Pain/topic interrupts must keep the safety acknowledgment visible — the
         # generic tweak intro alone fails "acknowledge knee first" must-pass cases.
         if looks_like_topic_interrupt(user_msg) and looks_like_pain_injury_interrupt(
@@ -404,25 +535,15 @@ def coaching_team_node(state: CoachingTeamState) -> dict:
                 "Sorry your knee hurts — I've adjusted this week's sessions toward "
                 "knee-safer options (no deep loaded squats/lunges)."
             )
-            reply_text = _sanitize_plan_change_reply(body, plan_changed=True)
+            reply_text = _compose_plan_changed_reply(state, body)
         else:
-            reply_text = _sanitize_plan_change_reply(
+            reply_text = _compose_plan_changed_reply(
+                state,
                 _plan_change_intro(state),
-                plan_changed=True,
             )
         retained = {
             k: state.proposals[k]
-            for k in (
-                "plan_changed",
-                "proposed_week_plan",
-                "proposed_diet_plan",
-                "diet_plan_summary",
-                "tdee_targets",
-                "nutrition_plan_change",
-                "scheduler",
-                "memory_written",
-                "offer_upload",
-            )
+            for k in _PLAN_CHANGED_RETAIN_KEYS
             if k in state.proposals
         }
         return {
@@ -570,6 +691,10 @@ def approve_node(state: CoachingTeamState) -> dict:
     from app.graph.plan_utils import coerce_week_plan
     from app.memory.store import get_saved_week_plan, replace_diet_plan_week
 
+    # Last-chance personalization before the card is shown (same failsafe as council).
+    proposals = _ensure_personalization_on_plan_change(state)
+    state = state.model_copy(update={"proposals": proposals})
+
     proposed_plan = coerce_week_plan(state.proposals.get("proposed_week_plan")) or state.week_plan
     proposed_diet = state.proposals.get("proposed_diet_plan") or []
     if not isinstance(proposed_diet, list):
@@ -581,6 +706,15 @@ def approve_node(state: CoachingTeamState) -> dict:
         prior = get_saved_week_plan(state.user_id) if state.user_id else None
     framing = plan_approval_framing(has_prior=has_prior_week_plan(prior))
     is_first_plan = bool(framing["is_first_plan"])
+    personalization_note = str(
+        state.proposals.get("personalization_note") or ""
+    ).strip()
+    if personalization_note:
+        framing = {
+            **framing,
+            "subhead": personalization_note,
+            "personalization_note": personalization_note,
+        }
     decision = interrupt({
         "type": "plan_approval",
         "proposed_plan": proposed_plan.model_dump() if proposed_plan else None,

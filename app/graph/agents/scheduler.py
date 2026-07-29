@@ -14,10 +14,21 @@ from app.graph.micro_workout import (
     handle_quick_10_done,
     looks_like_ten_minute_request,
 )
+from app.graph.personalization import (
+    apply_personalization_flags,
+    load_personal_plan_context,
+    scrub_diet_for_food_avoids,
+    scrub_week_plan_for_avoids,
+)
 from app.graph.plan_utils import current_week_start_iso, parse_week_plan
-from app.graph.state import CoachingTeamState
+from app.graph.state import CoachingTeamState, WeekPlan, WorkoutDay
 from app.graph.tdee import compute_macro_targets
 from app.graph.tool_agent import run_tool_agent
+from app.graph.weight_gate import (
+    looks_like_first_plan_request,
+    looks_like_training_day_preference,
+)
+from app.memory.store import get_saved_week_plan
 from app.rag.memory_store import retrieve_memories
 from app.security import (
     as_text,
@@ -82,7 +93,130 @@ When profile has weight_kg, ground calorie/protein in that weight — no "estima
 When using KB chunks, mention them with [KB: File.md — Section] tags.
 
 Do NOT tell the user to "reply approve" or type a confirmation keyword — the UI
-approval card handles plan confirmation."""
+approval card handles plan confirmation.
+
+CRITICAL OUTPUT RULE: When drafting or rebuilding a week (first plan, personal-doc
+apply, or weekday preference), you MUST end with the fenced WeekPlan JSON above.
+Do not ask "sound good?" or defer meals to a later turn — include workouts in JSON
+now; meals are attached in code."""
+
+
+def _fallback_week_plan(
+    state: CoachingTeamState,
+    *,
+    week_start: str,
+    calorie_target: int,
+    protein_target_g: int,
+) -> WeekPlan:
+    """Deterministic scaffold when the LLM omits parseable WeekPlan JSON."""
+    base = state.week_plan
+    if base is None and state.user_id:
+        base = get_saved_week_plan(state.user_id)
+    if base and base.days:
+        days = [
+            d.model_copy(update={"status": "planned"})
+            for d in base.days
+        ]
+        return WeekPlan(
+            week_start=week_start,
+            days=days,
+            calorie_target=calorie_target,
+            protein_target_g=protein_target_g,
+            notes=(base.notes or "").strip()
+            or "Rebuilt from your current week (structured fallback).",
+        )
+    sessions = max(3, min(4, int(state.profile.sessions_per_week or 3)))
+    # Prefer Mon/Wed/Sat (+Tue if 4) — leave Friday free by default.
+    foci = [
+        ("Monday", "Full body — goblet squat, push-up, row"),
+        ("Wednesday", "Upper — incline press, lat pulldown, core"),
+        ("Saturday", "Lower — leg press, Romanian deadlift, hinge pattern"),
+        ("Tuesday", "Full body — lighter accessories + walk"),
+    ]
+    days = [
+        WorkoutDay(day=name, focus=focus, duration_min=45, status="planned")
+        for name, focus in foci[:sessions]
+    ]
+    for rest in ("Thursday", "Friday", "Sunday"):
+        if not any(d.day == rest for d in days):
+            days.append(
+                WorkoutDay(day=rest, focus="Rest", duration_min=0, status="planned")
+            )
+    return WeekPlan(
+        week_start=week_start,
+        days=days,
+        calorie_target=calorie_target,
+        protein_target_g=protein_target_g,
+        notes="Structured fallback week (3–4 sessions; Friday rest).",
+    )
+
+
+def _attach_structured_plan(
+    *,
+    proposals: dict,
+    parsed: WeekPlan,
+    week_start: str,
+    macro_targets,
+    personal_ctx,
+    state: CoachingTeamState,
+    user_msg: str,
+    proposal: str,
+) -> dict:
+    """Finalize plan_changed proposals + diet + personalization flags."""
+    parsed.week_start = week_start
+    parsed.calorie_target = macro_targets.calorie_target
+    parsed.protein_target_g = macro_targets.protein_target_g
+    if macro_targets.is_estimate:
+        note = (parsed.notes or "").strip()
+        caveat = "Macros are starting estimates (incomplete body stats)."
+        parsed.notes = f"{note} {caveat}".strip()
+    doc_tag = None
+    if personal_ctx.citations:
+        doc_tag = personal_ctx.citations[0].get("tag")
+    if personal_ctx.avoid_terms:
+        parsed = scrub_week_plan_for_avoids(
+            parsed, personal_ctx.avoid_terms, source_tag=doc_tag
+        )
+    proposals["proposed_week_plan"] = parsed.model_dump()
+    proposals["plan_changed"] = True
+    proposals = apply_personalization_flags(proposals, personal_ctx)
+    proposals["tdee_targets"] = {
+        "calorie_target": macro_targets.calorie_target,
+        "protein_target_g": macro_targets.protein_target_g,
+        "tdee_kcal": macro_targets.tdee_kcal,
+        "bmr_kcal": macro_targets.bmr_kcal,
+        "is_estimate": macro_targets.is_estimate,
+        "formula": macro_targets.formula,
+        "notes": macro_targets.notes,
+    }
+    diet_meals = build_diet_week(
+        state.profile,
+        week_start=week_start,
+        conversation_text=user_msg,
+    )
+    pref = (state.profile.food_preference or "").lower()
+    if pref in {"vegetarian", "vegan", "eggetarian"} and diet_plan_contains_nonveg(
+        diet_meals
+    ):
+        safe_pref = "vegan" if pref == "vegan" else "vegetarian"
+        diet_meals = build_diet_week(
+            state.profile.model_copy(update={"food_preference": safe_pref}),
+            week_start=week_start,
+            conversation_text=user_msg,
+        )
+    if personal_ctx.food_avoids:
+        diet_meals = scrub_diet_for_food_avoids(
+            diet_meals, personal_ctx.food_avoids, source_tag=doc_tag
+        )
+    proposals["proposed_diet_plan"] = diet_meals
+    proposals["diet_plan_summary"] = diet_summary_lines(diet_meals)
+    proposals["nutrition_plan_change"] = True
+    proposals["scheduler"] = (
+        f"{proposal}\n\n"
+        f"[structured week_start={week_start}; "
+        f"{len(parsed.days)} workout days; {len(diet_meals)} planned meals]"
+    )
+    return proposals
 
 
 def _memory_query(state: CoachingTeamState, user_msg: str) -> str:
@@ -186,7 +320,9 @@ def scheduler_node(state: CoachingTeamState) -> dict:
     else:
         hint = (
             "Call calendar_conflicts only as a check; if empty, schedule from the user's "
-            "stated constraints only. Use exercise lookup/substitutions for constrained swaps."
+            "stated constraints only. Use exercise lookup/substitutions for constrained swaps. "
+            "If the user asked to skip/prefer certain weekdays or rebuild the week, "
+            "ALWAYS emit a full WeekPlan JSON (plan_changed) — never advisory-only."
         )
 
     macro_targets = compute_macro_targets(
@@ -220,11 +356,17 @@ def scheduler_node(state: CoachingTeamState) -> dict:
     )
     memory_block = "\n\n".join(memory_chunks) if memory_chunks else ""
 
+    personal_ctx = load_personal_plan_context(state.user_id or "", state.profile)
+    personal_block = personal_ctx.prompt_block
+    if personal_block:
+        personal_block = f"\n{personal_block}\n"
+
     user_prompt = (
         f"Profile: {state.profile.model_dump_json()}\n"
         f"Plan: {state.week_plan.model_dump_json() if state.week_plan else 'none'}\n"
         f"{wrap_untrusted(user_msg, source='user')}\n\n"
-        f"{memory_block}\n\n"
+        f"{memory_block}\n"
+        f"{personal_block}"
         f"{hint}"
         f"{revision_block(state)}"
     )
@@ -236,52 +378,42 @@ def scheduler_node(state: CoachingTeamState) -> dict:
     proposal = result.text
     parsed = parse_week_plan(proposal)
     proposals = {**state.proposals, "scheduler": proposal}
+    must_structure = (
+        first_plan
+        or looks_like_first_plan_request(user_msg)
+        or looks_like_training_day_preference(user_msg)
+    )
     # Only pause for HITL when we have a structured plan to save. Otherwise a
     # fresh user can "approve" prose and still land with an empty Plan tab.
     if parsed and parsed.days:
-        # Authoritative week_start = this calendar week's Monday (never LLM placeholder).
-        parsed.week_start = week_start
-        # Override LLM macros with code-computed TDEE (daily-totals principle).
-        parsed.calorie_target = macro_targets.calorie_target
-        parsed.protein_target_g = macro_targets.protein_target_g
-        if macro_targets.is_estimate:
-            note = (parsed.notes or "").strip()
-            caveat = "Macros are starting estimates (incomplete body stats)."
-            parsed.notes = f"{note} {caveat}".strip()
-        proposals["proposed_week_plan"] = parsed.model_dump()
-        proposals["plan_changed"] = True
-        proposals["tdee_targets"] = {
-            "calorie_target": macro_targets.calorie_target,
-            "protein_target_g": macro_targets.protein_target_g,
-            "tdee_kcal": macro_targets.tdee_kcal,
-            "bmr_kcal": macro_targets.bmr_kcal,
-            "is_estimate": macro_targets.is_estimate,
-            "formula": macro_targets.formula,
-            "notes": macro_targets.notes,
-        }
-        diet_meals = build_diet_week(
-            state.profile,
+        proposals = _attach_structured_plan(
+            proposals=proposals,
+            parsed=parsed,
             week_start=week_start,
-            conversation_text=user_msg,
+            macro_targets=macro_targets,
+            personal_ctx=personal_ctx,
+            state=state,
+            user_msg=user_msg,
+            proposal=proposal,
         )
-        # Preference safety: never ship non-veg to vegetarian/vegan profiles.
-        pref = (state.profile.food_preference or "").lower()
-        if pref in {"vegetarian", "vegan", "eggetarian"} and diet_plan_contains_nonveg(diet_meals):
-            safe_pref = "vegan" if pref == "vegan" else "vegetarian"
-            diet_meals = build_diet_week(
-                state.profile.model_copy(update={"food_preference": safe_pref}),
-                week_start=week_start,
-                conversation_text=user_msg,
-            )
-        proposals["proposed_diet_plan"] = diet_meals
-        proposals["diet_plan_summary"] = diet_summary_lines(diet_meals)
-        proposals["nutrition_plan_change"] = True
-        # Keep scheduler draft short for any downstream LLM — day detail lives in
-        # proposed_week_plan / proposed_diet_plan (approval card source of truth).
-        proposals["scheduler"] = (
-            f"{proposal}\n\n"
-            f"[structured week_start={week_start}; "
-            f"{len(parsed.days)} workout days; {len(diet_meals)} planned meals]"
+    elif must_structure:
+        # LLM wrote an essay instead of JSON — still ship a HITL card so
+        # personalization/rebuild never dies as chat-only advice.
+        fallback = _fallback_week_plan(
+            state,
+            week_start=week_start,
+            calorie_target=macro_targets.calorie_target,
+            protein_target_g=macro_targets.protein_target_g,
+        )
+        proposals = _attach_structured_plan(
+            proposals=proposals,
+            parsed=fallback,
+            week_start=week_start,
+            macro_targets=macro_targets,
+            personal_ctx=personal_ctx,
+            state=state,
+            user_msg=user_msg,
+            proposal=proposal,
         )
     elif first_plan:
         proposals["scheduler"] = (
@@ -298,10 +430,13 @@ def scheduler_node(state: CoachingTeamState) -> dict:
     cites = merge_citations(
         list(state.citations),
         memory_cites,
-        citations_from_texts(rag_bits + [proposal] + memory_chunks),
+        personal_ctx.citations,
+        citations_from_texts(rag_bits + [proposal] + memory_chunks + personal_ctx.chunks),
     )
     return {
         "proposals": proposals,
-        "retrieved_context": state.retrieved_context + memory_chunks + rag_bits,
+        "retrieved_context": (
+            state.retrieved_context + memory_chunks + personal_ctx.chunks + rag_bits
+        ),
         "citations": cites,
     }

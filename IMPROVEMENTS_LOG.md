@@ -4,7 +4,7 @@ Chronological log of product and eval upgrades after the Task 5 baseline
 (`baseline_fixed`, 80 cases) and Task 6 hybrid retrieval (`hybrid_retrieval`).
 Artifacts live under `evals/summary_*.md` / `evals/results_*.json`.
 
-**Live:** [App](https://steady-fit.vercel.app) · [API](https://steadyfit-api.onrender.com/health)
+**Live:** [App](https://www.steadyfit.pro) · [API](https://steadyfit-api.onrender.com/health)
 
 **Golden set (current):** **120** cases in `evals/golden_dataset.jsonl`
 (23 categories, including `calendar_day`). Latest near-full suite:

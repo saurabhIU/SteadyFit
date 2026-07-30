@@ -20,7 +20,7 @@ services:
         sync: false
       - key: USDA_API_KEY
         sync: false
-      - key: FRONTEND_URL          # Vercel origin, for CORS
+      - key: FRONTEND_URL          # Public frontend origin (e.g. https://www.steadyfit.pro), for CORS
         sync: false
       - key: LANGSMITH_TRACING
         sync: false

@@ -10,6 +10,11 @@ data/*.sqlite-wal
 data/uploads/
 .DS_Store
 
+# Local / agent-only docs (capstone content lives in README.md)
+deliverables.md
+CLAUDE.md
+claude.md
+
 # Ephemeral unlabeled eval outputs (latest run mirrors)
 evals/results.json
 evals/summary.json

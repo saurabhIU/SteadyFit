@@ -1,8 +1,8 @@
 # SteadyFit — Product Roadmap
 
 Post-cohort product direction. Capstone Tasks 1–7, eval evidence, and Demo Day
-keep-list live in **deliverables.md** and **IMPROVEMENTS_LOG.md**. This file is
-the forward-looking roadmap only.
+keep-list live in **README.md** (Tasks 1–7) and **IMPROVEMENTS_LOG.md**. This
+file is the forward-looking roadmap only.
 
 > **Note (Jul 2026):** `ROADMAP.md` was not present in the repo when founder-mode
 > retention notes were merged in. Phase 1 bullets below are consolidated from

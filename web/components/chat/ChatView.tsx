@@ -154,9 +154,15 @@ export function ChatView() {
     async (text: string, image?: PendingImage | null) => {
       // Free-text replace/extra must hit the dedicated path (not intake/LLM).
       // Bare "done" stays chip-only via handleChip to avoid mid-intake collisions.
+      // While an approval card is pending, NEVER take this path (and never
+      // silently return) — free-text must reach /api/chat → resume=modify.
       const quickAction = quickWorkoutActionForChip(text);
-      if (!image && (quickAction === "replace" || quickAction === "extra")) {
-        if (loading || restoring || pendingApproval) return;
+      if (
+        !image &&
+        !pendingApproval &&
+        (quickAction === "replace" || quickAction === "extra")
+      ) {
+        if (loading || restoring) return;
         setError(null);
         setLoading(true);
         const userMsg: ChatMessage = {
@@ -246,10 +252,14 @@ export function ChatView() {
 
   async function handleSubmit(e?: React.FormEvent) {
     e?.preventDefault();
+    // ONLY loading / restoring / empty — never gate on pendingApproval.
+    // Approval-card free-text must reach /api/chat → Command(resume="modify").
+    if (loading || restoring) return;
     const text = input.trim();
-    if ((!text && !pendingImage) || loading || restoring || pendingApproval) return;
+    const imageToSend = pendingApproval ? null : pendingImage;
+    if (!text && !imageToSend) return;
     setInput("");
-    await submitMessage(text, pendingImage);
+    await submitMessage(text, imageToSend);
   }
 
   async function handleFileChange(file: File | null) {
@@ -267,20 +277,44 @@ export function ChatView() {
     }
   }
 
-  function handleApprovalResolved(reply: string) {
+  function handleApprovalResolved(reply: string, decision: "accept" | "reject") {
     setPendingApproval(null);
-    setMessages((prev) => [
-      ...markQuickRepliesAnswered(prev),
-      {
-        id: crypto.randomUUID(),
-        role: "assistant",
-        content: reply,
-      },
-    ]);
+    // Prefer the canonical short accept line — never show the pre-approval
+    // proposal body (personalization / "take a look below") as confirmation.
+    const confirmReply =
+      decision === "accept"
+        ? "Plan approved and saved — you're set for the week."
+        : reply.trim() ||
+          "No worries — kept your previous plan. Tell me if you want a different adjustment.";
+    setMessages((prev) => {
+      const marked = markQuickRepliesAnswered(prev);
+      // Card is gone — strip stale "look below" CTAs from the proposal bubble.
+      const cleaned = marked.map((m, idx) => {
+        if (m.role !== "assistant") return m;
+        const isLastAssistant =
+          idx === marked.findLastIndex((x) => x.role === "assistant");
+        if (!isLastAssistant) return m;
+        const next = m.content
+          .replace(/\n*\s*Here's the update — take a look below\.?\s*$/i, "")
+          .replace(/\n*\s*Here's your plan — take a look below\.?\s*$/i, "")
+          .replace(/\n*\s*Take a look below\.?\s*$/i, "")
+          .trim();
+        return next === m.content ? m : { ...m, content: next };
+      });
+      return [
+        ...cleaned,
+        {
+          id: crypto.randomUUID(),
+          role: "assistant" as const,
+          content: confirmReply,
+        },
+      ];
+    });
     notifyPlanUpdated();
   }
 
   async function handleChip(option: string) {
+    // Chips / quick-workout stay paused during approval; free-text is the escape hatch.
     if (loading || restoring || pendingApproval) return;
 
     const quickAction = quickWorkoutActionForChip(option);
@@ -337,9 +371,12 @@ export function ChatView() {
   }, [ready, restoring, loading, pendingApproval, submitMessage]);
 
   const lastAssistantIndex = messages.findLastIndex((m) => m.role === "assistant");
-  const composerDisabled = loading || restoring || Boolean(pendingApproval);
-  const canSend = Boolean(input.trim() || pendingImage) && !composerDisabled;
-  const showTenMinute = !composerDisabled;
+  const approvalPending = Boolean(pendingApproval);
+  // Composer stays enabled with a pending approval card — only block while busy.
+  const composerDisabled = loading || restoring;
+  const canSend =
+    Boolean(input.trim() || (!approvalPending && pendingImage)) && !composerDisabled;
+  const showUtilityChips = !composerDisabled && !approvalPending;
   const activeChipCount = messages.reduce(
     (n, m) =>
       n +
@@ -512,23 +549,21 @@ export function ChatView() {
           }}
         />
 
-        {!composerDisabled ? (
+        {showUtilityChips ? (
           <div className="mb-3 flex flex-wrap gap-2">
-            {showTenMinute ? (
-              <button
-                type="button"
-                onClick={() => void handleChip(TEN_MINUTE_CHIP)}
-                className={cn(
-                  "inline-flex items-center gap-1.5 rounded-[var(--radius-pill)]",
-                  "border border-sage/50 bg-accent-tint px-3.5 py-1.5",
-                  "text-xs font-medium text-sage transition-colors",
-                  "hover:border-sage hover:bg-sage/20",
-                )}
-              >
-                <TimerIcon className="size-3.5" aria-hidden />
-                {TEN_MINUTE_CHIP}
-              </button>
-            ) : null}
+            <button
+              type="button"
+              onClick={() => void handleChip(TEN_MINUTE_CHIP)}
+              className={cn(
+                "inline-flex items-center gap-1.5 rounded-[var(--radius-pill)]",
+                "border border-sage/50 bg-accent-tint px-3.5 py-1.5",
+                "text-xs font-medium text-sage transition-colors",
+                "hover:border-sage hover:bg-sage/20",
+              )}
+            >
+              <TimerIcon className="size-3.5" aria-hidden />
+              {TEN_MINUTE_CHIP}
+            </button>
             <button
               type="button"
               onClick={() => fileRef.current?.click()}
@@ -578,12 +613,20 @@ export function ChatView() {
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={(e) => {
-              if (e.key === "Enter" && !e.shiftKey) {
-                e.preventDefault();
-                void handleSubmit();
+              if (e.key !== "Enter" || e.shiftKey || e.nativeEvent.isComposing) {
+                return;
               }
+              // Always handle Enter here so a disabled Submit button (or any
+              // form default) cannot swallow the key while an approval card is up.
+              e.preventDefault();
+              e.stopPropagation();
+              void handleSubmit();
             }}
-            placeholder="e.g. Life happened — want me to re-plan?"
+            placeholder={
+              approvalPending
+                ? "e.g. Reduce to 2 sessions this week…"
+                : "e.g. Life happened — want me to re-plan?"
+            }
             rows={1}
             disabled={composerDisabled}
             className={cn(

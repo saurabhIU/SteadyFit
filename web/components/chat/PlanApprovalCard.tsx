@@ -9,7 +9,7 @@ type PlanApprovalCardProps = {
   approval: PendingApproval;
   threadId: string;
   userId: string;
-  onResolved: (reply: string) => void;
+  onResolved: (reply: string, decision: "accept" | "reject") => void;
   onError: (message: string) => void;
 };
 
@@ -63,7 +63,7 @@ export function PlanApprovalCard({
           ? "Plan saved — we'll keep you on track."
           : "No changes — your current week stays as is.",
       );
-      onResolved(data.reply);
+      onResolved(data.reply, decision);
     } catch (err) {
       const message =
         err instanceof ApiError

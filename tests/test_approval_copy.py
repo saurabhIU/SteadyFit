@@ -1,6 +1,22 @@
 """Plan approval card first-plan vs tweak framing."""
-from app.graph.approval_copy import has_prior_week_plan, plan_approval_framing
+from app.graph.approval_copy import (
+    APPROVE_ACCEPT_REPLY,
+    approve_decision_reply,
+    has_prior_week_plan,
+    plan_approval_framing,
+)
 from app.graph.state import WeekPlan, WorkoutDay
+
+
+def test_approve_decision_reply_is_short_confirmation():
+    accept = approve_decision_reply("accept")
+    assert accept == APPROVE_ACCEPT_REPLY
+    assert "look below" not in accept.lower()
+    assert "personal document" not in accept.lower()
+    assert len(accept) < 100
+    reject = approve_decision_reply("reject", is_first_plan=False)
+    assert "kept your previous plan" in reject.lower()
+    assert "look below" not in reject.lower()
 
 
 def test_first_plan_framing_when_no_prior():

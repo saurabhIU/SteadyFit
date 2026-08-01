@@ -6,7 +6,7 @@ Artifacts live under `evals/summary_*.md` / `evals/results_*.json`.
 
 **Live:** [App](https://www.steadyfit.pro) · [API](https://steadyfit-api.onrender.com/health)
 
-**Golden set (current):** **120** cases in `evals/golden_dataset.jsonl`
+**Golden set (current):** **122** cases in `evals/golden_dataset.jsonl`
 (23 categories, including `calendar_day`). Latest near-full suite:
 `try_profile_ux_full` (**96** cases, 0 critical must-pass failures).
 

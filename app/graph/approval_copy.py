@@ -3,6 +3,28 @@ from __future__ import annotations
 
 from typing import Any
 
+# Post-accept / post-reject chat replies — short only. Never reuse the
+# pre-approval proposal body (personalization note, look-below CTA, diffs).
+APPROVE_ACCEPT_REPLY = "Plan approved and saved — you're set for the week."
+APPROVE_REJECT_REPLY_TWEAK = (
+    "No worries — kept your previous plan. "
+    "Tell me if you want a different adjustment."
+)
+APPROVE_REJECT_REPLY_FIRST = (
+    "No worries — we won't lock a week in yet. "
+    "Tell me when you want to try a first-week draft again."
+)
+
+
+def approve_decision_reply(decision: str, *, is_first_plan: bool = False) -> str:
+    """Canonical short confirmation after HITL accept/reject."""
+    action = (decision or "").strip().lower()
+    if action == "accept":
+        return APPROVE_ACCEPT_REPLY
+    if is_first_plan:
+        return APPROVE_REJECT_REPLY_FIRST
+    return APPROVE_REJECT_REPLY_TWEAK
+
 
 def has_prior_week_plan(plan: Any) -> bool:
     """True when a real WeekPlan with scheduled days already exists."""

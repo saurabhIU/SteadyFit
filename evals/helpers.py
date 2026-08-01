@@ -1463,6 +1463,39 @@ def diet_plan_structural_failure(row: dict, out: dict) -> str | None:
 
 def approval_card_structural_failure(row: dict, out: dict) -> str | None:
     """Assert first-plan vs tweak framing on pending_approval payload."""
+    reply = str(out.get("reply") or "").lower()
+    if row.get("expect_approval_modify_path"):
+        if "still waiting" in reply or "tap accept" in reply:
+            return "stuck in approval nudge instead of revise-and-replan"
+        pending = out.get("pending_approval") or {}
+        if not (isinstance(pending, dict) and pending.get("type") == "plan_approval"):
+            return "expected new pending_approval card after typed modification"
+        plan = pending.get("proposed_plan") or {}
+        days = plan.get("days") if isinstance(plan, dict) else None
+        want = row.get("expect_proposed_sessions")
+        if want is not None:
+            if not isinstance(days, list):
+                return "modified approval card missing proposed_plan.days"
+            if len(days) != int(want):
+                return f"expected {want} proposed sessions after modify, got {len(days)}"
+        return None
+
+    if row.get("expect_short_approve_confirm"):
+        raw = str(out.get("reply") or "")
+        low = raw.lower()
+        if out.get("pending_approval"):
+            return "post-approve must clear pending_approval"
+        if "take a look" in low or "look below" in low:
+            return "post-approve confirmation must not say take a look below"
+        if "personal document" in low or "factored it into" in low:
+            return "post-approve must not repeat personalization announcement"
+        if "plan approved" not in low or "saved" not in low:
+            return f"expected short save confirmation, got {raw!r}"
+        # One short sentence — not a re-proposed plan body.
+        if len(raw) > 120 or raw.count("\n") > 1:
+            return f"post-approve confirmation too long: {raw!r}"
+        return None
+
     pending = out.get("pending_approval") or {}
     if not (isinstance(pending, dict) and pending.get("type") == "plan_approval"):
         return "expected pending_approval plan card"

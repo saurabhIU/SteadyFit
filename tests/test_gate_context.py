@@ -172,6 +172,33 @@ def test_first_turn_openers_are_in_scope_without_llm():
         assert classify_scope(msg, prior_assistant=None) == "in_scope", msg
 
 
+def test_adherence_life_got_in_the_way_is_in_scope_even_when_quoted():
+    """Welcome invites 'what got in the way' — must not firm-refuse (quoted or not)."""
+    from app.security import normalize_user_message
+
+    variants = (
+        "honestly this week got away from me, work has been brutal",
+        '"honestly this week got away from me, work has been brutal"',
+        "“honestly this week got away from me, work has been brutal”",
+        "life got in the way this week",
+        "I keep falling off after two weeks",
+    )
+    for msg in variants:
+        normalized = normalize_user_message(msg)
+        assert not normalized.startswith('"'), msg
+        assert looks_like_fitness_query(normalized), normalized
+        assert classify_scope(normalized, prior_assistant=None) == "in_scope", normalized
+
+
+def test_out_of_scope_reply_does_not_nest_quotes():
+    from app.security import out_of_scope_reply
+
+    reply = out_of_scope_reply('"what\'s the weather"')
+    assert '""' not in reply
+    assert "“" not in reply and "”" not in reply
+    assert "what's the weather" in reply
+
+
 def test_weather_is_out_of_scope_without_llm():
     assert classify_scope("what's the weather today", prior_assistant=None) == "out_of_scope"
 

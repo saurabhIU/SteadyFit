@@ -734,7 +734,14 @@ def coaching_team_node(state: CoachingTeamState) -> dict:
 
 
 def approve_node(state: CoachingTeamState) -> dict:
-    """Human-in-the-loop: pause the graph until the user accepts/edits the plan change."""
+    """Human-in-the-loop: pause until accept / reject / modify (typed revision).
+
+    Resume values:
+    - ``"accept"`` — persist proposed week (+ diet) as the saved plan
+    - ``"reject"`` — discard proposal; keep prior plan
+    - ``"modify"`` — promote the proposed draft into working ``week_plan``
+      (not DB-persisted) so the next chat turn can tweak it and re-propose
+    """
     from app.graph.approval_copy import has_prior_week_plan, plan_approval_framing
     from app.graph.plan_utils import coerce_week_plan
     from app.memory.store import get_saved_week_plan, replace_diet_plan_week
@@ -774,11 +781,26 @@ def approve_node(state: CoachingTeamState) -> dict:
         "scheduler_summary": (state.proposals.get("scheduler") or "")[:600],
         **framing,
     })
-    accepted = decision == "accept"
+    # Normalize resume payloads (string or small dict from API).
+    if isinstance(decision, dict):
+        action = str(decision.get("decision") or decision.get("action") or "").strip().lower()
+    else:
+        action = str(decision or "").strip().lower()
+
     updates: dict = {
         "proposals": {},
         "quick_replies": [],
     }
+    if action == "modify":
+        # Clear the interrupt and keep the draft as the working week_plan so the
+        # user's next message revises it (chat_pipeline chains a full turn after).
+        if proposed_plan:
+            updates["week_plan"] = proposed_plan
+        return updates
+
+    from app.graph.approval_copy import approve_decision_reply
+
+    accepted = action == "accept"
     if accepted and proposed_plan:
         updates["week_plan"] = proposed_plan
         if proposed_diet and state.user_id:
@@ -790,9 +812,10 @@ def approve_node(state: CoachingTeamState) -> dict:
                 )
             except Exception:
                 logger.exception("replace_diet_plan_week failed user=%s", state.user_id)
+        # Short confirmation only — never re-emit the proposal / look-below body.
         updates["messages"] = [{
             "role": "assistant",
-            "content": "Plan approved and saved — you're set for the week.",
+            "content": approve_decision_reply("accept"),
         }]
     elif accepted:
         updates["messages"] = [{
@@ -805,12 +828,6 @@ def approve_node(state: CoachingTeamState) -> dict:
     else:
         updates["messages"] = [{
             "role": "assistant",
-            "content": (
-                "No worries — kept your previous plan. "
-                "Tell me if you want a different adjustment."
-                if not is_first_plan
-                else "No worries — we won't lock a week in yet. "
-                "Tell me when you want to try a first-week draft again."
-            ),
+            "content": approve_decision_reply("reject", is_first_plan=is_first_plan),
         }]
     return updates

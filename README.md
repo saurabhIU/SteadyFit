@@ -67,7 +67,7 @@ RAG / memory (Postgres + pgvector `documents`):
   weekly summaries  ──► doc_type=memory     (user_id; dense+recency)
 App state: profiles · week_plans · diet_plan_days · food_log · workout_log · weight_log
 Gateway: Vercel AI Gateway · Traces: LangSmith
-Evals: 120 golden cases · RAGAS + LLM-judge
+Evals: 122 golden cases · RAGAS + LLM-judge
 ```
 
 ```mermaid
@@ -116,7 +116,7 @@ flowchart TD
 
     subgraph OBS[Observability]
         LS[LangSmith]
-        EV[RAGAS + judge · 120 cases]
+        EV[RAGAS + judge · 122 cases]
     end
 
     UI -->|X-User-Id| GATE
@@ -263,7 +263,7 @@ npm run dev
 ```bash
 uv run pytest tests/
 uv run python evals/run_evals.py --label try_profile_ux_full   # large suite
-# Golden set: 120 cases · categories include schedule, nutrition, photo_meal,
+# Golden set: 122 cases · categories include schedule, nutrition, photo_meal,
 #   council_critique, diet_plan, weight_gate, try_profile_ux, calendar_day,
 #   kb_retrieval, …
 # **5**/**6** labeled pair still available:
@@ -295,7 +295,7 @@ app/
   tools/     calendar, food_api, tavily, exercise_lookup, meal_vision, agent_tools
   memory/    Postgres profiles · week_plans · diet_plan_days · food_log
 web/         chat (photo + chips + approval) · plan (planned vs logged) · upload
-evals/       golden_dataset.jsonl (120) · harness · labeled summaries
+evals/       golden_dataset.jsonl (122) · harness · labeled summaries
 IMPROVEMENTS_LOG.md   Post-baseline changelog + eval pointers
 ROADMAP.md            Post-cohort product roadmap
 ```
@@ -601,7 +601,7 @@ behaviour and the non-judgmental copy tone throughout the app.
 
 ## **5**: Evals
 
-- Golden set (**current HEAD**): **120 cases** across **23 categories**, including the
+- Golden set (**current HEAD**): **122 cases** across **23 categories**, including the
   original **5** set plus `council_critique`, `photo_meal`, `try_profile_ux`,
   `topic_interrupt`, `first_message`, `weight_gate`, `diet_plan`, `intake_chips`,
   `approval_card`, `calendar_day`, and the RAG / gate categories.

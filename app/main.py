@@ -275,14 +275,31 @@ def approve(
     body: ApproveIn,
     x_user_id: str | None = Header(default=None),
 ):
+    from app.graph.approval_copy import approve_decision_reply
+    from app.graph.response import pending_approval_from_snapshot
+
     uid = require_user_id(x_user_id)
     thread = make_thread_id(uid, body.thread_id)
     g = require_graph()
     config = thread_config(thread, user_id=uid, endpoint="api/approve")
+    # Capture first-plan framing before resume clears the interrupt.
+    try:
+        snap = g.get_state(config)
+        pending_before = pending_approval_from_snapshot(snap) or {}
+    except Exception:
+        pending_before = {}
+    is_first = bool(pending_before.get("is_first_plan"))
     result = g.invoke(Command(resume=body.decision), config=config)
     if body.decision == "accept":
         persist_approved_plan(g, thread, uid)
-    return build_chat_payload(thread, result, graph=g, config=config)
+    payload = build_chat_payload(thread, result, graph=g, config=config)
+    # Force a short confirmation. Never surface the pre-approval proposal body
+    # (personalization note / "take a look below") as the post-HITL reply.
+    payload["reply"] = approve_decision_reply(body.decision, is_first_plan=is_first)
+    payload["pending_approval"] = None
+    payload["coaching_team"] = {}
+    payload["quick_replies"] = []
+    return payload
 
 
 @app.get("/api/plan")

@@ -63,6 +63,9 @@ Examples — all in_scope:
 - "hey" / "hi" / "sup" / "help me" / "help me get started" / "new here"
   / "not sure where to start" / "ready to start" → coaching openers
   (app will ask for the goal; do NOT refuse)
+- "honestly this week got away from me" / "work has been brutal" /
+  "life got in the way" / "I keep falling off" → adherence / life-interference
+  (UI invites this; coach should re-plan or check in — do NOT refuse)
 - After PRIOR_ASSISTANT asked something: "yes", "no", "3", "vegetarian",
   "gym", "prefer not to say" → continuations
 
@@ -91,6 +94,13 @@ _IN_SCOPE_HINTS = re.compile(
     r"guideline|guidelines|program|deload|creatine|supplement|"
     r"physical\s+activity|weekly\s+activity|missed|schedule|plan|"
     r"adherence|streak|motivation|recovery|sleep|injury|knee|back|"
+    # Life-got-in-the-way / adherence openers (welcome invites these)
+    r"got\s+away|got\s+in\s+the\s+way|life\s+happened|life\s+got|"
+    r"falling\s+off|fell\s+off|fell\s+behind|behind\s+(?:this\s+)?week|"
+    r"busy\s+week|brutal\s+week|crazy\s+week|rough\s+week|"
+    r"work\s+has\s+been|been\s+brutal|been\s+crazy|been\s+swamped|"
+    r"overwhelmed|inconsistent|consistency|struggling\s+to\s+(?:stick|train|keep)|"
+    r"skipped|slip(?:ped)?|re-?plan|simplif(?:y|ied)|"
     # Declarative goals / body-comp / onboarding facts (first-message path)
     r"fat\s*loss|lose\s+(?:fat|weight)|weight\s*loss|cut(?:ting)?|bulk(?:ing)?|"
     r"build\s+muscle|muscle|hypertrophy|get\s+fit|fitness\s+goal|goal|"
@@ -252,7 +262,11 @@ def wrap_untrusted(content: str, *, source: str = "user") -> str:
 
 
 def normalize_user_message(text: str, *, max_chars: int | None = None) -> str:
-    """Strip pseudo-tags / control chars and enforce max length (noise reduction)."""
+    """Strip pseudo-tags / control chars and enforce max length (noise reduction).
+
+    Also unwrap a single layer of matching surrounding quotes — users sometimes
+    paste or type their whole message in quotes; that must not change scope.
+    """
     if not text:
         return ""
     limit = max_chars if max_chars is not None else settings.max_message_length
@@ -260,19 +274,31 @@ def normalize_user_message(text: str, *, max_chars: int | None = None) -> str:
     cleaned = _CONTROL_CHARS_RE.sub("", cleaned)
     cleaned = _ANGLE_TAG_RE.sub("", cleaned)
     cleaned = cleaned.strip()
+    # Unwrap "…", '…', “…” when the whole message is quoted.
+    if len(cleaned) >= 2:
+        pairs = (('"', '"'), ("'", "'"), ("“", "”"), ("‘", "’"))
+        for left, right in pairs:
+            if cleaned.startswith(left) and cleaned.endswith(right) and len(cleaned) > 2:
+                cleaned = cleaned[len(left) : -len(right)].strip()
+                break
     if len(cleaned) > limit:
         cleaned = cleaned[:limit]
     return cleaned
 
 
 def out_of_scope_reply(message: str) -> str:
-    """Brief refusal that references what they asked — avoids identical canned spam."""
+    """Brief refusal that references what they asked — avoids identical canned spam.
+
+    Do not wrap the preview in quote characters — the UI already shows the user
+    bubble, and nested “…” + typed quotes renders as ugly double quotes.
+    """
     preview = " ".join((message or "").split())
+    preview = preview.strip(" \"'“”‘’")
     if len(preview) > 72:
         preview = preview[:69] + "…"
     if preview:
         return (
-            f"I stay focused on fitness coaching, so I can't help with “{preview}”. "
+            f"I stay focused on fitness coaching, so I can't help with: {preview}. "
             "Ask me about a workout, meal, or re-planning your week."
         )
     return OUT_OF_SCOPE_REPLY
@@ -556,6 +582,16 @@ def _message_content(msg: object) -> str:
     return as_text(
         getattr(msg, "content", None) if not isinstance(msg, dict) else msg.get("content")
     ).strip()
+
+
+# Mirrors the client-only ChatView welcome invite (not stored in LangGraph).
+# Used as synthetic PRIOR_ASSISTANT on the first user turn so the scope gate
+# treats "what got in the way this week" answers as coaching continuations.
+UI_WELCOME_PRIOR = (
+    "Hi — I'm Steady. If you're new here I'll ask a few quick things about "
+    "your goals and how you like to train. Or jump straight in: log a meal, "
+    "or say what got in the way this week."
+)
 
 
 def is_first_user_turn(messages: list) -> bool:

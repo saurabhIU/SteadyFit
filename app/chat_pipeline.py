@@ -19,6 +19,7 @@ from app.memory.store import get_profile
 from app.memory.user_context import set_current_user_id
 from app.security import (
     OUT_OF_SCOPE_REPLY,
+    UI_WELCOME_PRIOR,
     classify_scope,
     gentle_clarification_reply,
     is_first_user_turn,
@@ -185,7 +186,7 @@ def process_user_chat(
             "scope": verdict,
         }
 
-    # ── 1) Plan-approval HITL resume (free-text Accept/Reject) ──────────────
+    # ── 1) Plan-approval HITL resume (accept / reject / typed modify) ───────
     if pending and pending.get("type") == "plan_approval":
         gate = scope_gate(
             normalized,
@@ -196,31 +197,37 @@ def process_user_chat(
         )
         verdict = gate["verdict"]
         if looks_like_short_affirmation(normalized):
+            from app.graph.approval_copy import approve_decision_reply
+
+            is_first = bool(pending.get("is_first_plan"))
             result = graph.invoke(Command(resume="accept"), config=config)
             persist_approved_plan(graph, thread, user_id)
             payload = build_chat_payload(thread, result, graph=graph, config=config)
+            payload["reply"] = approve_decision_reply("accept", is_first_plan=is_first)
+            payload["pending_approval"] = None
+            payload["coaching_team"] = {}
+            payload["quick_replies"] = []
             payload["scope"] = verdict
             payload["user_id"] = user_id
             return payload
         if looks_like_short_reject(normalized):
+            from app.graph.approval_copy import approve_decision_reply
+
+            is_first = bool(pending.get("is_first_plan"))
             result = graph.invoke(Command(resume="reject"), config=config)
             payload = build_chat_payload(thread, result, graph=graph, config=config)
+            payload["reply"] = approve_decision_reply("reject", is_first_plan=is_first)
+            payload["pending_approval"] = None
+            payload["coaching_team"] = {}
+            payload["quick_replies"] = []
             payload["scope"] = verdict
             payload["user_id"] = user_id
             return payload
-        return {
-            "thread_id": thread,
-            "user_id": user_id,
-            "reply": (
-                "Your plan change is still waiting for approval — "
-                "tap Accept / Reject, or say “sounds good” / “no thanks”."
-            ),
-            "coaching_team": {},
-            "pending_approval": pending,
-            "quick_replies": ["sounds good", "no thanks"],
-            "citations": [],
-            "scope": verdict,
-        }
+        # Free-text modification: clear the interrupt, keep the proposed draft as
+        # the working week_plan, then run a normal coaching turn so Scheduler can
+        # apply the tweak and (usually) interrupt again with an updated card.
+        graph.invoke(Command(resume="modify"), config=config)
+        return _enter_graph(bypass=True, bypass_reason="plan_approval_modify")
 
     # ── 2) First-turn bypass (empty checkpointer history) ───────────────────
     # UI greeting is client-only — never rely on it. Skip firm gating and route
@@ -231,9 +238,11 @@ def process_user_chat(
         return _enter_graph(bypass=True, bypass_reason="meal_photo")
 
     if first_turn:
+        # Welcome is client-only — feed it as prior so adherence openers that
+        # answer "what got in the way this week" are not false-refused.
         oos_check = classify_scope(
             normalized,
-            prior_assistant=prior_assistant,
+            prior_assistant=prior_assistant or UI_WELCOME_PRIOR,
             prior_user=prior_user,
         )
         if oos_check == "out_of_scope":

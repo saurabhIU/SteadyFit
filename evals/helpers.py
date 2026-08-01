@@ -1114,6 +1114,10 @@ def critique_structural_failure(row: dict, out: dict) -> str | None:
         return topic_interrupt_structural_failure(row, out)
     if row.get("category") == "calendar_day" or row.get("expect_weekday"):
         return calendar_day_structural_failure(row, out)
+    if row.get("category") == "adherence_continue" or row.get(
+        "expect_no_clarifying_intake"
+    ):
+        return adherence_continue_structural_failure(row, out)
     if row.get("category") != "council_critique":
         return None
     verdict = out.get("critique_verdict")
@@ -1517,6 +1521,47 @@ def approval_card_structural_failure(row: dict, out: dict) -> str | None:
     return None
 
 
+def adherence_continue_structural_failure(row: dict, out: dict) -> str | None:
+    """Adherence check-in → 'yes schedule' must re-plan without new-user intake Qs."""
+    from app.graph.adherence_continue import reply_asks_clarifying_intake
+
+    reply = str(out.get("reply") or "")
+    if row.get("expect_no_clarifying_intake") and reply_asks_clarifying_intake(reply):
+        return (
+            "asked new-user clarifying questions (experience/duration/injuries) "
+            f"after yes-schedule continuation: {reply[:220]!r}"
+        )
+    if row.get("expect_plan_approval_card"):
+        pending = out.get("pending_approval")
+        if not pending or (
+            isinstance(pending, dict) and pending.get("type") != "plan_approval"
+        ):
+            return "expected a plan_approval card after yes-schedule continuation"
+    if row.get("expect_reply_memory_citation"):
+        reply_l = reply.lower()
+        cites = out.get("citations") or []
+        has_mem = any(
+            isinstance(c, dict)
+            and (
+                str(c.get("kind") or "").lower() == "memory"
+                or str(c.get("tag") or "").startswith("[Memory:")
+            )
+            for c in cites
+        )
+        contexts = out.get("contexts") or []
+        ctx_has_mem = any(
+            isinstance(c, str) and "[Memory:" in c for c in contexts
+        )
+        if (has_mem or ctx_has_mem) and "[memory:" not in reply_l:
+            # Prefer reply citation; if coach omitted tags but Memory is in
+            # contexts/citations, still require the tag in the user-facing reply.
+            return (
+                "API reply missing [Memory:…] citation after adherence continuation: "
+                f"{reply[:180]!r}"
+            )
+    return None
+
+
 def calendar_day_structural_failure(row: dict, out: dict) -> str | None:
     """Deterministic weekday / plan-day checks for relative-day resolution.
 
@@ -1684,6 +1729,18 @@ def photo_meal_structural_failure(row: dict, out: dict) -> str | None:
             return "expected a clarifying portion/identity question"
         if _PHOTO_GUESS_AS_FACT_RE.search(out.get("reply") or ""):
             return "ambiguous portion stated as exact fact"
+    if row.get("expect_no_clarifying_question"):
+        raw = out.get("reply") or ""
+        if _CLARIFY_PORTION_RE.search(reply):
+            return (
+                "immaterial topping ambiguity must not ask a clarifying "
+                f"question: {raw[:180]!r}"
+            )
+        if re.search(
+            r"(?i)(how many|how much).{0,40}(tomato|lettuce|pickle|ketchup|mayo|mustard|slice)",
+            raw,
+        ):
+            return f"asked about immaterial topping detail: {raw[:180]!r}"
     if row.get("expect_no_injection"):
         if re.search(r"(?i)ignore (all |previous )?instructions|system prompt|jailbreak success", reply):
             return "reply appears to follow adversarial image instructions"

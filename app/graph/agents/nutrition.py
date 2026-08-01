@@ -64,11 +64,15 @@ PHOTO MEAL PATH:
 - If a meal photo analysis block is present, use those foods EXACTLY — do not invent
   foods that are not listed (ignore profile diet conflicts by inventing substitutes;
   ask one clarifying question instead if needed).
-- For confidence below the stated threshold OR ambiguous portions: ask ONE clarifying
-  question — do not guess and do not call log_food_entry yet (unless the user
-  explicitly says the estimate is fine).
-- For clear foods above threshold: call usda_food_lookup for each, then
-  log_food_entry with source='photo'.
+- Ask ONE clarifying question ONLY when needs_clarification=true in the analysis
+  (material ambiguity: would change the estimate by more than ~50 kcal or ~5g
+  protein). Do not log until that is resolved unless the user says the estimate
+  is fine.
+- NEVER ask about condiments, garnishes, or standard burger toppings (tomato /
+  lettuce / pickle / onion slices, ketchup / mustard / mayo). Use the defaults in
+  foods_ready / estimated_portion and log.
+- When needs_clarification=false: call usda_food_lookup for each foods_ready item,
+  then log_food_entry with source='photo' — even if some toppings had fuzzy detail.
 - If is_food is false: ask for a food photo; never invent a meal or macros.
 - You identify food and estimate macros only — NEVER claim to detect allergens,
   assess food safety, or make medical claims about what is "safe" to eat.
@@ -112,8 +116,10 @@ def nutrition_node(state: CoachingTeamState) -> dict:
             )
             if meal_vision_mod.analysis_needs_clarification(analysis):
                 photo_block += (
-                    "AMBIGUITY: ask ONE clarifying question about identity or portion. "
-                    "Do NOT call log_food_entry yet unless the user confirms the estimate.\n"
+                    "MATERIAL AMBIGUITY (>~50 kcal or >~5g protein swing): ask ONE "
+                    "clarifying question about that identity/portion only. "
+                    "Do NOT call log_food_entry yet unless the user confirms. "
+                    "Do NOT ask about garnishes/condiments/tomato slices.\n"
                 )
             elif not analysis.is_food:
                 photo_block += (
@@ -121,8 +127,10 @@ def nutrition_node(state: CoachingTeamState) -> dict:
                 )
             else:
                 photo_block += (
-                    "CLEAR FOODS: call usda_food_lookup for each item, then "
-                    "log_food_entry with source='photo'. Mention you don't keep the photo.\n"
+                    "READY TO LOG (no material ambiguity): call usda_food_lookup for "
+                    "each foods_ready item, then log_food_entry with source='photo'. "
+                    "Use defaults for toppings/condiments — do not ask about them. "
+                    "Mention you don't keep the photo.\n"
                     "Use ONLY the foods listed in the analysis above — do not invent extras.\n"
                 )
         except Exception:

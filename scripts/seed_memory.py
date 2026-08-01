@@ -169,7 +169,10 @@ def seed_veteran(*, history_weeks: int, no_llm: bool) -> str:
             preferred_workout_modes=["gym", "walking"],
             food_preference="vegetarian",
             sessions_per_week=5,
-            constraints=[],
+            constraints=[
+                "Right knee: mild irritation on deep bilateral squats when volume is high",
+                "Prefer goblet squat, leg press, or step-ups over back squat when knee feels puffy",
+            ],
             constraints_asked=True,
             onboarding_complete=True,
             awaiting_onboarding_confirm=False,

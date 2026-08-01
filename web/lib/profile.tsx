@@ -135,6 +135,8 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
       setApiUserId(id);
       const params = new URLSearchParams(searchParams.toString());
       params.set("profile", id);
+      // Conversation threads are profile-scoped — drop ?conv= on switch.
+      params.delete("conv");
       router.replace(`${pathname}?${params.toString()}`);
     },
     [pathname, router, searchParams],

@@ -189,3 +189,95 @@ def test_coaching_team_api_reply_field_is_concrete():
     assert "30" in reply
     assert "[Memory: week of 2026-06-29]" in reply
     assert "uploaded a personal document" in reply
+
+
+def test_rest_day_kept_or_removed_omitted_from_diff():
+    prior = WeekPlan(
+        week_start=WEEK_START,
+        days=[
+            WorkoutDay(day="Mon", focus="Upper A", duration_min=50, status="planned"),
+            WorkoutDay(day="Tue", focus="Rest", duration_min=0, status="planned"),
+            WorkoutDay(day="Wed", focus="Lower A", duration_min=50, status="planned"),
+        ],
+        calorie_target=2100,
+        protein_target_g=140,
+    )
+    # Rest kept (micro focus rewrite) + rest removed from Fri that was never there —
+    # Tuesday rest→rest should not appear; only Mon duration change is substantive.
+    proposed = WeekPlan(
+        week_start=WEEK_START,
+        days=[
+            WorkoutDay(day="Mon", focus="Upper A", duration_min=40, status="planned"),
+            WorkoutDay(day="Tue", focus="Rest — full recovery", duration_min=0, status="planned"),
+            WorkoutDay(day="Wed", focus="Lower A", duration_min=50, status="planned"),
+        ],
+        calorie_target=2100,
+        protein_target_g=140,
+    )
+    diff = compute_plan_diff(prior, proposed, user_msg="shorten Monday to 40 mins")
+    assert not any(
+        c.weekday_full == "Tuesday" or "rest" in (c.new_focus or c.old_focus).lower()
+        for c in diff.changes
+    )
+    reply = format_plan_diff_reply(diff, modes=["gym"], goal="lose 8kg")
+    assert "Tuesday" not in reply
+    assert "**0 minutes**" not in reply
+    assert "Rest to" not in reply
+
+
+def test_workout_to_rest_says_set_as_rest_day_not_trimmed():
+    prior = WeekPlan(
+        week_start=WEEK_START,
+        days=[
+            WorkoutDay(day="Tue", focus="Lower A", duration_min=50, status="planned"),
+            WorkoutDay(day="Wed", focus="Upper A", duration_min=50, status="planned"),
+        ],
+        calorie_target=2100,
+        protein_target_g=140,
+    )
+    proposed = WeekPlan(
+        week_start=WEEK_START,
+        days=[
+            WorkoutDay(day="Tue", focus="Rest", duration_min=0, status="planned"),
+            WorkoutDay(day="Wed", focus="Upper A", duration_min=50, status="planned"),
+        ],
+        calorie_target=2100,
+        protein_target_g=140,
+    )
+    diff = compute_plan_diff(prior, proposed, user_msg="make Tuesday a rest day")
+    reply = format_plan_diff_reply(diff, modes=["gym"], goal="lose 8kg")
+    assert "rest day" in reply.lower()
+    assert "trimmed" not in reply.lower()
+    assert "**0 minutes**" not in reply
+
+
+def test_removed_rest_day_not_mentioned():
+    prior = WeekPlan(
+        week_start=WEEK_START,
+        days=[
+            WorkoutDay(day="Mon", focus="Upper A", duration_min=50, status="planned"),
+            WorkoutDay(day="Tue", focus="Rest", duration_min=0, status="planned"),
+        ],
+        calorie_target=2100,
+        protein_target_g=140,
+    )
+    proposed = WeekPlan(
+        week_start=WEEK_START,
+        days=[
+            WorkoutDay(day="Mon", focus="Upper A", duration_min=45, status="planned"),
+        ],
+        calorie_target=2100,
+        protein_target_g=140,
+    )
+    diff = compute_plan_diff(prior, proposed, user_msg="trim Monday a bit")
+    assert not any(_is_rest_change(c) for c in diff.changes)
+    reply = format_plan_diff_reply(diff, modes=["gym"], goal="lose 8kg")
+    assert "Tuesday" not in reply
+    assert "removed Tuesday" not in reply.lower()
+    assert "**0 minutes**" not in reply
+
+
+def _is_rest_change(c) -> bool:
+    from app.graph.plan_diff import _is_rest_day
+
+    return _is_rest_day(c.old) or _is_rest_day(c.new)

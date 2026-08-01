@@ -102,6 +102,31 @@ def _focus_core(focus: str) -> str:
     return re.sub(r"\s+", " ", text).lower()
 
 
+_REST_FOCUS_RE = re.compile(r"(?is)\b(rest|recovery|off\s*day|active\s*recovery)\b")
+
+
+def _is_rest_day(day: WorkoutDay | None) -> bool:
+    """True for rest/recovery days (focus keyword and/or zero-duration rest)."""
+    if day is None:
+        return False
+    focus = (day.focus or "").strip()
+    if _REST_FOCUS_RE.search(focus):
+        return True
+    # Zero-duration with empty/placeholder focus also counts as rest.
+    return int(day.duration_min or 0) == 0 and (
+        not focus or focus.lower() in {"—", "-", "n/a", "none"}
+    )
+
+
+def _is_noise_rest_change(old: WorkoutDay | None, new: WorkoutDay | None) -> bool:
+    """Rest kept as rest, or a rest day removed — not worth reporting."""
+    if new is None and _is_rest_day(old):
+        return True
+    if _is_rest_day(old) and _is_rest_day(new):
+        return True
+    return False
+
+
 def _day_map(plan: WeekPlan | None) -> dict[str, WorkoutDay]:
     if not plan or not plan.days:
         return {}
@@ -250,6 +275,10 @@ def compute_plan_diff(
         kind = _classify(old, new)
         if kind is None:
             continue
+        # Drop rest↔rest micro-diffs and removed rest days — "trimmed Rest to
+        # 0 minutes" is meaningless noise in the user-facing summary.
+        if _is_noise_rest_change(old, new):
+            continue
         label = _weekday_label(proposed_plan or prior_plan, key, new or old)
         requested = key in requested_keys
         if (
@@ -346,6 +375,17 @@ def format_plan_diff_reply(
     if requested:
         bullets: list[str] = []
         for c in requested:
+            # Workout → rest day: never "trimmed … to 0 minutes".
+            if _is_rest_day(c.new) and int(c.new_duration or 0) == 0:
+                if _is_rest_day(c.old):
+                    bullets.append(
+                        f"I've kept {c.weekday_full} as a rest day."
+                    )
+                else:
+                    bullets.append(
+                        f"I've set {c.weekday_full} as a rest day."
+                    )
+                continue
             label = _session_label(c)
             if c.kind in {"duration", "mixed"} and c.new_duration is not None:
                 if c.old_duration is not None and c.new_duration < c.old_duration:
@@ -359,17 +399,30 @@ def format_plan_diff_reply(
                         f"**{c.new_duration} minutes**."
                     )
             elif c.kind == "added" and c.new is not None:
-                bullets.append(
-                    f"I've added {c.weekday_full}'s **{label}** "
-                    f"({c.new_duration} min)."
-                )
+                if _is_rest_day(c.new) and int(c.new_duration or 0) == 0:
+                    bullets.append(
+                        f"I've kept {c.weekday_full} as a rest day."
+                    )
+                else:
+                    bullets.append(
+                        f"I've added {c.weekday_full}'s **{label}** "
+                        f"({c.new_duration} min)."
+                    )
             elif c.kind == "removed":
+                if _is_rest_day(c.old):
+                    continue  # never "removed Tuesday's Rest"
                 bullets.append(f"I've removed {c.weekday_full}'s {label}.")
             else:
                 bullets.append(
                     f"I've updated {c.weekday_full}'s session to **{label}**."
                 )
-        parts.append(" ".join(bullets))
+        if bullets:
+            parts.append(" ".join(bullets))
+        else:
+            parts.append(
+                f"I've adjusted this week around {mode_bit} while keeping your "
+                f"{goal_bit} goal in mind."
+            )
     else:
         parts.append(
             f"I've adjusted this week around {mode_bit} while keeping your "

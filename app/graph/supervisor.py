@@ -7,6 +7,11 @@ from langgraph.types import interrupt
 logger = logging.getLogger(__name__)
 
 from app.config import get_llm
+from app.graph.adherence_continue import (
+    YES_SCHEDULE_CHIP,
+    looks_like_yes_schedule_chip,
+    prior_was_adherence_schedule_offer,
+)
 from app.graph.intake import looks_like_profile_change_request, needs_intake
 from app.graph.macros import PROVISIONAL_MACRO_INSTRUCTIONS, macros_provisional
 from app.graph.state import CoachingTeamState
@@ -88,13 +93,41 @@ guilt-tripping.
 Respond with just the intent word."""
 
 
+def _message_role(message) -> str:
+    if message is None:
+        return ""
+    role = getattr(message, "type", None) or getattr(message, "role", None)
+    if role:
+        return str(role).lower()
+    if isinstance(message, dict):
+        return str(message.get("role") or message.get("type") or "").lower()
+    return ""
+
+
+def _last_user_text(messages: list) -> str:
+    """Most recent human/user text (skip trailing assistant turns from RISK loops)."""
+    for message in reversed(messages or []):
+        role = _message_role(message)
+        if role in {"human", "user"}:
+            content = getattr(message, "content", None)
+            if content is None and isinstance(message, dict):
+                content = message.get("content")
+            return as_text(content)
+    return ""
+
+
 def coach_node(state: CoachingTeamState) -> dict:
     rounds = state.coaching_team_rounds + 1
+    last_role = _message_role(state.messages[-1]) if state.messages else ""
     # Fresh critique budget each coach entry (including risk renegotiation).
+    # New user turn (last message is human): drop stale RISK from a prior
+    # check-in so it cannot force schedule on unrelated follow-ups.
+    # In-graph RISK renegotiation re-enters with a trailing assistant message.
     critique_reset = {
         "critique_rounds": 0,
         "critique_verdict": None,
         "coaching_team_transcript": [],
+        **({"risk_flag": False} if last_role in {"human", "user"} else {}),
     }
 
     # Meal photo → nutrition directly (even mid-intake — logging is in-scope).
@@ -106,8 +139,8 @@ def coach_node(state: CoachingTeamState) -> dict:
             **critique_reset,
         }
 
-    user_msg = ""
-    if state.messages:
+    user_msg = _last_user_text(list(state.messages or []))
+    if not user_msg and state.messages:
         user_msg = as_text(state.messages[-1].content)
 
     # Quick-10 Done / replace-vs-extra — always schedule fast-path (no intake gate).
@@ -175,6 +208,44 @@ def coach_node(state: CoachingTeamState) -> dict:
             "intent": "schedule",
             "coaching_team_rounds": rounds,
             "quick_replies": [],
+            **critique_reset,
+        }
+
+    # In-graph adherence RISK renegotiation (trailing assistant from coaching_team)
+    # → Scheduler simplify — do not re-classify the drop-off opener as adherence.
+    if (
+        state.risk_flag
+        and state.coaching_team_rounds >= 1
+        and last_role in {"ai", "assistant"}
+    ):
+        return {
+            "intent": "schedule",
+            "coaching_team_rounds": rounds,
+            "quick_replies": [],
+            "proposals": {
+                **state.proposals,
+                "adherence_continuation": True,
+            },
+            **critique_reset,
+        }
+
+    history_without_latest = list(state.messages or [])[:-1] if state.messages else []
+    prior_assistant, _ = prior_turns_from_messages(history_without_latest)
+
+    # "yes schedule" chip / short accept after an adherence dial-back offer →
+    # schedule continuation (inherit context; never re-run new-user intake).
+    if looks_like_yes_schedule_chip(user_msg) or (
+        looks_like_short_affirmation(user_msg)
+        and prior_was_adherence_schedule_offer(prior_assistant)
+    ):
+        return {
+            "intent": "schedule",
+            "coaching_team_rounds": rounds,
+            "quick_replies": [],
+            "proposals": {
+                **state.proposals,
+                "adherence_continuation": True,
+            },
             **critique_reset,
         }
 
@@ -268,15 +339,15 @@ def coach_node(state: CoachingTeamState) -> dict:
         }
 
     llm = get_llm(max_tokens=32)
-    history_without_latest = list(state.messages or [])[:-1] if state.messages else []
-    prior_assistant, _ = prior_turns_from_messages(history_without_latest)
     hint = ""
     if prior_assistant:
         hint = (
             "\n\nPrior coach message (for turn-type classification):\n"
             f"{prior_assistant[:800]}\n\n"
             "CONTINUATION only if the latest user message answers/accepts that "
-            "offer (yes/ok/sounds good / a requested value). "
+            "offer (yes/ok/sounds good / a requested value / 'yes schedule' chip). "
+            "After an adherence check-in that offered to dial back / re-plan, "
+            "acceptances → schedule (not a brand-new first-plan intake). "
             "INTERRUPT if they raise a new concern (actually/wait/also; knee "
             "hurts; allergy; pregnancy/safety; diabetes; high blood pressure) — "
             "route on the new concern only, never inherit nutrition from a "
@@ -723,6 +794,22 @@ def coaching_team_node(state: CoachingTeamState) -> dict:
         and looks_like_short_affirmation(user_msg)
     ):
         quick = ["creatine timing tips"]
+    # Adherence check-in with a dial-back / simplify offer → chip for the
+    # schedule-adjustment continuation (avoids a bare "yes" losing context).
+    had_adherence = bool(state.proposals.get("adherence"))
+    if (
+        had_adherence
+        and not plan_changed
+        and not interrupt
+        and not quick
+        and (
+            state.risk_flag
+            or prior_was_adherence_schedule_offer(reply_text)
+            or "simplify" in reply_text.lower()
+            or "dial" in reply_text.lower()
+        )
+    ):
+        quick = [YES_SCHEDULE_CHIP]
     return {
         "messages": [{"role": "assistant", "content": reply_text}],
         "proposals": retained,

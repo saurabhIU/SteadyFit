@@ -1,6 +1,7 @@
 "use client";
 
 import { Fragment, useCallback, useEffect, useRef, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { CopyIcon, ImagePlusIcon, TimerIcon, XIcon } from "lucide-react";
 import {
   Conversation,
@@ -38,6 +39,19 @@ const DONE_CHIP = "done";
 const REPLACE_CHIP = "Count as today's session";
 const EXTRA_CHIP = "Log it separately";
 const PENDING_MICRO_KEY = "steadyfit:pending_micro_10";
+
+/**
+ * Display labels for chips whose API/routing value differs from what we show.
+ * Backend may still emit the internal value ("yes schedule"); we render the
+ * natural answer to "should we adjust now?".
+ */
+const QUICK_REPLY_DISPLAY_LABELS: Record<string, string> = {
+  "yes schedule": "yes, adjust",
+};
+
+function quickReplyDisplayLabel(value: string): string {
+  return QUICK_REPLY_DISPLAY_LABELS[value] ?? value;
+}
 
 function quickWorkoutActionForChip(
   option: string,
@@ -102,6 +116,8 @@ type PendingImage = {
 
 export function ChatView() {
   const { userId, ready } = useProfile();
+  const searchParams = useSearchParams();
+  const conv = searchParams.get("conv");
   const [messages, setMessages] = useState<ChatMessage[]>([WELCOME]);
   const [input, setInput] = useState("");
   const [threadId, setThreadId] = useState<string | null>(null);
@@ -121,6 +137,33 @@ export function ChatView() {
     setError(null);
     setInput("");
     setPendingImage(null);
+
+    // ?conv= starts (or resumes) an explicit conversation for this profile.
+    if (conv) {
+      const thread = conv.includes(":") ? conv : `${userId}:${conv}`;
+      setThreadId(thread);
+      sessionStorage.setItem(threadStorageKey(userId), thread);
+      setRestoring(true);
+      fetchChatHistory(thread)
+        .then((data) => {
+          if (data.messages.length > 0) {
+            setMessages(
+              data.messages.map((msg) => ({
+                id: crypto.randomUUID(),
+                role: msg.role,
+                content: msg.content,
+                coaching_team: msg.coaching_team,
+              })),
+            );
+          }
+          setPendingApproval(data.pending_approval ?? null);
+        })
+        .catch(() => {
+          // Brand-new conv ids have no history — keep welcome.
+        })
+        .finally(() => setRestoring(false));
+      return;
+    }
 
     const storedThread = sessionStorage.getItem(threadStorageKey(userId));
     if (!storedThread) {
@@ -148,14 +191,19 @@ export function ChatView() {
         // Keep welcome state if history cannot be loaded.
       })
       .finally(() => setRestoring(false));
-  }, [userId, ready]);
+  }, [userId, ready, conv]);
 
   const submitMessage = useCallback(
-    async (text: string, image?: PendingImage | null) => {
+    async (
+      text: string,
+      image?: PendingImage | null,
+      opts?: { displayText?: string },
+    ) => {
       // Free-text replace/extra must hit the dedicated path (not intake/LLM).
       // Bare "done" stays chip-only via handleChip to avoid mid-intake collisions.
       // While an approval card is pending, NEVER take this path (and never
       // silently return) — free-text must reach /api/chat → resume=modify.
+      const displayText = opts?.displayText ?? text;
       const quickAction = quickWorkoutActionForChip(text);
       if (
         !image &&
@@ -168,7 +216,7 @@ export function ChatView() {
         const userMsg: ChatMessage = {
           id: crypto.randomUUID(),
           role: "user",
-          content: text,
+          content: displayText,
         };
         setMessages((prev) => [...markQuickRepliesAnswered(prev), userMsg]);
         try {
@@ -207,7 +255,7 @@ export function ChatView() {
       const userMsg: ChatMessage = {
         id: crypto.randomUUID(),
         role: "user",
-        content: text || (hasImage ? "Meal photo" : ""),
+        content: displayText || (hasImage ? "Meal photo" : ""),
         imagePreviewUrl: image?.previewUrl,
       };
       // Free-text (or chip via submitMessage) answers the pending question —
@@ -355,7 +403,11 @@ export function ChatView() {
       return;
     }
 
-    await submitMessage(option);
+    // Show the friendly label in the thread; send the internal chip value
+    // (e.g. "yes schedule") so backend routing stays unchanged.
+    await submitMessage(option, null, {
+      displayText: quickReplyDisplayLabel(option),
+    });
   }
 
   // Plan page (and deep links) can stash a pending micro-session request.
@@ -476,7 +528,7 @@ export function ChatView() {
                             chipsAnswered && "cursor-default",
                           )}
                         >
-                          {option}
+                          {quickReplyDisplayLabel(option)}
                         </button>
                       ))}
                     </div>

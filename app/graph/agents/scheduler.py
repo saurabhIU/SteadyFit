@@ -1,4 +1,9 @@
 """Scheduler agent: life-aware weekly re-planning with KB + coaching memory."""
+from app.graph.adherence_continue import (
+    looks_like_yes_schedule_chip,
+    prior_was_adherence_schedule_offer,
+)
+from app.graph.approval_copy import has_prior_week_plan
 from app.graph.citations import citations_from_texts, merge_citations
 from app.graph.critique import revision_block
 from app.graph.diet_plan import build_diet_week, diet_plan_contains_nonveg, diet_summary_lines
@@ -38,6 +43,7 @@ from app.rag.memory_store import retrieve_memories
 from app.security import (
     as_text,
     looks_like_pain_injury_interrupt,
+    prior_turns_from_messages,
     with_security,
     wrap_untrusted,
 )
@@ -110,7 +116,18 @@ approval card handles plan confirmation.
 CRITICAL OUTPUT RULE: When drafting or rebuilding a week (first plan, personal-doc
 apply, or weekday preference), you MUST end with the fenced WeekPlan JSON above.
 Do not ask "sound good?" or defer meals to a later turn — include workouts in JSON
-now; meals are attached in code."""
+now; meals are attached in code.
+
+RETURNING USERS (onboarding_complete=true AND an existing week_plan):
+- NEVER ask experience level, preferred session duration, or injuries/limitations.
+- Those are NOT missing intake slots — use profile.constraints (empty = none
+  reported), preferred_workout_modes, sessions_per_week, and the duration_min
+  values already on the current week_plan / Memory / personal docs.
+- Default to intermediate training experience when the user has multi-week history.
+- Proceed directly to a concrete re-plan with the WeekPlan JSON — no clarifying
+  interview, even if the latest user message is a short chip like "yes schedule".
+- When CONTINUATION / adherence context appears in the prompt, simplify the week
+  (fewer or shorter sessions) and keep [Memory:…] citations from that context."""
 
 
 def _fallback_week_plan(
@@ -241,16 +258,29 @@ def _memory_query(state: CoachingTeamState, user_msg: str) -> str:
     )
 
 
+def _last_user_text(messages: list) -> str:
+    for message in reversed(messages or []):
+        role = getattr(message, "type", None) or getattr(message, "role", None)
+        if role is None and isinstance(message, dict):
+            role = message.get("role") or message.get("type")
+        if str(role or "").lower() in {"human", "user"}:
+            content = getattr(message, "content", None)
+            if content is None and isinstance(message, dict):
+                content = message.get("content")
+            return as_text(content)
+    return ""
+
+
 def scheduler_node(state: CoachingTeamState) -> dict:
-    last = state.messages[-1] if state.messages else None
-    if last is None:
-        user_msg = ""
-    elif hasattr(last, "content"):
-        user_msg = as_text(last.content)
-    elif isinstance(last, dict):
-        user_msg = as_text(last.get("content", ""))
-    else:
-        user_msg = as_text(str(last))
+    user_msg = _last_user_text(list(state.messages or []))
+    if not user_msg and state.messages:
+        last = state.messages[-1]
+        if hasattr(last, "content"):
+            user_msg = as_text(last.content)
+        elif isinstance(last, dict):
+            user_msg = as_text(last.get("content", ""))
+        else:
+            user_msg = as_text(str(last))
 
     # Quick-10 Done / replace / extra — before suggestion path.
     choice = state.proposals.get("micro_done_choice")
@@ -328,11 +358,27 @@ def scheduler_node(state: CoachingTeamState) -> dict:
             "citations": list(state.citations),
         }
 
+    saved_plan = get_saved_week_plan(state.user_id) if state.user_id else None
+    has_plan = has_prior_week_plan(state.week_plan) or has_prior_week_plan(saved_plan)
+    returning = bool(state.profile.onboarding_complete and has_plan)
+    adherence_continuation = bool(state.proposals.get("adherence_continuation"))
+    history_without_latest = list(state.messages or [])[:-1] if state.messages else []
+    prior_assistant, _ = prior_turns_from_messages(history_without_latest)
+    if looks_like_yes_schedule_chip(user_msg) or (
+        prior_was_adherence_schedule_offer(prior_assistant)
+        and adherence_continuation
+    ):
+        adherence_continuation = True
+
     first_plan = (
         state.intent == "first_plan"
         or state.proposals.get("intake_handoff") == "first_plan"
-        or state.week_plan is None
+        or not has_plan
     )
+    # Returning users never take the first-plan interview path.
+    if returning:
+        first_plan = False
+
     modes = ", ".join(state.profile.preferred_workout_modes) or "gym"
     week_start = current_week_start_iso()
     if first_plan:
@@ -348,6 +394,25 @@ def scheduler_node(state: CoachingTeamState) -> dict:
             "Call get_exercise_substitutions / find_exercises_tool for safer options. "
             "Propose knee-safe (or relevant joint-safe) swaps; do not push through pain. "
             "Do not discuss protein/meal plans."
+        )
+    elif adherence_continuation or (
+        returning and prior_was_adherence_schedule_offer(prior_assistant)
+    ):
+        hint = (
+            "ADHERENCE CONTINUATION: the user accepted a dial-back / re-plan offer "
+            "(e.g. tapped 'yes schedule'). They are a known returning user — do NOT "
+            "ask experience level, session duration, or injuries. Simplify the existing "
+            "week (fewer/shorter sessions) using profile + current plan + Memory + "
+            "personal docs. ALWAYS emit a full WeekPlan JSON immediately."
+        )
+    elif returning:
+        hint = (
+            "RETURNING USER with an existing week_plan. Do NOT ask experience level, "
+            "session duration, or injuries/limitations. Use profile.constraints, "
+            f"modes ({modes}), sessions_per_week, plan duration_min values, Memory, "
+            "and personal docs. Call calendar_conflicts only as a check; if empty, "
+            "schedule from stated constraints only. ALWAYS emit a full WeekPlan JSON "
+            "when adjusting/rebuilding — never advisory-only clarifying questions."
         )
     else:
         hint = (
@@ -381,23 +446,53 @@ def scheduler_node(state: CoachingTeamState) -> dict:
             "Do NOT ask for weight again.\n"
         )
 
+    mem_query = _memory_query(state, user_msg)
+    if adherence_continuation or prior_was_adherence_schedule_offer(prior_assistant):
+        mem_query = (
+            f"{mem_query}\nsimplified plan overload stress adherence drop-off"
+        )
     memory_chunks, memory_cites = retrieve_memories(
-        _memory_query(state, user_msg),
+        mem_query,
         user_id=state.user_id,
         k=3,
     )
-    memory_block = "\n\n".join(memory_chunks) if memory_chunks else ""
+    # Carry forward Memory chunks cited on the prior adherence turn when present.
+    prior_ctx = [
+        c
+        for c in (state.retrieved_context or [])
+        if isinstance(c, str) and "[Memory:" in c and c not in memory_chunks
+    ]
+    memory_block = "\n\n".join(memory_chunks + prior_ctx[:3]) if (
+        memory_chunks or prior_ctx
+    ) else ""
 
     personal_ctx = load_personal_plan_context(state.user_id or "", state.profile)
     personal_block = personal_ctx.prompt_block
     if personal_block:
         personal_block = f"\n{personal_block}\n"
 
-    cal_block = calendar_truth_block(state.week_plan, user_msg)
+    prior_block = ""
+    if prior_assistant and (
+        adherence_continuation or prior_was_adherence_schedule_offer(prior_assistant)
+    ):
+        prior_block = (
+            "\nPrior adherence check-in (CONTINUATION — inherit this context):\n"
+            f"{prior_assistant[:1200]}\n"
+        )
+
+    plan_json = (
+        state.week_plan.model_dump_json()
+        if state.week_plan
+        else (saved_plan.model_dump_json() if saved_plan else "none")
+    )
+    cal_block = calendar_truth_block(state.week_plan or saved_plan, user_msg)
     user_prompt = (
         f"Profile: {state.profile.model_dump_json()}\n"
-        f"Plan: {state.week_plan.model_dump_json() if state.week_plan else 'none'}\n"
+        f"Plan: {plan_json}\n"
+        f"onboarding_complete={state.profile.onboarding_complete}; "
+        f"returning_user={returning}\n"
         f"{wrap_untrusted(user_msg, source='user')}\n\n"
+        f"{prior_block}"
         f"{cal_block}\n\n"
         f"{memory_block}\n"
         f"{personal_block}"
@@ -414,8 +509,14 @@ def scheduler_node(state: CoachingTeamState) -> dict:
     proposals = {**state.proposals, "scheduler": proposal}
     must_structure = (
         first_plan
+        or adherence_continuation
+        or looks_like_yes_schedule_chip(user_msg)
         or looks_like_first_plan_request(user_msg)
         or looks_like_training_day_preference(user_msg)
+        or (
+            returning
+            and prior_was_adherence_schedule_offer(prior_assistant)
+        )
     )
     # Only pause for HITL when we have a structured plan to save. Otherwise a
     # fresh user can "approve" prose and still land with an empty Plan tab.

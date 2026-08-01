@@ -4,6 +4,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "evals"))
 from helpers import (
+    adherence_continue_structural_failure,
     compare_labeled_summaries,
     format_summary_table,
     parse_judge_scores,
@@ -90,3 +91,27 @@ def test_compare_labeled_summaries():
     md = compare_labeled_summaries(a, b, label_a="baseline", label_b="hybrid")
     assert "baseline" in md and "hybrid" in md
     assert "0.3" in md or "0.30" in md  # faithfulness delta
+
+
+def test_adherence_continue_structural_failure_flags_intake_qs():
+    row = {
+        "expect_no_clarifying_intake": True,
+        "expect_plan_approval_card": True,
+    }
+    bad = adherence_continue_structural_failure(
+        row,
+        {
+            "reply": "What's your experience level and session duration?",
+            "pending_approval": None,
+        },
+    )
+    assert bad and "clarifying" in bad
+    good = adherence_continue_structural_failure(
+        row,
+        {
+            "reply": "Lighter week locked in. [Memory: week of 2026-06-29]",
+            "pending_approval": {"type": "plan_approval", "proposed_plan": {"days": []}},
+            "citations": [{"kind": "memory", "tag": "[Memory: week of 2026-06-29]"}],
+        },
+    )
+    assert good is None

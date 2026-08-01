@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { TryItYourself } from "@/components/landing/TryItYourself";
 import { useProfile } from "@/lib/profile";
 import { useWeekStreak } from "@/lib/use-week-streak";
@@ -114,6 +114,34 @@ function BottomNav({
   );
 }
 
+function NewChatLink() {
+  const pathname = usePathname();
+  const router = useRouter();
+  const { userId, ready } = useProfile();
+
+  if (!ready || pathname !== "/chat") return null;
+
+  return (
+    <button
+      type="button"
+      onClick={() => {
+        const conv = crypto.randomUUID();
+        router.push(
+          `/chat?profile=${encodeURIComponent(userId)}&conv=${encodeURIComponent(conv)}`,
+        );
+      }}
+      className={cn(
+        "text-xs text-navy-muted-dim underline-offset-2 transition-colors",
+        "hover:text-navy-muted hover:underline",
+      )}
+      aria-label="Start a new chat"
+      title="Start a new chat"
+    >
+      New chat
+    </button>
+  );
+}
+
 function ProfileSwitcher() {
   const { userId, profiles, setUserId, ready } = useProfile();
   // Keep the demo switcher for stable, public-facing profiles only — try-*
@@ -221,6 +249,7 @@ export function Header() {
               className="hidden sm:flex"
             />
             {showStreak ? <StreakBadge weeks={streakWeeks} /> : null}
+            <NewChatLink />
             <ProfileSwitcher />
           </div>
         </div>

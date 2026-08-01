@@ -55,12 +55,45 @@ def bootstrap_input(
     set_current_user_id(user_id)
     profile = get_profile(user_id)
     week_plan = week_plan_from_graph(graph, thread_id) or get_saved_week_plan(user_id)
+
+    # Carry Memory chunks/citations from the prior turn so adherence →
+    # "yes schedule" continuations keep the same grounding (capped).
+    prior_ctx: list[str] = []
+    prior_cites: list[dict] = []
+    try:
+        snapshot = graph.get_state(thread_config(thread_id))
+        values = getattr(snapshot, "values", None) if snapshot else None
+        if isinstance(values, dict):
+            raw_ctx = values.get("retrieved_context") or []
+            raw_cites = values.get("citations") or []
+            prior_ctx = [
+                c for c in raw_ctx
+                if isinstance(c, str) and "[Memory:" in c
+            ][-3:]
+            prior_cites = [
+                c for c in raw_cites
+                if isinstance(c, dict)
+                and (
+                    str(c.get("kind") or "").lower() == "memory"
+                    or str(c.get("tag") or "").startswith("[Memory:")
+                )
+            ][-6:]
+    except Exception:
+        pass
+
+    ctx = list(retrieved_context) if retrieved_context is not None else list(prior_ctx)
+    if retrieved_context is not None and prior_ctx:
+        for chunk in prior_ctx:
+            if chunk not in ctx:
+                ctx.append(chunk)
+
     return CoachingTeamState(
         messages=messages or [],
         user_id=user_id,
         profile=profile,
         week_plan=week_plan,
-        retrieved_context=retrieved_context or [],
+        retrieved_context=ctx,
+        citations=prior_cites,
         pending_image_base64=pending_image_base64,
         pending_image_mime=pending_image_mime,
     )

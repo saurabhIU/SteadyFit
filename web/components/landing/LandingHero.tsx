@@ -5,7 +5,7 @@ import { PlanPhonePreview } from "@/components/landing/PlanPhonePreview";
 
 const DEMO_LOOM_URL =
   process.env.NEXT_PUBLIC_DEMO_LOOM_URL ??
-  "https://www.loom.com/share/steadyfit-demo-placeholder";
+  "https://youtu.be/2gTdga4oN6c";
 
 export function LandingHero() {
   return (
